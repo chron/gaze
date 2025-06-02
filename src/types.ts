@@ -1,6 +1,6 @@
-import type { MessageParam } from "@anthropic-ai/sdk/resources"
-import type { sendToClaude } from "./lib/anthropic"
+import type {
+	Message as ClaudeMessage,
+	MessageParam,
+} from "@anthropic-ai/sdk/resources"
 
-export type Message =
-	| (MessageParam & { id: string })
-	| Awaited<ReturnType<typeof sendToClaude>>
+export type Message = (MessageParam & { id: string }) | ClaudeMessage
