@@ -1,74 +1,54 @@
 import { nanoid } from "nanoid"
-import { useState } from "react"
 import { sendToClaude } from "../lib/anthropic"
+import { mainStore } from "../stores/main"
 import type { Message } from "../types"
 
-export const useAi = () => {
-	const [messages, setMessages] = useState<Message[]>([])
+const addOrUpdateMessage = (campaignId: string, message: Message) => {
+	mainStore.setState((state) => {
+		const campaign = state.campaigns.find((c) => c.id === campaignId)
+		if (!campaign) return state
 
-	const sendMessage = async (
-		messageHistory: Message[],
-		newMessage: Message,
-	) => {
-		setMessages((oldMessages) => [...oldMessages, newMessage])
+		const messageIndex = campaign.messages.findIndex((m) => m.id === message.id)
+		const newCampaign = {
+			...campaign,
+			messages:
+				messageIndex === -1
+					? [...campaign.messages, message]
+					: [
+							...campaign.messages.slice(0, messageIndex),
+							message,
+							...campaign.messages.slice(messageIndex + 1),
+						],
+		}
+
+		return {
+			...state,
+			campaigns: state.campaigns.map((c) =>
+				c.id === campaignId ? newCampaign : c,
+			),
+		}
+	})
+}
+
+export const useAi = (campaignId: string) => {
+	const sendMessage = async (newMessage: Message) => {
+		addOrUpdateMessage(campaignId, newMessage)
+
+		const messageHistory =
+			mainStore.state.campaigns.find((c) => c.id === campaignId)?.messages ?? []
 
 		const response = await sendToClaude(
 			[...messageHistory, newMessage],
 			(id, _delta, snapshot) => {
-				setMessages((m) => {
-					if (!m.find((m) => m.id === id)) {
-						return [
-							...m,
-							{
-								id,
-								role: "assistant",
-								content: snapshot,
-							},
-						]
-					}
-
-					return m.map((m) => {
-						if (m.id !== id) return m
-
-						if (typeof m.content === "string") {
-							return {
-								...m,
-								content: snapshot,
-							}
-						}
-
-						// Can we get streaming events from previous blocks? idk
-						const lastContent = m.content[m.content.length - 1]
-
-						if (lastContent.type === "text") {
-							return {
-								...m,
-								content: [
-									...m.content.slice(0, -1),
-									{
-										...m.content[m.content.length - 1],
-										text: snapshot,
-									},
-								],
-							}
-						}
-
-						return m
-					})
+				addOrUpdateMessage(campaignId, {
+					id,
+					role: "assistant",
+					content: snapshot,
 				})
 			},
 		)
-		setMessages((oldMessages) => {
-			if (!oldMessages.find((m) => m.id === response.id)) {
-				return [...oldMessages, response]
-			}
-			return oldMessages.map((m) => {
-				if (m.id === response.id) {
-					return response
-				}
-				return m
-			})
-		})
+
+		addOrUpdateMessage(campaignId, response)
 
 		if (response.stop_reason === "tool_use") {
 			const lastBlock = response.content[response.content.length - 1]
@@ -105,9 +85,7 @@ export const useAi = () => {
 		}
 	}
 
-	const handleSend = (newMessage: Message) => sendMessage(messages, newMessage)
-
-	return [messages, handleSend] as const
+	return sendMessage
 }
 
 const rollDice = (number: number, faces: number) => {

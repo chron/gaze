@@ -3,8 +3,7 @@ import type { Tool } from "@anthropic-ai/sdk/resources"
 import { nanoid } from "nanoid"
 import { env } from "../../env"
 import type { Message } from "../types"
-
-const SYSTEM_PROMPT = "You are a helpful assistant."
+import systemPrompt from "./prompts/system.txt?raw"
 
 const client = new Anthropic({
 	apiKey: env.VITE_ANTHROPIC_API_KEY,
@@ -40,7 +39,7 @@ export const sendToClaude = async (
 		.stream({
 			max_tokens: 1024,
 			messages: messagePayload,
-			system: SYSTEM_PROMPT,
+			system: systemPrompt,
 			model: "claude-3-5-sonnet-latest",
 			tools,
 			tool_choice: {

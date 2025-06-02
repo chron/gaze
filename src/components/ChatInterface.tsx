@@ -1,16 +1,20 @@
+import { useStore } from "@tanstack/react-store"
 import { nanoid } from "nanoid"
 import { useEffect, useRef, useState } from "react"
+import { mainStore } from "../stores/main"
 import { Message } from "./Message"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { useAi } from "./useAi"
 
 export const ChatInterface: React.FC = () => {
+	const campaign = useStore(mainStore, (state) => state.campaigns[0])
+
 	const [isLoading, setIsLoading] = useState(false)
 	const [input, setInput] = useState(
 		"Can you help me roll the dice to choose attributes for a new D&D character?",
 	)
-	const [messages, sendMessage] = useAi()
+	const sendMessage = useAi(campaign.id)
 	const messagePanelRef = useRef<HTMLDivElement>(null)
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: I hate useEffect honestly
@@ -20,7 +24,7 @@ export const ChatInterface: React.FC = () => {
 				top: messagePanelRef.current.scrollHeight,
 			})
 		}
-	}, [messages])
+	}, [campaign.messages])
 
 	const handleSend = async () => {
 		setIsLoading(true)
@@ -42,9 +46,11 @@ export const ChatInterface: React.FC = () => {
 				ref={messagePanelRef}
 				className="flex-1 flex flex-col justify-end gap-4 min-h-0 py-4 px-4 flex-grow overflow-y-auto"
 			>
-				{messages.map((message) => (
+				{campaign.messages.map((message) => (
 					<Message key={message.id} message={message} />
 				))}
+
+				{JSON.stringify(campaign)}
 			</div>
 
 			<div className="flex items-center gap-4 p-4">
