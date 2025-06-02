@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk"
-import type { MessageParam, Tool } from "@anthropic-ai/sdk/resources"
+import type { Tool } from "@anthropic-ai/sdk/resources"
+import { nanoid } from "nanoid"
 import { env } from "../../env"
 import type { Message } from "../types"
 
@@ -25,22 +26,30 @@ const tools: Tool[] = [
 	},
 ]
 
-export const sendToClaude = async (messageList: Message[]) => {
+export const sendToClaude = async (
+	messageList: Message[],
+	newChunk: (id: string, text: string, textSnapshot: string) => void,
+) => {
 	const messagePayload = messageList.map(({ role, content }) => ({
 		role,
 		content,
 	}))
 
-	const message = await client.messages.create({
-		max_tokens: 1024,
-		messages: messagePayload,
-		system: SYSTEM_PROMPT,
-		model: "claude-3-5-sonnet-latest",
-		tools,
-		tool_choice: {
-			type: "auto",
-		},
-	})
+	const id = nanoid()
+	const stream = client.messages
+		.stream({
+			max_tokens: 1024,
+			messages: messagePayload,
+			system: SYSTEM_PROMPT,
+			model: "claude-3-5-sonnet-latest",
+			tools,
+			tool_choice: {
+				type: "auto",
+			},
+			stream: true,
+		})
+		.on("text", (text, textSnapshot) => newChunk(id, text, textSnapshot))
 
-	return message
+	const message = await stream.finalMessage()
+	return { ...message, id }
 }

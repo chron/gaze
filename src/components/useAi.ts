@@ -10,8 +10,65 @@ export const useAi = () => {
 		messageHistory: Message[],
 		newMessage: Message,
 	) => {
-		const response = await sendToClaude([...messageHistory, newMessage])
-		setMessages((oldMessages) => [...oldMessages, newMessage, response])
+		setMessages((oldMessages) => [...oldMessages, newMessage])
+
+		const response = await sendToClaude(
+			[...messageHistory, newMessage],
+			(id, _delta, snapshot) => {
+				setMessages((m) => {
+					if (!m.find((m) => m.id === id)) {
+						return [
+							...m,
+							{
+								id,
+								role: "assistant",
+								content: snapshot,
+							},
+						]
+					}
+
+					return m.map((m) => {
+						if (m.id !== id) return m
+
+						if (typeof m.content === "string") {
+							return {
+								...m,
+								content: snapshot,
+							}
+						}
+
+						// Can we get streaming events from previous blocks? idk
+						const lastContent = m.content[m.content.length - 1]
+
+						if (lastContent.type === "text") {
+							return {
+								...m,
+								content: [
+									...m.content.slice(0, -1),
+									{
+										...m.content[m.content.length - 1],
+										text: snapshot,
+									},
+								],
+							}
+						}
+
+						return m
+					})
+				})
+			},
+		)
+		setMessages((oldMessages) => {
+			if (!oldMessages.find((m) => m.id === response.id)) {
+				return [...oldMessages, response]
+			}
+			return oldMessages.map((m) => {
+				if (m.id === response.id) {
+					return response
+				}
+				return m
+			})
+		})
 
 		if (response.stop_reason === "tool_use") {
 			const lastBlock = response.content[response.content.length - 1]

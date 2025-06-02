@@ -1,4 +1,7 @@
-import type { Message } from "@anthropic-ai/sdk/resources"
+import type {
+	ContentBlock,
+	ContentBlockParam,
+} from "@anthropic-ai/sdk/resources"
 import { cn } from "../lib/utils"
 import type { Message as MessageType } from "../types"
 
@@ -26,7 +29,7 @@ export const Message: React.FC<Props> = ({ message }) => {
 	)
 }
 
-const blockToText = (block: Message["content"][number]) => {
+const blockToText = (block: ContentBlockParam | ContentBlock) => {
 	if (block.type === "text") {
 		return block.text
 	}
