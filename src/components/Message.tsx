@@ -2,19 +2,14 @@ import type {
 	ContentBlock,
 	ContentBlockParam,
 } from "@anthropic-ai/sdk/resources"
+import type { Doc } from "../../convex/_generated/dataModel"
 import { cn } from "../lib/utils"
-import type { Message as MessageType } from "../types"
 
 type Props = {
-	message: MessageType
+	message: Doc<"messages">
 }
 
 export const Message: React.FC<Props> = ({ message }) => {
-	const content =
-		typeof message.content === "string"
-			? message.content
-			: message.content.map((block) => blockToText(block)).join("")
-
 	return (
 		<div
 			className={cn(
@@ -24,26 +19,28 @@ export const Message: React.FC<Props> = ({ message }) => {
 					: "self-start bg-gray-100 text-gray-800",
 			)}
 		>
-			<div className="flex flex-col gap-2 whitespace-pre-wrap">{content}</div>
+			<div className="flex flex-col gap-2 whitespace-pre-wrap">
+				{message.content}
+			</div>
 		</div>
 	)
 }
 
-const blockToText = (block: ContentBlockParam | ContentBlock) => {
-	if (block.type === "text") {
-		return block.text
-	}
+// const blockToText = (block: ContentBlockParam | ContentBlock) => {
+// 	if (block.type === "text") {
+// 		return block.text
+// 	}
 
-	if (block.type === "tool_use") {
-		if (block.name === "roll_dice") {
-			const toolArgs = block.input as { number: number; faces: number }
-			return `[Roll ${toolArgs.number}d${toolArgs.faces}]`
-		}
-	}
+// 	if (block.type === "tool_use") {
+// 		if (block.name === "roll_dice") {
+// 			const toolArgs = block.input as { number: number; faces: number }
+// 			return `[Roll ${toolArgs.number}d${toolArgs.faces}]`
+// 		}
+// 	}
 
-	if (block.type === "tool_result") {
-		return block.content
-	}
+// 	if (block.type === "tool_result") {
+// 		return block.content
+// 	}
 
-	return JSON.stringify(block, null, 2)
-}
+// 	return JSON.stringify(block, null, 2)
+// }

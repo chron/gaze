@@ -1,7 +1,6 @@
-import { useStore } from "@tanstack/react-store"
-import { FileIcon, Plus, PlusIcon } from "lucide-react"
-import { nanoid } from "nanoid"
-import { mainStore, updateCampaign } from "../stores/main"
+import { useMutation, useQuery } from "convex/react"
+import { Plus } from "lucide-react"
+import { api } from "../../convex/_generated/api"
 import {
 	Sidebar,
 	SidebarContent,
@@ -16,19 +15,16 @@ import {
 } from "./ui/sidebar"
 
 export const MainSidebar: React.FC = () => {
-	const campaigns = useStore(mainStore, (state) => state.campaigns)
+	const addCampaign = useMutation(api.campaigns.addCampaign)
+	const campaigns = useQuery(api.campaigns.list)
 
-	const addCampaign = () => {
-		const id = nanoid()
-		updateCampaign({
-			id,
+	const handleAddCampaign = () => {
+		addCampaign({
 			name: "New Campaign",
 			description: "New Campaign",
-			messages: [],
-			createdAt: new Date(),
-			updatedAt: new Date(),
 		})
 	}
+
 	return (
 		<Sidebar>
 			<SidebarHeader>Gaze</SidebarHeader>
@@ -36,14 +32,17 @@ export const MainSidebar: React.FC = () => {
 				<SidebarGroup>
 					<SidebarGroupLabel>Campaigns</SidebarGroupLabel>
 
-					<SidebarGroupAction onClick={addCampaign}>
+					<SidebarGroupAction
+						onClick={handleAddCampaign}
+						className="cursor-pointer"
+					>
 						<Plus /> <span className="sr-only">Add Project</span>
 					</SidebarGroupAction>
 
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{campaigns.map((campaign) => (
-								<SidebarMenuItem key={campaign.id}>
+							{campaigns?.map((campaign) => (
+								<SidebarMenuItem key={campaign._id}>
 									<SidebarMenuButton>{campaign.name}</SidebarMenuButton>
 								</SidebarMenuItem>
 							))}
