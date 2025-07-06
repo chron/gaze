@@ -1,1 +1,2 @@
 - Tidy up old images from convex storage before regenerating
+- Edit campaign upfront, navigate to it after creating

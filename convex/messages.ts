@@ -163,13 +163,15 @@ export const sendToLLM = internalAction({
 			maxSteps: 10,
 			tools: {
 				update_character_sheet: tool({
-					description: "Update the player's character sheet with any changes.",
+					description:
+						"Update the player's character sheet with any changes, including when they set their name or when their stats change.",
 					parameters: z.object({
 						name: z.string(),
+						description: z.string(),
 						xp: z.number(),
 						inventory: z.array(z.string()),
 					}),
-					execute: async ({ name, xp, inventory }) => {
+					execute: async ({ name, description, xp, inventory }) => {
 						if (!characterSheet) {
 							throw new Error("Character sheet not found")
 						}
@@ -177,6 +179,7 @@ export const sendToLLM = internalAction({
 						await ctx.runMutation(api.characterSheets.update, {
 							characterSheetId: characterSheet._id,
 							name,
+							description,
 							xp,
 							inventory,
 						})
@@ -203,7 +206,7 @@ export const sendToLLM = internalAction({
 				}),
 				introduce_character: tool({
 					description:
-						"Whenever a new character is introduced, use this tool to describe the character. The character should have a name, and description, which will be used to generate an image.",
+						"Whenever a new NPC is introduced, use this tool to describe the character. The NPC should have a name, and description, which will be used to generate an image.",
 					parameters: z.object({
 						name: z.string(),
 						description: z.string(),

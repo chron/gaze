@@ -26,15 +26,20 @@ export const MessageList: React.FC<Props> = ({
 		}
 	}, [messages])
 
+	const lastMessage = messages?.[messages.length - 1]
+	const usage = lastMessage?.usage
+
 	return (
 		<div className="flex-1 flex flex-col justify-end gap-4 min-h-0 py-4 px-4">
 			{messages?.map((message) => (
 				<Message key={message._id} message={message} />
 			))}
 
-			<div className="text-sm text-gray-500">
-				Context: {messages?.[messages.length - 1]?.usage?.promptTokens} tokens
-			</div>
+			{usage && (
+				<div className="text-sm text-gray-500">
+					Context: {usage.promptTokens} tokens
+				</div>
+			)}
 		</div>
 	)
 }

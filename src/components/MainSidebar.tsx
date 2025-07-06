@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router"
 import { useMutation, useQuery } from "convex/react"
 import { Plus } from "lucide-react"
 import { api } from "../../convex/_generated/api"
-import { cn } from "../lib/utils"
 import {
 	Sidebar,
 	SidebarContent,
@@ -14,6 +13,7 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
+	SidebarTrigger,
 } from "./ui/sidebar"
 
 export const MainSidebar: React.FC = () => {
@@ -30,7 +30,12 @@ export const MainSidebar: React.FC = () => {
 	return (
 		<Sidebar>
 			<SidebarHeader>
-				<Link to="/">Gaze</Link>
+				<div className="flex items-center gap-1">
+					<SidebarTrigger />
+					<Link to="/" className="font-bold">
+						Gaze
+					</Link>
+				</div>
 			</SidebarHeader>
 			<SidebarContent>
 				<SidebarGroup>
@@ -40,7 +45,7 @@ export const MainSidebar: React.FC = () => {
 						onClick={handleAddCampaign}
 						className="cursor-pointer"
 					>
-						<Plus /> <span className="sr-only">Add Project</span>
+						<Plus /> <span className="sr-only">Add Campaign</span>
 					</SidebarGroupAction>
 
 					<SidebarGroupContent>

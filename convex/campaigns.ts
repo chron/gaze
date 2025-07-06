@@ -36,3 +36,17 @@ export const addCampaign = mutation({
 		return await ctx.db.get(id)
 	},
 })
+
+export const update = mutation({
+	args: {
+		id: v.id("campaigns"),
+		name: v.string(),
+		imagePrompt: v.string(),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.id, {
+			name: args.name,
+			imagePrompt: args.imagePrompt,
+		})
+	},
+})
