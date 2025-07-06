@@ -8,6 +8,8 @@ type Props = {
 }
 
 export const Message: React.FC<Props> = ({ message }) => {
+	if (message.content === "") return null
+
 	return (
 		<div
 			className={cn(

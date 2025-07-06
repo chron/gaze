@@ -1,9 +1,10 @@
 import { google } from "@ai-sdk/google"
-import { streamText, tool } from "ai"
+import { openai } from "@ai-sdk/openai"
+import { generateText, streamText, tool } from "ai"
 import { v } from "convex/values"
 import { z } from "zod"
 import { api, internal } from "./_generated/api"
-import { internalAction, mutation, query } from "./_generated/server"
+import { action, internalAction, mutation, query } from "./_generated/server"
 import systemPrompt from "./prompts/system"
 
 export const list = query({
@@ -26,6 +27,7 @@ export const getLastScene = query({
 		return await ctx.db
 			.query("messages")
 			.filter((q) => q.eq(q.field("campaignId"), args.campaignId))
+			.filter((q) => q.neq(q.field("scene"), undefined))
 			.order("desc")
 			.first()
 	},
@@ -120,7 +122,6 @@ export const sendToLLM = internalAction({
 			campaignId: args.campaignId,
 		})
 
-		// Format messages for the LLM (user/assistant roles)
 		const formattedMessages = messages.map((msg) => ({
 			role: msg.role,
 			content: msg.content,
@@ -150,10 +151,14 @@ export const sendToLLM = internalAction({
 			})
 		}
 
+		const characters = await ctx.runQuery(api.characters.list, {
+			campaignId: args.campaignId,
+		})
+
 		// TODO: let's move to a real templating engine
 		const prompt = `${systemPrompt}\n\nHere is the character sheet for the player: ${JSON.stringify(
 			characterSheet,
-		)}`
+		)}\n\nHere are the existing characters: ${JSON.stringify(characters)}`
 
 		const model = google("gemini-2.5-flash")
 		const { textStream, usage } = streamText({
@@ -268,5 +273,36 @@ export const sendToLLM = internalAction({
 				completionTokens: usageInfo.completionTokens,
 			},
 		})
+	},
+})
+
+export const summarizeChatHistory = action({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args): Promise<string> => {
+		const messages = await ctx.runQuery(api.messages.list, {
+			campaignId: args.campaignId,
+		})
+
+		const prompt =
+			"You are an expert game master, compiling notes from a RPG session. Summarize the following conversation:"
+
+		const { text } = await generateText({
+			system: prompt,
+			model: openai("gpt-4o-mini"),
+			messages: [
+				...messages.map((msg) => ({
+					role: msg.role,
+					content: msg.content,
+				})),
+				{
+					role: "user",
+					content: "Summarize the storyline so far.",
+				},
+			],
+		})
+
+		return text
 	},
 })

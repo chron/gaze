@@ -13,7 +13,7 @@ export default defineSchema({
 	characterSheets: defineTable({
 		campaignId: v.id("campaigns"),
 		name: v.string(),
-		description: v.string(),
+		description: v.optional(v.string()),
 		xp: v.number(),
 		inventory: v.array(v.string()),
 	}),

@@ -7,6 +7,7 @@ import { CharacterList } from "./CharacterList"
 import { MessageList } from "./MessageList"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
+import { Textarea } from "./ui/textarea"
 
 type Props = {
 	campaignId: Id<"campaigns">
@@ -45,7 +46,7 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 
 	return (
 		<div
-			className="flex flex-col w-full h-full max-h-[calc(100dvh-52px)]"
+			className="flex flex-col w-full  h-screen max-h-[calc(100dvh-52px)]"
 			style={{
 				backgroundColor: lastScene?.scene?.backgroundColor ?? "white",
 			}}
@@ -65,17 +66,23 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 				/>
 			</div>
 
-			<div className="flex items-center gap-4 p-4 relative">
+			<div className="flex items-end gap-4 p-4 relative">
 				<CharacterList campaignId={campaign._id} />
-				<Input
+				<Textarea
 					autoFocus
-					type="text"
+					rows={1}
 					value={input}
 					onChange={(e) => setInput(e.target.value)}
 					placeholder="Enter your message"
-					className="flex-grow"
+					className="flex-grow py-[7px]"
 					onKeyUp={(e) => {
-						if (e.key === "Enter" && !isLoading && input.length > 0) {
+						if (
+							e.key === "Enter" &&
+							!isLoading &&
+							input.length > 0 &&
+							!e.shiftKey
+						) {
+							e.preventDefault()
 							handleSend()
 						}
 					}}
