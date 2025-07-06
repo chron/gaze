@@ -1,7 +1,5 @@
-import type {
-	ContentBlock,
-	ContentBlockParam,
-} from "@anthropic-ai/sdk/resources"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import type { Doc } from "../../convex/_generated/dataModel"
 import { cn } from "../lib/utils"
 
@@ -19,8 +17,10 @@ export const Message: React.FC<Props> = ({ message }) => {
 					: "self-start bg-gray-100 text-gray-800",
 			)}
 		>
-			<div className="flex flex-col gap-2 whitespace-pre-wrap">
-				{message.content}
+			<div className="flex flex-col gap-2">
+				<ReactMarkdown remarkPlugins={[remarkGfm]}>
+					{message.content}
+				</ReactMarkdown>
 			</div>
 		</div>
 	)

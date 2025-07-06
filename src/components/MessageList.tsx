@@ -27,7 +27,7 @@ export const MessageList: React.FC<Props> = ({ campaignId }) => {
 	return (
 		<div
 			ref={messagePanelRef}
-			className="flex-1 flex flex-col justify-end gap-4 min-h-0 py-4 px-4 flex-grow overflow-y-auto"
+			className="flex-1 flex flex-col justify-end gap-4 min-h-0 py-4 px-4"
 		>
 			{messages?.map((message) => (
 				<Message key={message._id} message={message} />

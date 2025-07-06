@@ -88,9 +88,10 @@ export const sendToLLM = internalAction({
 
 		// Call Gemini via ai SDK
 		const model = google("gemini-2.5-flash")
-		const { textStream } = streamText({
+		const { textStream, toolCalls, toolResults } = streamText({
 			model,
 			messages: formattedMessages,
+			maxSteps: 10,
 			tools: {
 				roll_dice: tool({
 					description: "Roll one or more dice",
@@ -99,6 +100,8 @@ export const sendToLLM = internalAction({
 						faces: z.number().min(1).max(100),
 					}),
 					execute: async ({ number, faces }) => {
+						console.log("rolling dice", number, faces)
+
 						const results: number[] = []
 						for (let i = 0; i < number; i++) {
 							results.push(Math.floor(Math.random() * faces) + 1)
@@ -114,6 +117,12 @@ export const sendToLLM = internalAction({
 					content: JSON.stringify(error.error),
 				})
 			},
+			// onFinish: async (result) => {
+			// 	await ctx.runMutation(api.messages.appendToMessage, {
+			// 		messageId: assistantMessageId,
+			// 		content: ` [${JSON.stringify(result)}]`,
+			// 	})
+			// },
 		})
 
 		for await (const textPart of textStream) {
@@ -122,5 +131,12 @@ export const sendToLLM = internalAction({
 				content: textPart,
 			})
 		}
+
+		// for (const toolResult of await toolResults) {
+		// 	await ctx.runMutation(api.messages.appendToMessage, {
+		// 		messageId: assistantMessageId,
+		// 		content: ` [${JSON.stringify(toolResult)}]`,
+		// 	})
+		// }
 	},
 })

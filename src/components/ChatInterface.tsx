@@ -12,9 +12,7 @@ export const ChatInterface: React.FC = () => {
 	const campaign = campaigns?.[0] // TODO: router later
 
 	const [isLoading, setIsLoading] = useState(false)
-	const [input, setInput] = useState(
-		"Can you help me roll the dice to choose attributes for a new D&D character?",
-	)
+	const [input, setInput] = useState()
 
 	const handleSend = async () => {
 		if (!campaign) throw new Error("No campaign found")
@@ -37,9 +35,9 @@ export const ChatInterface: React.FC = () => {
 	return (
 		<div className="flex flex-col w-full h-screen">
 			<h1 className="text-4xl font-bold p-4">{campaign.name}</h1>
-
-			<MessageList campaignId={campaign._id} />
-
+			<div className="flex-1 min-h-0 overflow-y-auto">
+				<MessageList campaignId={campaign._id} />
+			</div>
 			<div className="flex items-center gap-4 p-4">
 				<Input
 					autoFocus
