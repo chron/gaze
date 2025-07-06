@@ -4,6 +4,7 @@ import { v } from "convex/values"
 import { z } from "zod"
 import { api, internal } from "./_generated/api"
 import { internalAction, mutation, query } from "./_generated/server"
+import systemPrompt from "./prompts/system"
 
 export const list = query({
 	args: {
@@ -14,6 +15,19 @@ export const list = query({
 			.query("messages")
 			.filter((q) => q.eq(q.field("campaignId"), args.campaignId))
 			.collect()
+	},
+})
+
+export const getLastScene = query({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.db
+			.query("messages")
+			.filter((q) => q.eq(q.field("campaignId"), args.campaignId))
+			.order("desc")
+			.first()
 	},
 })
 
@@ -64,6 +78,21 @@ export const appendToMessage = mutation({
 	},
 })
 
+export const addSceneToMessage = mutation({
+	args: {
+		messageId: v.id("messages"),
+		scene: v.object({
+			description: v.string(),
+			backgroundColor: v.string(),
+		}),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.messageId, {
+			scene: args.scene,
+		})
+	},
+})
+
 export const sendToLLM = internalAction({
 	args: { campaignId: v.id("campaigns") },
 	handler: async (ctx, args) => {
@@ -88,11 +117,29 @@ export const sendToLLM = internalAction({
 
 		// Call Gemini via ai SDK
 		const model = google("gemini-2.5-flash")
-		const { textStream, toolCalls, toolResults } = streamText({
+		const { textStream } = streamText({
+			system: systemPrompt,
 			model,
 			messages: formattedMessages,
 			maxSteps: 10,
 			tools: {
+				change_scene: tool({
+					description:
+						"Whenever the scene changes, use this tool to describe the new scene. The background color should be a hex code that can be used with black text in the main chat interface. The description will be used to create an image.",
+					parameters: z.object({
+						description: z.string(),
+						backgroundColor: z.string(),
+					}),
+					execute: async ({ description, backgroundColor }) => {
+						await ctx.runMutation(api.messages.addSceneToMessage, {
+							messageId: assistantMessageId,
+							scene: {
+								description,
+								backgroundColor,
+							},
+						})
+					},
+				}),
 				roll_dice: tool({
 					description: "Roll one or more dice",
 					parameters: z.object({

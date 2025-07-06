@@ -12,6 +12,7 @@ type Props = {
 
 export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 	const campaign = useQuery(api.campaigns.get, { id: campaignId })
+	const lastScene = useQuery(api.messages.getLastScene, { campaignId })
 	const addUserMessage = useMutation(api.messages.addUserMessage)
 
 	const [isLoading, setIsLoading] = useState(false)
@@ -40,7 +41,12 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 	}
 
 	return (
-		<div className="flex flex-col w-full h-screen">
+		<div
+			className="flex flex-col w-full h-screen"
+			style={{
+				backgroundColor: lastScene?.scene?.backgroundColor ?? "white",
+			}}
+		>
 			<h1 className="text-4xl font-bold p-4">{campaign.name}</h1>
 			<div className="flex-1 min-h-0 overflow-y-auto">
 				<MessageList campaignId={campaign._id} />

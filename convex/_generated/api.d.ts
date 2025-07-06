@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as campaigns from "../campaigns.js";
 import type * as messages from "../messages.js";
+import type * as prompts_system from "../prompts/system.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -27,6 +28,7 @@ import type * as messages from "../messages.js";
 declare const fullApi: ApiFromModules<{
   campaigns: typeof campaigns;
   messages: typeof messages;
+  "prompts/system": typeof prompts_system;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

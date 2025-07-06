@@ -13,5 +13,11 @@ export default defineSchema({
 		campaignId: v.id("campaigns"),
 		role: v.union(v.literal("user"), v.literal("assistant")),
 		content: v.string(),
+		scene: v.optional(
+			v.object({
+				description: v.string(),
+				backgroundColor: v.string(),
+			}),
+		),
 	}),
 })
