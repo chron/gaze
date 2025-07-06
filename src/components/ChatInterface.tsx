@@ -1,18 +1,21 @@
 import { useMutation, useQuery } from "convex/react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
+import type { Id } from "../../convex/_generated/dataModel"
 import { MessageList } from "./MessageList"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 
-export const ChatInterface: React.FC = () => {
-	const campaigns = useQuery(api.campaigns.list)
+type Props = {
+	campaignId: Id<"campaigns">
+}
+
+export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
+	const campaign = useQuery(api.campaigns.get, { id: campaignId })
 	const addUserMessage = useMutation(api.messages.addUserMessage)
 
-	const campaign = campaigns?.[0] // TODO: router later
-
 	const [isLoading, setIsLoading] = useState(false)
-	const [input, setInput] = useState()
+	const [input, setInput] = useState("")
 
 	const handleSend = async () => {
 		if (!campaign) throw new Error("No campaign found")
@@ -28,7 +31,11 @@ export const ChatInterface: React.FC = () => {
 		setIsLoading(false)
 	}
 
-	if (!campaign) {
+	if (campaign === undefined) {
+		return null
+	}
+
+	if (campaign === null) {
 		return <div>No campaign found</div>
 	}
 

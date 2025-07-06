@@ -1,6 +1,8 @@
+import { Link } from "@tanstack/react-router"
 import { useMutation, useQuery } from "convex/react"
 import { Plus } from "lucide-react"
 import { api } from "../../convex/_generated/api"
+import { cn } from "../lib/utils"
 import {
 	Sidebar,
 	SidebarContent,
@@ -27,7 +29,9 @@ export const MainSidebar: React.FC = () => {
 
 	return (
 		<Sidebar>
-			<SidebarHeader>Gaze</SidebarHeader>
+			<SidebarHeader>
+				<Link to="/">Gaze</Link>
+			</SidebarHeader>
 			<SidebarContent>
 				<SidebarGroup>
 					<SidebarGroupLabel>Campaigns</SidebarGroupLabel>
@@ -43,7 +47,19 @@ export const MainSidebar: React.FC = () => {
 						<SidebarMenu>
 							{campaigns?.map((campaign) => (
 								<SidebarMenuItem key={campaign._id}>
-									<SidebarMenuButton>{campaign.name}</SidebarMenuButton>
+									<Link
+										to="/campaigns/$campaignId"
+										params={{ campaignId: campaign._id }}
+									>
+										{({ isActive }) => (
+											<SidebarMenuButton
+												isActive={isActive}
+												className="cursor-pointer"
+											>
+												{campaign.name}
+											</SidebarMenuButton>
+										)}
+									</Link>
 								</SidebarMenuItem>
 							))}
 						</SidebarMenu>
