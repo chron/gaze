@@ -29,6 +29,7 @@ export const addCampaign = mutation({
 		const campaign = {
 			name: args.name,
 			description: args.description,
+			imagePrompt: "A simple cartoon style",
 		}
 		const id = await ctx.db.insert("campaigns", campaign)
 

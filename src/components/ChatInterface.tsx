@@ -1,7 +1,8 @@
 import { useMutation, useQuery } from "convex/react"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
+import { CharacterList } from "./CharacterList"
 import { MessageList } from "./MessageList"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -11,6 +12,7 @@ type Props = {
 }
 
 export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
+	const messagePanelRef = useRef<HTMLDivElement>(null)
 	const campaign = useQuery(api.campaigns.get, { id: campaignId })
 	const lastScene = useQuery(api.messages.getLastScene, { campaignId })
 	const addUserMessage = useMutation(api.messages.addUserMessage)
@@ -48,10 +50,15 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 			}}
 		>
 			<h1 className="text-4xl font-bold p-4">{campaign.name}</h1>
-			<div className="flex-1 min-h-0 overflow-y-auto">
-				<MessageList campaignId={campaign._id} />
+			<div ref={messagePanelRef} className="flex-1 min-h-0 overflow-y-auto">
+				<MessageList
+					campaignId={campaign._id}
+					messagePanelRef={messagePanelRef}
+				/>
 			</div>
-			<div className="flex items-center gap-4 p-4">
+
+			<div className="flex items-center gap-4 p-4 relative">
+				<CharacterList campaignId={campaign._id} />
 				<Input
 					autoFocus
 					type="text"
@@ -60,13 +67,18 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 					placeholder="Enter your message"
 					className="flex-grow"
 					onKeyUp={(e) => {
-						if (e.key === "Enter") {
+						if (e.key === "Enter" && !isLoading && input.length > 0) {
 							handleSend()
 						}
 					}}
 				/>
 
-				<Button variant="outline" onClick={handleSend} isLoading={isLoading}>
+				<Button
+					variant="outline"
+					onClick={handleSend}
+					isLoading={isLoading}
+					disabled={isLoading || input.length === 0}
+				>
 					Send
 				</Button>
 			</div>

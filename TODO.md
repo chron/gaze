@@ -1,0 +1,1 @@
+- Tidy up old images from convex storage before regenerating

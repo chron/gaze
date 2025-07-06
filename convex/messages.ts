@@ -37,6 +37,10 @@ export const addUserMessage = mutation({
 		content: v.string(),
 	},
 	handler: async (ctx, args) => {
+		if (args.content.length === 0) {
+			throw new Error("Content cannot be empty")
+		}
+
 		await ctx.db.insert("messages", {
 			...args,
 			role: "user",
@@ -93,6 +97,21 @@ export const addSceneToMessage = mutation({
 	},
 })
 
+export const addUsageToMessage = mutation({
+	args: {
+		messageId: v.id("messages"),
+		usage: v.object({
+			promptTokens: v.number(),
+			completionTokens: v.number(),
+		}),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.messageId, {
+			usage: args.usage,
+		})
+	},
+})
+
 export const sendToLLM = internalAction({
 	args: { campaignId: v.id("campaigns") },
 	handler: async (ctx, args) => {
@@ -115,14 +134,56 @@ export const sendToLLM = internalAction({
 			},
 		)
 
-		// Call Gemini via ai SDK
+		// Put together the main prompt
+		let characterSheet = await ctx.runQuery(api.characterSheets.get, {
+			campaignId: args.campaignId,
+		})
+
+		if (!characterSheet) {
+			// TODO: can you do this in one operation?
+			await ctx.runMutation(api.characterSheets.create, {
+				campaignId: args.campaignId,
+			})
+
+			characterSheet = await ctx.runQuery(api.characterSheets.get, {
+				campaignId: args.campaignId,
+			})
+		}
+
+		// TODO: let's move to a real templating engine
+		const prompt = `${systemPrompt}\n\nHere is the character sheet for the player: ${JSON.stringify(
+			characterSheet,
+		)}`
+
 		const model = google("gemini-2.5-flash")
-		const { textStream } = streamText({
-			system: systemPrompt,
+		const { textStream, usage } = streamText({
+			system: prompt,
 			model,
 			messages: formattedMessages,
 			maxSteps: 10,
 			tools: {
+				update_character_sheet: tool({
+					description: "Update the player's character sheet with any changes.",
+					parameters: z.object({
+						name: z.string(),
+						xp: z.number(),
+						inventory: z.array(z.string()),
+					}),
+					execute: async ({ name, xp, inventory }) => {
+						if (!characterSheet) {
+							throw new Error("Character sheet not found")
+						}
+
+						await ctx.runMutation(api.characterSheets.update, {
+							characterSheetId: characterSheet._id,
+							name,
+							xp,
+							inventory,
+						})
+
+						return `Character sheet updated: ${name}, ${xp}, ${JSON.stringify(inventory)}`
+					},
+				}),
 				change_scene: tool({
 					description:
 						"Whenever the scene changes, use this tool to describe the new scene. The background color should be a hex code that can be used with black text in the main chat interface. The description will be used to create an image.",
@@ -138,6 +199,29 @@ export const sendToLLM = internalAction({
 								backgroundColor,
 							},
 						})
+					},
+				}),
+				introduce_character: tool({
+					description:
+						"Whenever a new character is introduced, use this tool to describe the character. The character should have a name, and description, which will be used to generate an image.",
+					parameters: z.object({
+						name: z.string(),
+						description: z.string(),
+					}),
+					execute: async ({ name, description }) => {
+						const characterId = await ctx.runMutation(api.characters.create, {
+							name,
+							description,
+							campaignId: args.campaignId,
+						})
+
+						await ctx.scheduler.runAfter(
+							0,
+							api.characters.generateImageForCharacter,
+							{
+								characterId,
+							},
+						)
 					},
 				}),
 				roll_dice: tool({
@@ -164,12 +248,6 @@ export const sendToLLM = internalAction({
 					content: JSON.stringify(error.error),
 				})
 			},
-			// onFinish: async (result) => {
-			// 	await ctx.runMutation(api.messages.appendToMessage, {
-			// 		messageId: assistantMessageId,
-			// 		content: ` [${JSON.stringify(result)}]`,
-			// 	})
-			// },
 		})
 
 		for await (const textPart of textStream) {
@@ -179,11 +257,13 @@ export const sendToLLM = internalAction({
 			})
 		}
 
-		// for (const toolResult of await toolResults) {
-		// 	await ctx.runMutation(api.messages.appendToMessage, {
-		// 		messageId: assistantMessageId,
-		// 		content: ` [${JSON.stringify(toolResult)}]`,
-		// 	})
-		// }
+		const usageInfo = await usage
+		await ctx.runMutation(api.messages.addUsageToMessage, {
+			messageId: assistantMessageId,
+			usage: {
+				promptTokens: usageInfo.promptTokens,
+				completionTokens: usageInfo.completionTokens,
+			},
+		})
 	},
 })

@@ -8,6 +8,13 @@ export default defineSchema({
 	campaigns: defineTable({
 		name: v.string(),
 		description: v.string(),
+		imagePrompt: v.string(),
+	}),
+	characterSheets: defineTable({
+		campaignId: v.id("campaigns"),
+		name: v.string(),
+		xp: v.number(),
+		inventory: v.array(v.string()),
 	}),
 	messages: defineTable({
 		campaignId: v.id("campaigns"),
@@ -19,5 +26,17 @@ export default defineSchema({
 				backgroundColor: v.string(),
 			}),
 		),
+		usage: v.optional(
+			v.object({
+				promptTokens: v.number(),
+				completionTokens: v.number(),
+			}),
+		),
+	}),
+	characters: defineTable({
+		campaignId: v.id("campaigns"),
+		name: v.string(),
+		description: v.string(),
+		image: v.optional(v.id("_storage")),
 	}),
 })
