@@ -16,6 +16,7 @@ import type {
 import type * as campaigns from "../campaigns.js";
 import type * as characterSheets from "../characterSheets.js";
 import type * as characters from "../characters.js";
+import type * as memories from "../memories.js";
 import type * as messages from "../messages.js";
 import type * as prompts_system from "../prompts/system.js";
 
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   campaigns: typeof campaigns;
   characterSheets: typeof characterSheets;
   characters: typeof characters;
+  memories: typeof memories;
   messages: typeof messages;
   "prompts/system": typeof prompts_system;
 }>;

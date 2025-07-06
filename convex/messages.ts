@@ -1,11 +1,20 @@
 import { google } from "@ai-sdk/google"
 import { openai } from "@ai-sdk/openai"
-import { generateText, streamText, tool } from "ai"
+import { embed, generateText, streamText, tool } from "ai"
 import { v } from "convex/values"
 import { z } from "zod"
 import { api, internal } from "./_generated/api"
 import { action, internalAction, mutation, query } from "./_generated/server"
 import systemPrompt from "./prompts/system"
+
+export const get = query({
+	args: {
+		messageId: v.id("messages"),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.db.get(args.messageId)
+	},
+})
 
 export const list = query({
 	args: {
@@ -135,7 +144,6 @@ export const sendToLLM = internalAction({
 			},
 		)
 
-		// Put together the main prompt
 		let characterSheet = await ctx.runQuery(api.characterSheets.get, {
 			campaignId: args.campaignId,
 		})
@@ -155,10 +163,38 @@ export const sendToLLM = internalAction({
 			campaignId: args.campaignId,
 		})
 
+		const lastMessage = formattedMessages[formattedMessages.length - 1]
+		const { embedding } = await embed({
+			model: google.textEmbeddingModel("gemini-embedding-exp-03-07"),
+			value: lastMessage.content,
+		})
+
+		const memoryRefs = await ctx.vectorSearch("memories", "by_embedding", {
+			vector: embedding,
+			limit: 10,
+			filter: (q) => q.eq("campaignId", args.campaignId),
+		})
+
+		const memories = await ctx.runQuery(internal.memories.findMany, {
+			ids: memoryRefs.map((ref) => ref._id),
+		})
+
+		const serializedCharacters = characters.map((character) => ({
+			name: character.name,
+			description: character.description,
+		}))
+
+		const serializedMemories = memories.map((memory) => ({
+			content: memory.content,
+			importance: memory.importance,
+		}))
+
 		// TODO: let's move to a real templating engine
 		const prompt = `${systemPrompt}\n\nHere is the character sheet for the player: ${JSON.stringify(
 			characterSheet,
-		)}\n\nHere are the existing characters: ${JSON.stringify(characters)}`
+		)}\n\nHere are the existing characters: ${JSON.stringify(serializedCharacters)}\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(serializedMemories)}`
+
+		console.log(prompt)
 
 		const model = google("gemini-2.5-flash")
 		const { textStream, usage } = streamText({
@@ -272,6 +308,10 @@ export const sendToLLM = internalAction({
 				promptTokens: usageInfo.promptTokens,
 				completionTokens: usageInfo.completionTokens,
 			},
+		})
+
+		await ctx.scheduler.runAfter(0, internal.memories.scanForNewMemories, {
+			messageId: assistantMessageId,
 		})
 	},
 })

@@ -34,6 +34,17 @@ export default defineSchema({
 			}),
 		),
 	}),
+	memories: defineTable({
+		campaignId: v.id("campaigns"),
+		content: v.string(),
+		importance: v.number(),
+		embedding: v.array(v.float64()),
+		relatedMessageId: v.optional(v.id("messages")),
+	}).vectorIndex("by_embedding", {
+		vectorField: "embedding",
+		dimensions: 3072,
+		filterFields: ["campaignId"],
+	}),
 	characters: defineTable({
 		campaignId: v.id("campaigns"),
 		name: v.string(),
