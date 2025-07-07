@@ -36,10 +36,11 @@ export default defineSchema({
 	}),
 	memories: defineTable({
 		campaignId: v.id("campaigns"),
-		content: v.string(),
-		importance: v.number(),
+		type: v.string(),
+		summary: v.string(),
+		context: v.string(),
+		tags: v.array(v.string()),
 		embedding: v.array(v.float64()),
-		relatedMessageId: v.optional(v.id("messages")),
 	}).vectorIndex("by_embedding", {
 		vectorField: "embedding",
 		dimensions: 3072,

@@ -4,7 +4,13 @@ import { embed, generateText, streamText, tool } from "ai"
 import { v } from "convex/values"
 import { z } from "zod"
 import { api, internal } from "./_generated/api"
-import { action, internalAction, mutation, query } from "./_generated/server"
+import {
+	action,
+	internalAction,
+	internalQuery,
+	mutation,
+	query,
+} from "./_generated/server"
 import systemPrompt from "./prompts/system"
 
 export const get = query({
@@ -13,6 +19,23 @@ export const get = query({
 	},
 	handler: async (ctx, args) => {
 		return await ctx.db.get(args.messageId)
+	},
+})
+
+export const getMany = internalQuery({
+	args: {
+		ids: v.array(v.id("messages")),
+	},
+	handler: async (ctx, args) => {
+		const results = []
+		for (const id of args.ids) {
+			const doc = await ctx.db.get(id)
+			if (doc === null) {
+				continue
+			}
+			results.push(doc)
+		}
+		return results
 	},
 })
 
@@ -185,8 +208,10 @@ export const sendToLLM = internalAction({
 		}))
 
 		const serializedMemories = memories.map((memory) => ({
-			content: memory.content,
-			importance: memory.importance,
+			type: memory.type,
+			summary: memory.summary,
+			context: memory.context,
+			tags: memory.tags,
 		}))
 
 		// TODO: let's move to a real templating engine
@@ -309,10 +334,6 @@ export const sendToLLM = internalAction({
 				completionTokens: usageInfo.completionTokens,
 			},
 		})
-
-		await ctx.scheduler.runAfter(0, internal.memories.scanForNewMemories, {
-			messageId: assistantMessageId,
-		})
 	},
 })
 
@@ -321,12 +342,14 @@ export const summarizeChatHistory = action({
 		campaignId: v.id("campaigns"),
 	},
 	handler: async (ctx, args): Promise<string> => {
+		// TODO: Don't summarise ALL messages, wait until a threshold and leave x tokens of recent messages.
+		// Then mark all the summarised messages as summarised and store the summary somewhere (new table?)
 		const messages = await ctx.runQuery(api.messages.list, {
 			campaignId: args.campaignId,
 		})
 
 		const prompt =
-			"You are an expert game master, compiling notes from a RPG session. Summarize the following conversation:"
+			"You are an expert game master, compiling notes from a RPG session. Summarize the following transcript:"
 
 		const { text } = await generateText({
 			system: prompt,
@@ -341,6 +364,10 @@ export const summarizeChatHistory = action({
 					content: "Summarize the storyline so far.",
 				},
 			],
+		})
+
+		await ctx.scheduler.runAfter(0, internal.memories.scanForNewMemories, {
+			messageIds: messages.map((msg) => msg._id),
 		})
 
 		return text

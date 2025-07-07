@@ -15,6 +15,7 @@ export const MessageList: React.FC<Props> = ({
 	messagePanelRef,
 }) => {
 	const [summary, setSummary] = useState<string | null>(null)
+	const [isLoading, setIsLoading] = useState(false)
 	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
 	const messages = useQuery(api.messages.list, {
 		campaignId,
@@ -56,9 +57,15 @@ export const MessageList: React.FC<Props> = ({
 						variant="outline"
 						size="sm"
 						onClick={async () => {
-							const summary = await summarizeChatHistory({ campaignId })
-							setSummary(summary)
+							setIsLoading(true)
+							try {
+								const summary = await summarizeChatHistory({ campaignId })
+								setSummary(summary)
+							} finally {
+								setIsLoading(false)
+							}
 						}}
+						isLoading={isLoading}
 					>
 						Summarise
 					</Button>

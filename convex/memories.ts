@@ -10,22 +10,25 @@ import {
 	mutation,
 	query,
 } from "./_generated/server"
+import extractMemories from "./prompts/extractMemories"
 
 export const add = mutation({
 	args: {
 		campaignId: v.id("campaigns"),
-		content: v.string(),
+		type: v.string(),
+		summary: v.string(),
+		context: v.string(),
+		tags: v.array(v.string()),
 		embedding: v.array(v.float64()),
-		importance: v.number(),
-		relatedMessageId: v.optional(v.id("messages")),
 	},
 	handler: async (ctx, args) => {
 		await ctx.db.insert("memories", {
 			campaignId: args.campaignId,
-			content: args.content,
+			type: args.type,
+			summary: args.summary,
+			context: args.context,
+			tags: args.tags,
 			embedding: args.embedding,
-			importance: args.importance,
-			relatedMessageId: args.relatedMessageId,
 		})
 	},
 })
@@ -47,39 +50,53 @@ export const findMany = internalQuery({
 	},
 })
 
-export const scanForNewMemories = internalAction({
+export const list = query({
 	args: {
-		messageId: v.id("messages"),
+		campaignId: v.id("campaigns"),
 	},
 	handler: async (ctx, args) => {
-		const message = await ctx.runQuery(api.messages.get, {
-			messageId: args.messageId,
+		return await ctx.db
+			.query("memories")
+			.filter((q) => q.eq(q.field("campaignId"), args.campaignId))
+			.collect()
+	},
+})
+
+export const scanForNewMemories = internalAction({
+	args: {
+		messageIds: v.array(v.id("messages")),
+	},
+	handler: async (ctx, args) => {
+		const messages = await ctx.runQuery(internal.messages.getMany, {
+			ids: args.messageIds,
 		})
 
-		if (!message) {
-			throw new Error("Message not found")
-		}
+		const formattedMessages = messages.map((message) => ({
+			role: message.role,
+			content: message.content,
+		}))
 
 		// See if any memories are worth saving based on the content
 		const { toolCalls } = await generateText({
-			system:
-				"You are a game master for a tabletop roleplaying game. You are tasked with creating a list of important memories based on the following message. Respond with a list of memories and an importance score from 1-10 for each.",
-			prompt: message.content,
+			system: extractMemories,
+			messages: formattedMessages,
 			tools: {
 				memories: tool({
 					description:
-						"Respond with an array of memories, one string per memory.",
+						"Respond with an array of memories that you have identified in the transcript.",
 					parameters: z.object({
 						memories: z.array(
 							z.object({
-								memory: z.string(),
-								importance: z.number(),
+								type: z.string(),
+								summary: z.string(),
+								context: z.string(),
+								tags: z.array(z.string()),
 							}),
 						),
 					}),
 				}),
 			},
-			model: openai("gpt-4o-mini"),
+			model: google("gemini-2.5-flash"),
 			toolChoice: {
 				type: "tool",
 				toolName: "memories",
@@ -90,15 +107,16 @@ export const scanForNewMemories = internalAction({
 			for (const memory of memoryList.args.memories) {
 				const { embedding } = await embed({
 					model: google.textEmbeddingModel("gemini-embedding-exp-03-07"),
-					value: memory.memory,
+					value: memory.summary,
 				})
 
 				await ctx.runMutation(api.memories.add, {
-					campaignId: message.campaignId,
-					content: memory.memory,
-					importance: memory.importance,
+					campaignId: messages[0].campaignId,
+					type: memory.type,
+					summary: memory.summary,
+					context: memory.context,
+					tags: memory.tags,
 					embedding,
-					relatedMessageId: args.messageId,
 				})
 			}
 		}

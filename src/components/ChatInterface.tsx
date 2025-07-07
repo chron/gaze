@@ -6,7 +6,6 @@ import { CampaignDetailsModal } from "./CampaignDetailsModal"
 import { CharacterList } from "./CharacterList"
 import { MessageList } from "./MessageList"
 import { Button } from "./ui/button"
-import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
 
 type Props = {
@@ -46,7 +45,7 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 
 	return (
 		<div
-			className="flex flex-col w-full  h-screen max-h-[calc(100dvh-52px)]"
+			className="flex flex-col w-full h-screen max-h-[calc(100dvh-52px)]"
 			style={{
 				backgroundColor: lastScene?.scene?.backgroundColor ?? "white",
 			}}
