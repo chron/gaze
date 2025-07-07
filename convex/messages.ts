@@ -1,6 +1,7 @@
 import { google } from "@ai-sdk/google"
 import { openai } from "@ai-sdk/openai"
 import { embed, generateText, streamText, tool } from "ai"
+import { paginationOptsValidator } from "convex/server"
 import { v } from "convex/values"
 import { z } from "zod"
 import { api, internal } from "./_generated/api"
@@ -48,6 +49,20 @@ export const list = query({
 			.query("messages")
 			.filter((q) => q.eq(q.field("campaignId"), args.campaignId))
 			.collect()
+	},
+})
+
+export const paginatedList = query({
+	args: {
+		campaignId: v.id("campaigns"),
+		paginationOpts: paginationOptsValidator,
+	},
+	handler: async (ctx, args) => {
+		return await ctx.db
+			.query("messages")
+			.filter((q) => q.eq(q.field("campaignId"), args.campaignId))
+			.order("desc")
+			.paginate(args.paginationOpts)
 	},
 })
 
