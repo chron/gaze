@@ -41,7 +41,7 @@ export const MessageList: React.FC<Props> = ({
 		}
 	}, [messages])
 
-	const lastMessage = messages?.[messages.length - 1]
+	const lastMessage = messages?.[0]
 	const usage = lastMessage?.usage
 	const reversedMessages = [...(messages ?? [])]
 	reversedMessages.reverse()
@@ -67,7 +67,8 @@ export const MessageList: React.FC<Props> = ({
 
 			{usage && (
 				<div className="text-sm text-gray-500">
-					Context: {usage.promptTokens} tokens
+					{usage.promptTokens} input tokens, {usage.completionTokens} output
+					tokens
 				</div>
 			)}
 

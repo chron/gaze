@@ -230,11 +230,22 @@ export const sendToLLM = internalAction({
 		}))
 
 		// TODO: let's move to a real templating engine
-		const prompt = `${systemPrompt}\n\nHere is the character sheet for the player: ${JSON.stringify(
+		let prompt = systemPrompt
+		prompt += `\n\nHere is the character sheet for the player: ${JSON.stringify(
 			characterSheet,
-		)}\n\nHere are the existing characters: ${JSON.stringify(serializedCharacters)}\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(serializedMemories)}`
+		)}`
 
-		console.log(prompt)
+		if (serializedCharacters.length > 0) {
+			prompt += `\n\nHere are the existing characters: ${JSON.stringify(
+				serializedCharacters,
+			)}`
+		}
+
+		if (serializedMemories.length > 0) {
+			prompt += `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
+				serializedMemories,
+			)}`
+		}
 
 		const model = google("gemini-2.5-flash")
 		const { textStream, usage } = streamText({

@@ -2,9 +2,6 @@ import { defineSchema, defineTable } from "convex/server"
 import { v } from "convex/values"
 
 export default defineSchema({
-	profile: defineTable({
-		name: v.string(),
-	}),
 	campaigns: defineTable({
 		name: v.string(),
 		description: v.string(),
