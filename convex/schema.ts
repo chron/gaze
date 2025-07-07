@@ -30,7 +30,7 @@ export default defineSchema({
 				completionTokens: v.number(),
 			}),
 		),
-	}),
+	}).index("by_campaign", ["campaignId"]),
 	memories: defineTable({
 		campaignId: v.id("campaigns"),
 		type: v.string(),
