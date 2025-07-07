@@ -19,7 +19,7 @@ export const Message: React.FC<Props> = ({ message }) => {
 					: "self-start bg-gray-100 text-gray-800",
 			)}
 		>
-			<div className="flex flex-col gap-2">
+			<div className="flex flex-col gap-2 font-serif">
 				<ReactMarkdown remarkPlugins={[remarkGfm]}>
 					{message.content}
 				</ReactMarkdown>
@@ -27,22 +27,3 @@ export const Message: React.FC<Props> = ({ message }) => {
 		</div>
 	)
 }
-
-// const blockToText = (block: ContentBlockParam | ContentBlock) => {
-// 	if (block.type === "text") {
-// 		return block.text
-// 	}
-
-// 	if (block.type === "tool_use") {
-// 		if (block.name === "roll_dice") {
-// 			const toolArgs = block.input as { number: number; faces: number }
-// 			return `[Roll ${toolArgs.number}d${toolArgs.faces}]`
-// 		}
-// 	}
-
-// 	if (block.type === "tool_result") {
-// 		return block.content
-// 	}
-
-// 	return JSON.stringify(block, null, 2)
-// }
