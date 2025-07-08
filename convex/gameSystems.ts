@@ -4,13 +4,27 @@ import { mutation, query } from "./_generated/server"
 
 export const get = query({
 	handler: async (ctx, args: { id: Id<"gameSystems"> }) => {
-		return await ctx.db.get(args.id)
+		const gameSystem = await ctx.db.get(args.id)
+
+		if (!gameSystem) {
+			return null
+		}
+
+		return {
+			...gameSystem,
+			files: await Promise.all(
+				gameSystem.files.map(async (file) => ({
+					...file,
+					url: await ctx.storage.getUrl(file.storageId),
+				})),
+			),
+		}
 	},
 })
 
 export const list = query({
 	handler: async (ctx) => {
-		return await ctx.db.query("gameSystems").collect()
+		return ctx.db.query("gameSystems").collect()
 	},
 })
 
@@ -85,7 +99,7 @@ export const getWithFiles = query({
 
 		const filesWithMetadata = await Promise.all(
 			gameSystem.files.map(async (file) => {
-				const fileMetadata = await ctx.storage.getMetadata(file.storageId)
+				const fileMetadata = await ctx.db.system.get(file.storageId)
 				return {
 					id: file.storageId,
 					name: file.filename,

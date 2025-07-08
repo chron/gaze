@@ -22,8 +22,7 @@ export const create = mutation({
 			campaignId: args.campaignId,
 			name: "New Character",
 			description: "",
-			xp: 0,
-			inventory: [],
+			data: {},
 		})
 	},
 })
@@ -33,15 +32,13 @@ export const update = mutation({
 		characterSheetId: v.id("characterSheets"),
 		name: v.string(),
 		description: v.string(),
-		xp: v.number(),
-		inventory: v.array(v.string()),
+		data: v.record(v.string(), v.any()),
 	},
 	handler: async (ctx, args) => {
 		return ctx.db.patch(args.characterSheetId, {
 			name: args.name,
 			description: args.description,
-			xp: args.xp,
-			inventory: args.inventory,
+			data: args.data,
 		})
 	},
 })

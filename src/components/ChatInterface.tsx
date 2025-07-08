@@ -74,7 +74,7 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 					onChange={(e) => setInput(e.target.value)}
 					placeholder="Enter your message"
 					className="flex-grow py-[7px]"
-					onKeyUp={(e) => {
+					onKeyDown={(e) => {
 						if (
 							e.key === "Enter" &&
 							!isLoading &&

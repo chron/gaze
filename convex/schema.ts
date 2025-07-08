@@ -22,8 +22,9 @@ export default defineSchema({
 		campaignId: v.id("campaigns"),
 		name: v.string(),
 		description: v.optional(v.string()),
-		xp: v.number(),
-		inventory: v.array(v.string()),
+		data: v.optional(v.record(v.string(), v.any())),
+		inventory: v.optional(v.array(v.string())), // TODO: remove
+		xp: v.optional(v.number()), // TODO: remove
 	}),
 	messages: defineTable({
 		campaignId: v.id("campaigns"),

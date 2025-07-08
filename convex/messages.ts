@@ -254,31 +254,27 @@ export const sendToLLM = internalAction({
 		}[] = []
 
 		let gameSystem: // TODO: there MUST be a way to get this type properly
-			| (Doc<"gameSystems"> & {
-					filesWithMetadata: {
-						id: Id<"_storage">
-						name: string
-						size: number
-						contentType: string
+			| (Omit<Doc<"gameSystems">, "files"> & {
+					files: {
+						storageId: Id<"_storage">
+						filename: string
 						url: string | null
 					}[]
 			  })
 			| null = null
 
 		if (campaign.gameSystemId) {
-			gameSystem = await ctx.runQuery(api.gameSystems.getWithFiles, {
+			gameSystem = await ctx.runQuery(api.gameSystems.get, {
 				id: campaign.gameSystemId,
 			})
 
 			if (gameSystem) {
-				formattedFiles = gameSystem.filesWithMetadata
-					.slice(0, 2)
-					.map((file) => ({
-						type: "file",
-						data: file.url || "", // TODO: filter these out maybe
-						mimeType: file.contentType,
-						filename: file.name,
-					}))
+				formattedFiles = gameSystem.files.slice(0, 2).map((file) => ({
+					type: "file",
+					data: file.url || "", // TODO: filter these out maybe
+					mimeType: "application/pdf", // TODO: unhardcode this
+					filename: file.filename,
+				}))
 			}
 		}
 
@@ -286,8 +282,7 @@ export const sendToLLM = internalAction({
 			? {
 					name: characterSheet.name,
 					description: characterSheet.description,
-					xp: characterSheet.xp,
-					inventory: characterSheet.inventory,
+					data: characterSheet.data,
 				}
 			: null
 
@@ -327,8 +322,6 @@ export const sendToLLM = internalAction({
 			})
 		}
 
-		console.log(formattedMessages)
-
 		const model = google("gemini-2.5-flash")
 		const { textStream, usage } = streamText({
 			system: prompt,
@@ -342,10 +335,9 @@ export const sendToLLM = internalAction({
 					parameters: z.object({
 						name: z.string(),
 						description: z.string(),
-						xp: z.number(),
-						inventory: z.array(z.string()),
+						data: z.record(z.string(), z.any()),
 					}),
-					execute: async ({ name, description, xp, inventory }) => {
+					execute: async ({ name, description, data }) => {
 						if (!characterSheet) {
 							throw new Error("Character sheet not found")
 						}
@@ -354,11 +346,15 @@ export const sendToLLM = internalAction({
 							characterSheetId: characterSheet._id,
 							name,
 							description,
-							xp,
-							inventory,
+							data,
 						})
 
-						return `Character sheet updated: ${name}, ${xp}, ${JSON.stringify(inventory)}`
+						await ctx.runMutation(api.messages.appendToMessage, {
+							messageId: assistantMessageId,
+							content: `[Character sheet updated: ${name}, ${JSON.stringify(data)}]`,
+						})
+
+						return `Character sheet updated: ${name}, ${JSON.stringify(data)}`
 					},
 				}),
 				change_scene: tool({
@@ -375,6 +371,11 @@ export const sendToLLM = internalAction({
 								description,
 								backgroundColor,
 							},
+						})
+
+						await ctx.runMutation(api.messages.appendToMessage, {
+							messageId: assistantMessageId,
+							content: `[Scene changed: ${description}, ${backgroundColor}]`,
 						})
 					},
 				}),
@@ -415,6 +416,12 @@ export const sendToLLM = internalAction({
 							results.push(Math.floor(Math.random() * faces) + 1)
 						}
 						const total = results.reduce((acc, curr) => acc + curr, 0)
+
+						await ctx.runMutation(api.messages.appendToMessage, {
+							messageId: assistantMessageId,
+							content: `[Rolled ${number}d${faces}: ${results.join(", ")}, total: ${total}]`,
+						})
+
 						return `Individual rolls: ${results.join(", ")}, total: ${total}`
 					},
 				}),
