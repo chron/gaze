@@ -13,7 +13,6 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarTrigger,
 } from "./ui/sidebar"
 
 export const MainSidebar: React.FC = () => {
@@ -31,7 +30,6 @@ export const MainSidebar: React.FC = () => {
 		<Sidebar>
 			<SidebarHeader>
 				<div className="flex items-center gap-1">
-					<SidebarTrigger />
 					<Link to="/" className="font-bold">
 						Gaze
 					</Link>
