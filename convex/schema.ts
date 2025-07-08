@@ -5,12 +5,18 @@ export default defineSchema({
 	gameSystems: defineTable({
 		name: v.string(),
 		prompt: v.string(),
-		files: v.array(v.id("_storage")),
+		files: v.array(
+			v.object({
+				storageId: v.id("_storage"),
+				filename: v.string(),
+			}),
+		),
 	}),
 	campaigns: defineTable({
 		name: v.string(),
 		description: v.string(),
 		imagePrompt: v.string(),
+		gameSystemId: v.optional(v.id("gameSystems")),
 	}),
 	characterSheets: defineTable({
 		campaignId: v.id("campaigns"),

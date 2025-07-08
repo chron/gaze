@@ -42,11 +42,13 @@ export const update = mutation({
 		id: v.id("campaigns"),
 		name: v.string(),
 		imagePrompt: v.string(),
+		gameSystemId: v.optional(v.id("gameSystems")),
 	},
 	handler: async (ctx, args) => {
 		await ctx.db.patch(args.id, {
 			name: args.name,
 			imagePrompt: args.imagePrompt,
+			gameSystemId: args.gameSystemId,
 		})
 	},
 })

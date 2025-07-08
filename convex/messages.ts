@@ -1,10 +1,18 @@
 import { google } from "@ai-sdk/google"
 import { openai } from "@ai-sdk/openai"
-import { embed, generateText, streamText, tool } from "ai"
+import {
+	type CoreAssistantMessage,
+	type CoreUserMessage,
+	embed,
+	generateText,
+	streamText,
+	tool,
+} from "ai"
 import { paginationOptsValidator } from "convex/server"
 import { v } from "convex/values"
 import { z } from "zod"
 import { api, internal } from "./_generated/api"
+import type { Doc, Id } from "./_generated/dataModel"
 import {
 	action,
 	internalAction,
@@ -164,15 +172,24 @@ export const addUsageToMessage = mutation({
 export const sendToLLM = internalAction({
 	args: { campaignId: v.id("campaigns") },
 	handler: async (ctx, args) => {
+		const campaign = await ctx.runQuery(api.campaigns.get, {
+			id: args.campaignId,
+		})
+
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
 		// Fetch previous messages for the campaign
 		const messages = await ctx.runQuery(api.messages.list, {
 			campaignId: args.campaignId,
 		})
 
-		const formattedMessages = messages.map((msg) => ({
-			role: msg.role,
-			content: msg.content,
-		}))
+		const formattedMessages: (CoreUserMessage | CoreAssistantMessage)[] =
+			messages.map((msg) => ({
+				role: msg.role,
+				content: msg.content,
+			}))
 
 		const assistantMessageId = await ctx.runMutation(
 			api.messages.addAssistantMessage,
@@ -229,10 +246,60 @@ export const sendToLLM = internalAction({
 			tags: memory.tags,
 		}))
 
+		let formattedFiles: {
+			type: "file"
+			data: string
+			mimeType: string
+			filename: string
+		}[] = []
+
+		let gameSystem: // TODO: there MUST be a way to get this type properly
+			| (Doc<"gameSystems"> & {
+					filesWithMetadata: {
+						id: Id<"_storage">
+						name: string
+						size: number
+						contentType: string
+						url: string | null
+					}[]
+			  })
+			| null = null
+
+		if (campaign.gameSystemId) {
+			gameSystem = await ctx.runQuery(api.gameSystems.getWithFiles, {
+				id: campaign.gameSystemId,
+			})
+
+			if (gameSystem) {
+				formattedFiles = gameSystem.filesWithMetadata
+					.slice(0, 2)
+					.map((file) => ({
+						type: "file",
+						data: file.url || "", // TODO: filter these out maybe
+						mimeType: file.contentType,
+						filename: file.name,
+					}))
+			}
+		}
+
+		const formattedCharacterSheet = characterSheet
+			? {
+					name: characterSheet.name,
+					description: characterSheet.description,
+					xp: characterSheet.xp,
+					inventory: characterSheet.inventory,
+				}
+			: null
+
 		// TODO: let's move to a real templating engine
 		let prompt = systemPrompt
+
+		prompt += gameSystem
+			? `\n\nYou are hosting a game of ${gameSystem.name}\n\n${gameSystem.prompt}`
+			: ""
+
 		prompt += `\n\nHere is the character sheet for the player: ${JSON.stringify(
-			characterSheet,
+			formattedCharacterSheet,
 		)}`
 
 		if (serializedCharacters.length > 0) {
@@ -246,6 +313,21 @@ export const sendToLLM = internalAction({
 				serializedMemories,
 			)}`
 		}
+
+		if (formattedFiles.length > 0) {
+			formattedMessages.push({
+				role: "user",
+				content: [
+					{
+						type: "text",
+						text: "Here are the files that are relevant to the game system:",
+					},
+					...formattedFiles,
+				],
+			})
+		}
+
+		console.log(formattedMessages)
 
 		const model = google("gemini-2.5-flash")
 		const { textStream, usage } = streamText({

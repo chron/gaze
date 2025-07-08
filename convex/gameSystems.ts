@@ -47,10 +47,18 @@ export const generateUploadUrl = mutation({
 })
 
 export const addFile = mutation({
-	args: { storageId: v.id("_storage"), gameSystemId: v.id("gameSystems") },
+	args: {
+		storageId: v.id("_storage"),
+		gameSystemId: v.id("gameSystems"),
+		filename: v.string(),
+	},
 	handler: async (
 		ctx,
-		args: { storageId: Id<"_storage">; gameSystemId: Id<"gameSystems"> },
+		args: {
+			storageId: Id<"_storage">
+			gameSystemId: Id<"gameSystems">
+			filename: string
+		},
 	) => {
 		const gameSystem = await ctx.db.get(args.gameSystemId)
 
@@ -59,7 +67,38 @@ export const addFile = mutation({
 		}
 
 		return await ctx.db.patch(args.gameSystemId, {
-			files: [...gameSystem.files, args.storageId],
+			files: [
+				...gameSystem.files,
+				{ storageId: args.storageId, filename: args.filename },
+			],
 		})
+	},
+})
+
+export const getWithFiles = query({
+	args: { id: v.id("gameSystems") },
+	handler: async (ctx, args) => {
+		const gameSystem = await ctx.db.get(args.id)
+		if (!gameSystem) {
+			return null
+		}
+
+		const filesWithMetadata = await Promise.all(
+			gameSystem.files.map(async (file) => {
+				const fileMetadata = await ctx.storage.getMetadata(file.storageId)
+				return {
+					id: file.storageId,
+					name: file.filename,
+					size: fileMetadata?.size || 0,
+					contentType: fileMetadata?.contentType || "application/octet-stream",
+					url: await ctx.storage.getUrl(file.storageId),
+				}
+			}),
+		)
+
+		return {
+			...gameSystem,
+			filesWithMetadata,
+		}
 	},
 })

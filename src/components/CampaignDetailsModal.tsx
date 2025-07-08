@@ -7,6 +7,14 @@ import { ResponsiveModal } from "./ResponsiveModal"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectSeparator,
+	SelectTrigger,
+	SelectValue,
+} from "./ui/select"
 
 type Props = {
 	campaignId: Id<"campaigns">
@@ -16,14 +24,19 @@ export const CampaignDetailsModal: React.FC<Props> = ({ campaignId }) => {
 	const [open, setOpen] = useState(false)
 	const campaign = useQuery(api.campaigns.get, { id: campaignId })
 	const updateCampaign = useMutation(api.campaigns.update)
+	const gameSystems = useQuery(api.gameSystems.list)
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
 		const formData = new FormData(e.target as HTMLFormElement)
 		const name = formData.get("name") as string
 		const imagePrompt = formData.get("imagePrompt") as string
+		const gameSystemId =
+			formData.get("gameSystemId") === "none"
+				? undefined
+				: (formData.get("gameSystemId") as Id<"gameSystems">)
 
-		await updateCampaign({ id: campaignId, name, imagePrompt })
+		await updateCampaign({ id: campaignId, name, imagePrompt, gameSystemId })
 
 		setOpen(false)
 	}
@@ -60,6 +73,30 @@ export const CampaignDetailsModal: React.FC<Props> = ({ campaignId }) => {
 						defaultValue={campaign?.imagePrompt}
 					/>
 				</div>
+
+				<div className="grid gap-3">
+					<Label htmlFor="gameSystemId">Game System</Label>
+					<Select
+						name="gameSystemId"
+						defaultValue={campaign?.gameSystemId || "none"}
+					>
+						<SelectTrigger>
+							<SelectValue placeholder="Select a game system" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="none">Freeform, no specific system</SelectItem>
+
+							<SelectSeparator />
+
+							{gameSystems?.map((gameSystem) => (
+								<SelectItem key={gameSystem._id} value={gameSystem._id}>
+									{gameSystem.name}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				</div>
+
 				<Button type="submit">Save changes</Button>
 			</form>
 		</ResponsiveModal>

@@ -22,7 +22,9 @@ function RouteComponent() {
 					<div key={system._id}>
 						<div className="flex justify-between items-center">
 							<div className="flex flex-col gap-2">
-								<div>{system.name}</div>
+								<div>
+									{system.name} ({system.files?.length} files)
+								</div>
 								<div className="text-sm text-muted-foreground">
 									{system.prompt}
 								</div>
