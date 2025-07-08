@@ -18,11 +18,11 @@ import {
 	DrawerTrigger,
 } from "@/components/ui/drawer"
 import { useMediaQuery } from "@uidotdev/usehooks"
-import { type PropsWithChildren, useState } from "react"
+import type { PropsWithChildren } from "react"
 
 type Props = {
 	title: string
-	description: string
+	description?: string
 	trigger: React.ReactNode
 	open: boolean
 	setOpen: (open: boolean) => void
@@ -45,7 +45,9 @@ export const ResponsiveModal: React.FC<PropsWithChildren<Props>> = ({
 				<DialogContent className="sm:max-w-[425px]">
 					<DialogHeader>
 						<DialogTitle>{title}</DialogTitle>
-						<DialogDescription>{description}</DialogDescription>
+						{description && (
+							<DialogDescription>{description}</DialogDescription>
+						)}
 					</DialogHeader>
 					{children}
 				</DialogContent>
@@ -59,7 +61,7 @@ export const ResponsiveModal: React.FC<PropsWithChildren<Props>> = ({
 			<DrawerContent>
 				<DrawerHeader className="text-left">
 					<DrawerTitle>{title}</DrawerTitle>
-					<DrawerDescription>{description}</DrawerDescription>
+					{description && <DrawerDescription>{description}</DrawerDescription>}
 				</DrawerHeader>
 				{children}
 				<DrawerFooter className="pt-2">

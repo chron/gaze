@@ -9,9 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SystemsRouteImport } from './routes/systems'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CampaignsCampaignIdRouteImport } from './routes/campaigns.$campaignId'
 
+const SystemsRoute = SystemsRouteImport.update({
+  id: '/systems',
+  path: '/systems',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -25,32 +31,43 @@ const CampaignsCampaignIdRoute = CampaignsCampaignIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/systems': typeof SystemsRoute
   '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/systems': typeof SystemsRoute
   '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/systems': typeof SystemsRoute
   '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/campaigns/$campaignId'
+  fullPaths: '/' | '/systems' | '/campaigns/$campaignId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/campaigns/$campaignId'
-  id: '__root__' | '/' | '/campaigns/$campaignId'
+  to: '/' | '/systems' | '/campaigns/$campaignId'
+  id: '__root__' | '/' | '/systems' | '/campaigns/$campaignId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SystemsRoute: typeof SystemsRoute
   CampaignsCampaignIdRoute: typeof CampaignsCampaignIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/systems': {
+      id: '/systems'
+      path: '/systems'
+      fullPath: '/systems'
+      preLoaderRoute: typeof SystemsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SystemsRoute: SystemsRoute,
   CampaignsCampaignIdRoute: CampaignsCampaignIdRoute,
 }
 export const routeTree = rootRouteImport

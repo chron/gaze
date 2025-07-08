@@ -2,6 +2,11 @@ import { defineSchema, defineTable } from "convex/server"
 import { v } from "convex/values"
 
 export default defineSchema({
+	gameSystems: defineTable({
+		name: v.string(),
+		prompt: v.string(),
+		files: v.array(v.id("_storage")),
+	}),
 	campaigns: defineTable({
 		name: v.string(),
 		description: v.string(),

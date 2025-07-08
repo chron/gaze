@@ -70,6 +70,27 @@ export const MainSidebar: React.FC = () => {
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
+
+				<SidebarGroup>
+					<SidebarGroupLabel>Setup</SidebarGroupLabel>
+
+					<SidebarGroupContent>
+						<SidebarMenu>
+							<SidebarMenuItem>
+								<Link to="/systems">
+									{({ isActive }) => (
+										<SidebarMenuButton
+											isActive={isActive}
+											className="cursor-pointer"
+										>
+											Game Systems
+										</SidebarMenuButton>
+									)}
+								</Link>
+							</SidebarMenuItem>
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
 			</SidebarContent>
 		</Sidebar>
 	)
