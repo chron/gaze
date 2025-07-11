@@ -73,7 +73,15 @@ export const scanForNewMemories = internalAction({
 
 		const formattedMessages = messages.map((message) => ({
 			role: message.role,
-			content: message.content,
+			content: message.content
+				.map((block) => {
+					if (block.type === "text") {
+						return block.text
+					}
+
+					return `[${block.toolName}: ${JSON.stringify(block.parameters)} -> ${JSON.stringify(block.result)}]`
+				})
+				.join(""),
 		}))
 
 		// See if any memories are worth saving based on the content

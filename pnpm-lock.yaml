@@ -14,6 +14,9 @@ dependencies:
   '@anthropic-ai/sdk':
     specifier: ^0.52.0
     version: 0.52.0
+  '@convex-dev/migrations':
+    specifier: ^0.2.9
+    version: 0.2.9(convex@1.24.8)
   '@radix-ui/react-dialog':
     specifier: ^1.1.14
     version: 1.1.14(@types/react-dom@19.1.5)(@types/react@19.1.6)(react-dom@19.1.0)(react@19.1.0)
@@ -706,6 +709,14 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /@convex-dev/migrations@0.2.9(convex@1.24.8):
+    resolution: {integrity: sha512-HfIv6/F8VbtJ1NVT2bQRTumJGdaqROl/+s5IOnubHm7vvgie0RjcfO6YiB7JoLFWwS19vjDQDKl63ihoA08zOA==}
+    peerDependencies:
+      convex: ~1.16.5 || >=1.17.0 <1.35.0
+    dependencies:
+      convex: 1.24.8(react@19.1.0)
+    dev: false
 
   /@esbuild/aix-ppc64@0.25.2:
     resolution: {integrity: sha512-wCIboOL2yXZym2cgm6mlA742s9QeJ8DjGVaL39dLN4rRwrOgOyYSnOaFPhKZGLb2ngj4EyfAFjsNJwPXZvseag==}

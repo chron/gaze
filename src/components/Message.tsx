@@ -8,7 +8,7 @@ type Props = {
 }
 
 export const Message: React.FC<Props> = ({ message }) => {
-	if (message.content === "") return null
+	if (message.content.length === 0) return null
 
 	return (
 		<div
@@ -20,10 +20,39 @@ export const Message: React.FC<Props> = ({ message }) => {
 			)}
 		>
 			<div className="flex flex-col gap-2 font-serif">
-				<ReactMarkdown remarkPlugins={[remarkGfm]}>
-					{message.content}
-				</ReactMarkdown>
+				{message.content.map((block) => {
+					if (block.type === "text") {
+						return (
+							<ReactMarkdown remarkPlugins={[remarkGfm]}>
+								{block.text}
+							</ReactMarkdown>
+						)
+					}
+
+					if (block.toolName === "change_scene") {
+						return (
+							<SceneChange
+								description={block.parameters.description}
+								backgroundColor={block.parameters.backgroundColor}
+							/>
+						)
+					}
+				})}
 			</div>
+		</div>
+	)
+}
+
+const SceneChange = ({
+	description,
+	backgroundColor,
+}: {
+	description: string
+	backgroundColor: string
+}) => {
+	return (
+		<div className="px-4 py-2 rounded-md" style={{ backgroundColor }}>
+			<p>{description}</p>
 		</div>
 	)
 }

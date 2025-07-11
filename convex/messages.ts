@@ -99,8 +99,14 @@ export const addUserMessage = mutation({
 		}
 
 		await ctx.db.insert("messages", {
-			...args,
+			campaignId: args.campaignId,
 			role: "user",
+			content: [
+				{
+					type: "text",
+					text: args.content,
+				},
+			],
 		})
 
 		await ctx.scheduler.runAfter(0, internal.messages.sendToLLM, {
@@ -112,29 +118,92 @@ export const addUserMessage = mutation({
 export const addAssistantMessage = mutation({
 	args: {
 		campaignId: v.id("campaigns"),
-		content: v.string(),
+		content: v.array(
+			v.union(
+				v.object({
+					type: v.literal("text"),
+					text: v.string(),
+				}),
+				v.object({
+					type: v.literal("tool_call"),
+					toolName: v.string(),
+					parameters: v.any(),
+					result: v.optional(v.any()),
+					timestamp: v.optional(v.number()),
+				}),
+			),
+		),
 	},
 	handler: async (ctx, args) => {
 		const messageId = await ctx.db.insert("messages", {
-			...args,
+			campaignId: args.campaignId,
 			role: "assistant",
+			content: args.content,
 		})
 
 		return messageId
 	},
 })
 
-export const appendToMessage = mutation({
+export const appendTextBlock = mutation({
 	args: {
 		messageId: v.id("messages"),
-		content: v.string(),
+		text: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const message = await ctx.db.get(args.messageId)
+		if (!message) throw new Error("Message not found")
+
+		const lastBlock = message.content[message.content.length - 1]
+
+		// If the last block is a text block, append to it
+		if (lastBlock && lastBlock.type === "text") {
+			const updatedContent = [...message.content]
+			updatedContent[updatedContent.length - 1] = {
+				type: "text",
+				text: lastBlock.text + args.text,
+			}
+			await ctx.db.patch(args.messageId, {
+				content: updatedContent,
+			})
+		} else {
+			// Otherwise, add a new text block
+			await ctx.db.patch(args.messageId, {
+				content: [
+					...message.content,
+					{
+						type: "text",
+						text: args.text,
+					},
+				],
+			})
+		}
+	},
+})
+
+export const appendToolCallBlock = mutation({
+	args: {
+		messageId: v.id("messages"),
+		toolName: v.string(),
+		parameters: v.any(),
+		result: v.optional(v.any()),
+		timestamp: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
 		const message = await ctx.db.get(args.messageId)
 		if (!message) throw new Error("Message not found")
 
 		await ctx.db.patch(args.messageId, {
-			content: message.content + args.content,
+			content: [
+				...message.content,
+				{
+					type: "tool_call",
+					toolName: args.toolName,
+					parameters: args.parameters,
+					result: args.result,
+					timestamp: args.timestamp,
+				},
+			],
 		})
 	},
 })
@@ -188,14 +257,22 @@ export const sendToLLM = internalAction({
 		const formattedMessages: (CoreUserMessage | CoreAssistantMessage)[] =
 			messages.map((msg) => ({
 				role: msg.role,
-				content: msg.content,
+				content: msg.content
+					.map((block) => {
+						if (block.type === "text") {
+							return block.text
+						}
+
+						return `[${block.toolName}: ${JSON.stringify(block.parameters)} -> ${JSON.stringify(block.result)}]`
+					})
+					.join(""),
 			}))
 
 		const assistantMessageId = await ctx.runMutation(
 			api.messages.addAssistantMessage,
 			{
 				campaignId: args.campaignId,
-				content: "",
+				content: [],
 			},
 		)
 
@@ -349,9 +426,12 @@ export const sendToLLM = internalAction({
 							data,
 						})
 
-						await ctx.runMutation(api.messages.appendToMessage, {
+						await ctx.runMutation(api.messages.appendToolCallBlock, {
 							messageId: assistantMessageId,
-							content: `[Character sheet updated: ${name}, ${JSON.stringify(data)}]`,
+							toolName: "update_character_sheet",
+							parameters: { name, description, data },
+							result: { name, data },
+							timestamp: Date.now(),
 						})
 
 						return `Character sheet updated: ${name}, ${JSON.stringify(data)}`
@@ -373,9 +453,10 @@ export const sendToLLM = internalAction({
 							},
 						})
 
-						await ctx.runMutation(api.messages.appendToMessage, {
+						await ctx.runMutation(api.messages.appendToolCallBlock, {
 							messageId: assistantMessageId,
-							content: `[Scene changed: ${description}, ${backgroundColor}]`,
+							toolName: "change_scene",
+							parameters: { description, backgroundColor },
 						})
 					},
 				}),
@@ -417,9 +498,12 @@ export const sendToLLM = internalAction({
 						}
 						const total = results.reduce((acc, curr) => acc + curr, 0)
 
-						await ctx.runMutation(api.messages.appendToMessage, {
+						await ctx.runMutation(api.messages.appendToolCallBlock, {
 							messageId: assistantMessageId,
-							content: `[Rolled ${number}d${faces}: ${results.join(", ")}, total: ${total}]`,
+							toolName: "roll_dice",
+							parameters: { number, faces },
+							result: { results, total },
+							timestamp: Date.now(),
 						})
 
 						return `Individual rolls: ${results.join(", ")}, total: ${total}`
@@ -427,17 +511,17 @@ export const sendToLLM = internalAction({
 				}),
 			},
 			onError: async (error) => {
-				await ctx.runMutation(api.messages.appendToMessage, {
+				await ctx.runMutation(api.messages.appendTextBlock, {
 					messageId: assistantMessageId,
-					content: JSON.stringify(error.error),
+					text: JSON.stringify(error.error),
 				})
 			},
 		})
 
 		for await (const textPart of textStream) {
-			await ctx.runMutation(api.messages.appendToMessage, {
+			await ctx.runMutation(api.messages.appendTextBlock, {
 				messageId: assistantMessageId,
-				content: textPart,
+				text: textPart,
 			})
 		}
 
@@ -472,7 +556,15 @@ export const summarizeChatHistory = action({
 			messages: [
 				...messages.map((msg) => ({
 					role: msg.role,
-					content: msg.content,
+					content: msg.content
+						.map((block) => {
+							if (block.type === "text") {
+								return block.text
+							}
+
+							return `[${block.toolName}: ${JSON.stringify(block.parameters)} -> ${JSON.stringify(block.result)}]`
+						})
+						.join(""),
 				})),
 				{
 					role: "user",

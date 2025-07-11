@@ -1,3 +1,7 @@
+NEXT
+- store tool calls along with other messages (string -> string[]? or more structured?)
+- figure out if there's a better way to get the files in context
+
 
 - Allow regenerating the last message
 - Tidy up old images from convex storage before regenerating
