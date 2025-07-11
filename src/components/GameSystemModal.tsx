@@ -8,6 +8,7 @@ import { Button } from "./ui/button"
 import { FileUpload } from "./ui/file-upload"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
+import { Textarea } from "./ui/textarea"
 
 type Props = {
 	gameSystem: Doc<"gameSystems"> | null
@@ -33,11 +34,21 @@ export const GameSystemModal: React.FC<Props> = ({ gameSystem }) => {
 		const formData = new FormData(e.target as HTMLFormElement)
 		const name = formData.get("name") as string
 		const prompt = formData.get("prompt") as string
+		const defaultCharacterData = formData.get("defaultCharacterData") as string
 
 		if (gameSystem) {
-			await updateSystem({ id: gameSystem._id, name, prompt })
+			await updateSystem({
+				id: gameSystem._id,
+				name,
+				prompt,
+				defaultCharacterData: JSON.parse(defaultCharacterData),
+			})
 		} else {
-			await addSystem({ name, prompt })
+			await addSystem({
+				name,
+				prompt,
+				defaultCharacterData: JSON.parse(defaultCharacterData),
+			})
 		}
 
 		setOpen(false)
@@ -134,6 +145,19 @@ export const GameSystemModal: React.FC<Props> = ({ gameSystem }) => {
 						id="prompt"
 						name="prompt"
 						defaultValue={gameSystem?.prompt}
+					/>
+				</div>
+
+				<div className="grid gap-3">
+					<Label htmlFor="prompt">Default character data</Label>
+					<Textarea
+						id="defaultCharacterData"
+						name="defaultCharacterData"
+						defaultValue={JSON.stringify(
+							gameSystem?.defaultCharacterData,
+							null,
+							2,
+						)}
 					/>
 				</div>
 

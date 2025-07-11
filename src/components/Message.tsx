@@ -2,6 +2,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import type { Doc } from "../../convex/_generated/dataModel"
 import { cn } from "../lib/utils"
+import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
 import { DiceRoll } from "./DiceRoll"
 
 type Props = {
@@ -58,6 +59,15 @@ export const Message: React.FC<Props> = ({ message }) => {
 											toolCallIndex={index}
 											parameters={block.parameters}
 											result={block.result}
+										/>
+									)
+								}
+
+								if (block.toolName === "update_character_sheet") {
+									return (
+										<CharacterSheetUpdate
+											key={`${message._id}-character-sheet-${block.toolName}`}
+											parameters={block.parameters}
 										/>
 									)
 								}

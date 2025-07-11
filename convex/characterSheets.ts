@@ -16,13 +16,14 @@ export const get = query({
 export const create = mutation({
 	args: {
 		campaignId: v.id("campaigns"),
+		data: v.record(v.string(), v.any()),
 	},
 	handler: async (ctx, args) => {
 		return ctx.db.insert("characterSheets", {
 			campaignId: args.campaignId,
 			name: "New Character",
 			description: "",
-			data: {},
+			data: args.data,
 		})
 	},
 })

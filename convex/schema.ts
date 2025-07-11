@@ -6,6 +6,7 @@ export default defineSchema(
 		gameSystems: defineTable({
 			name: v.string(),
 			prompt: v.string(),
+			defaultCharacterData: v.optional(v.record(v.string(), v.any())),
 			files: v.array(
 				v.object({
 					storageId: v.id("_storage"),

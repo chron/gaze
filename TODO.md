@@ -3,6 +3,8 @@ NEXT
 - figure out if there's a better way to get the files in context
 
 
+- If we're going to take JSON directly in the modal, need some friendly errors
+- Also the modal is too long with long JSON and files
 - Allow regenerating the last message
 - Tidy up old images from convex storage before regenerating
 - Edit campaign upfront, navigate to it after creating

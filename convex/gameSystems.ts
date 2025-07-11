@@ -3,7 +3,8 @@ import type { Id } from "./_generated/dataModel"
 import { mutation, query } from "./_generated/server"
 
 export const get = query({
-	handler: async (ctx, args: { id: Id<"gameSystems"> }) => {
+	args: { id: v.id("gameSystems") },
+	handler: async (ctx, args) => {
 		const gameSystem = await ctx.db.get(args.id)
 
 		if (!gameSystem) {
@@ -32,24 +33,30 @@ export const add = mutation({
 	args: {
 		name: v.string(),
 		prompt: v.string(),
+		defaultCharacterData: v.optional(v.record(v.string(), v.any())),
 	},
-	handler: async (ctx, args: { name: string; prompt: string }) => {
+	handler: async (ctx, args) => {
 		return await ctx.db.insert("gameSystems", {
 			name: args.name,
 			prompt: args.prompt,
 			files: [],
+			defaultCharacterData: args.defaultCharacterData,
 		})
 	},
 })
 
 export const update = mutation({
-	handler: async (
-		ctx,
-		args: { id: Id<"gameSystems">; name: string; prompt: string },
-	) => {
+	args: {
+		id: v.id("gameSystems"),
+		name: v.string(),
+		prompt: v.string(),
+		defaultCharacterData: v.optional(v.record(v.string(), v.any())),
+	},
+	handler: async (ctx, args) => {
 		return await ctx.db.patch(args.id, {
 			name: args.name,
 			prompt: args.prompt,
+			defaultCharacterData: args.defaultCharacterData,
 		})
 	},
 })
@@ -66,14 +73,7 @@ export const addFile = mutation({
 		gameSystemId: v.id("gameSystems"),
 		filename: v.string(),
 	},
-	handler: async (
-		ctx,
-		args: {
-			storageId: Id<"_storage">
-			gameSystemId: Id<"gameSystems">
-			filename: string
-		},
-	) => {
+	handler: async (ctx, args) => {
 		const gameSystem = await ctx.db.get(args.gameSystemId)
 
 		if (!gameSystem) {

@@ -324,6 +324,38 @@ export const sendToLLM = internalAction({
 			},
 		)
 
+		let formattedFiles: {
+			type: "file"
+			data: string
+			mimeType: string
+			filename: string
+		}[] = []
+
+		let gameSystem: // TODO: there MUST be a way to get this type properly
+			| (Omit<Doc<"gameSystems">, "files"> & {
+					files: {
+						storageId: Id<"_storage">
+						filename: string
+						url: string | null
+					}[]
+			  })
+			| null = null
+
+		if (campaign.gameSystemId) {
+			gameSystem = await ctx.runQuery(api.gameSystems.get, {
+				id: campaign.gameSystemId,
+			})
+
+			if (gameSystem) {
+				formattedFiles = gameSystem.files.slice(0, 2).map((file) => ({
+					type: "file",
+					data: file.url || "", // TODO: filter these out maybe
+					mimeType: "application/pdf", // TODO: unhardcode this
+					filename: file.filename,
+				}))
+			}
+		}
+
 		let characterSheet = await ctx.runQuery(api.characterSheets.get, {
 			campaignId: args.campaignId,
 		})
@@ -332,6 +364,7 @@ export const sendToLLM = internalAction({
 			// TODO: can you do this in one operation?
 			await ctx.runMutation(api.characterSheets.create, {
 				campaignId: args.campaignId,
+				data: gameSystem?.defaultCharacterData ?? {},
 			})
 
 			characterSheet = await ctx.runQuery(api.characterSheets.get, {
@@ -370,38 +403,6 @@ export const sendToLLM = internalAction({
 			context: memory.context,
 			tags: memory.tags,
 		}))
-
-		let formattedFiles: {
-			type: "file"
-			data: string
-			mimeType: string
-			filename: string
-		}[] = []
-
-		let gameSystem: // TODO: there MUST be a way to get this type properly
-			| (Omit<Doc<"gameSystems">, "files"> & {
-					files: {
-						storageId: Id<"_storage">
-						filename: string
-						url: string | null
-					}[]
-			  })
-			| null = null
-
-		if (campaign.gameSystemId) {
-			gameSystem = await ctx.runQuery(api.gameSystems.get, {
-				id: campaign.gameSystemId,
-			})
-
-			if (gameSystem) {
-				formattedFiles = gameSystem.files.slice(0, 2).map((file) => ({
-					type: "file",
-					data: file.url || "", // TODO: filter these out maybe
-					mimeType: "application/pdf", // TODO: unhardcode this
-					filename: file.filename,
-				}))
-			}
-		}
 
 		const formattedCharacterSheet = characterSheet
 			? {
@@ -471,7 +472,7 @@ export const sendToLLM = internalAction({
 			tools: {
 				update_character_sheet: tool({
 					description:
-						"Update the player's character sheet with any changes, including when they set their name or when their stats change.",
+						"Update the player's character sheet with any changes, including changes to their name, stats, conditions, or notes.",
 					parameters: z.object({
 						name: z.string(),
 						description: z.string(),
@@ -489,13 +490,11 @@ export const sendToLLM = internalAction({
 							data,
 						})
 
-						console.log("updating character sheet", name, description, data)
-
 						await ctx.runMutation(api.messages.appendToolCallBlock, {
 							messageId: assistantMessageId,
 							toolName: "update_character_sheet",
 							parameters: { name, description, data },
-							result: { name, data },
+							result: "Successfully updated character sheet",
 						})
 
 						return `Character sheet updated: ${name}, ${JSON.stringify(data)}`
@@ -565,8 +564,6 @@ export const sendToLLM = internalAction({
 		})
 
 		for await (const textPart of textStream) {
-			console.log("textPart", textPart)
-
 			await ctx.runMutation(api.messages.appendTextBlock, {
 				messageId: assistantMessageId,
 				text: textPart,
@@ -588,8 +585,6 @@ export const sendToLLM = internalAction({
 			for (const toolCall of await toolCalls) {
 				if (toolCall.toolName === "roll_dice") {
 					const { number, faces } = toolCall.args
-
-					console.log("rolling dice", number, faces)
 
 					await ctx.runMutation(api.messages.appendToolCallBlock, {
 						messageId: assistantMessageId,

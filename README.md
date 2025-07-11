@@ -1,4 +1,8 @@
-Advantages over using a chatbot directly:
+# GAZE
+
+A bad solo RPG chatbot
+
+## Advantages over using a chatbot directly:
 
 Maintaining state
 
