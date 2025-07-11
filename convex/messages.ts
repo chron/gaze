@@ -187,7 +187,6 @@ export const appendToolCallBlock = mutation({
 		toolName: v.string(),
 		parameters: v.any(),
 		result: v.optional(v.any()),
-		timestamp: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
 		const message = await ctx.db.get(args.messageId)
@@ -201,7 +200,6 @@ export const appendToolCallBlock = mutation({
 					toolName: args.toolName,
 					parameters: args.parameters,
 					result: args.result,
-					timestamp: args.timestamp,
 				},
 			],
 		})
@@ -235,6 +233,56 @@ export const addUsageToMessage = mutation({
 		await ctx.db.patch(args.messageId, {
 			usage: args.usage,
 		})
+	},
+})
+
+export const performUserDiceRoll = mutation({
+	args: {
+		messageId: v.id("messages"),
+		toolCallIndex: v.number(),
+	},
+	handler: async (ctx, args) => {
+		const message = await ctx.db.get(args.messageId)
+		if (!message) throw new Error("Message not found")
+
+		const toolCall = message.content[args.toolCallIndex]
+		if (
+			!toolCall ||
+			toolCall.type !== "tool_call" ||
+			toolCall.toolName !== "roll_dice"
+		) {
+			throw new Error("Invalid dice roll tool call")
+		}
+
+		if (toolCall.result !== null) {
+			throw new Error("Dice roll has already been performed")
+		}
+
+		const { number, faces } = toolCall.parameters
+
+		// Generate the dice roll results
+		const results: number[] = []
+		for (let i = 0; i < number; i++) {
+			results.push(Math.floor(Math.random() * faces) + 1)
+		}
+		const total = results.reduce((acc, curr) => acc + curr, 0)
+
+		// Update the tool call with the results
+		const updatedContent = [...message.content]
+		updatedContent[args.toolCallIndex] = {
+			...toolCall,
+			result: { results, total },
+		}
+
+		await ctx.db.patch(args.messageId, {
+			content: updatedContent,
+		})
+
+		await ctx.scheduler.runAfter(0, internal.messages.sendToLLM, {
+			campaignId: message.campaignId,
+		})
+
+		return { results, total }
 	},
 })
 
@@ -399,8 +447,23 @@ export const sendToLLM = internalAction({
 			})
 		}
 
+		// I actually don't think this is necessary
+
+		// Check if this is a continuation after a dice roll
+		// const lastRawMessage = messages[messages.length - 1]
+		// const hasDiceRoll = lastRawMessage?.content.some(
+		// 	(c) => c.type === "tool_call" && c.toolName === "roll_dice",
+		// )
+
+		// if (hasDiceRoll) {
+		// 	formattedMessages.push({
+		// 		role: "user",
+		// 		content: "Continue based on the dice roll result above.",
+		// 	})
+		// }
+
 		const model = google("gemini-2.5-flash")
-		const { textStream, usage } = streamText({
+		const { textStream, usage, finishReason, toolCalls } = streamText({
 			system: prompt,
 			model,
 			messages: formattedMessages,
@@ -426,12 +489,13 @@ export const sendToLLM = internalAction({
 							data,
 						})
 
+						console.log("updating character sheet", name, description, data)
+
 						await ctx.runMutation(api.messages.appendToolCallBlock, {
 							messageId: assistantMessageId,
 							toolName: "update_character_sheet",
 							parameters: { name, description, data },
 							result: { name, data },
-							timestamp: Date.now(),
 						})
 
 						return `Character sheet updated: ${name}, ${JSON.stringify(data)}`
@@ -484,30 +548,12 @@ export const sendToLLM = internalAction({
 					},
 				}),
 				roll_dice: tool({
-					description: "Roll one or more dice",
+					description:
+						"Present one or more dice to the user, and ask them to roll them. The user will click the dice to roll them.",
 					parameters: z.object({
 						number: z.number().min(1).max(100),
 						faces: z.number().min(1).max(100),
 					}),
-					execute: async ({ number, faces }) => {
-						console.log("rolling dice", number, faces)
-
-						const results: number[] = []
-						for (let i = 0; i < number; i++) {
-							results.push(Math.floor(Math.random() * faces) + 1)
-						}
-						const total = results.reduce((acc, curr) => acc + curr, 0)
-
-						await ctx.runMutation(api.messages.appendToolCallBlock, {
-							messageId: assistantMessageId,
-							toolName: "roll_dice",
-							parameters: { number, faces },
-							result: { results, total },
-							timestamp: Date.now(),
-						})
-
-						return `Individual rolls: ${results.join(", ")}, total: ${total}`
-					},
 				}),
 			},
 			onError: async (error) => {
@@ -519,6 +565,8 @@ export const sendToLLM = internalAction({
 		})
 
 		for await (const textPart of textStream) {
+			console.log("textPart", textPart)
+
 			await ctx.runMutation(api.messages.appendTextBlock, {
 				messageId: assistantMessageId,
 				text: textPart,
@@ -533,6 +581,25 @@ export const sendToLLM = internalAction({
 				completionTokens: usageInfo.completionTokens,
 			},
 		})
+
+		// We need to handle dice rolls without an execute because we don't want to feed back into the LLM,
+		// we need to wait for user input.
+		if ((await finishReason) === "tool-calls") {
+			for (const toolCall of await toolCalls) {
+				if (toolCall.toolName === "roll_dice") {
+					const { number, faces } = toolCall.args
+
+					console.log("rolling dice", number, faces)
+
+					await ctx.runMutation(api.messages.appendToolCallBlock, {
+						messageId: assistantMessageId,
+						toolName: "roll_dice",
+						parameters: { number, faces },
+						result: null, // null indicates pending user interaction
+					})
+				}
+			}
+		}
 	},
 })
 

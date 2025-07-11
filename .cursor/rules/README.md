@@ -1,0 +1,154 @@
+# Gaze Into The Abyss - Cursor Rules
+
+## Project Overview
+
+**Gaze Into The Abyss** is a tool for playing AI-powered solo tabletop RPGs. Unlike using a chatbot directly, this application maintains persistent state, character sheets, and provides intelligent context management for immersive gameplay.
+
+## Core Features
+
+- **State Management**: Persistent character sheets, campaigns, and game state
+- **AI Integration**: Multiple AI providers (OpenAI, Anthropic, Google) for different use cases
+- **Game Systems**: Support for different RPG rulesets with custom system prompts
+- **Character Management**: Character creation, sheets, and inventory tracking
+- **Memory System**: Vector database for storing and retrieving relevant game memories
+- **Interactive Tools**: Dice rolling, tool calls, and other game mechanics
+- **File Upload**: Support for rulebooks and reference materials
+- **Real-time Updates**: Live synchronization across all game elements
+
+## Technology Stack
+
+### Frontend
+- **React 19** - Latest React with concurrent features
+- **TypeScript** - Full type safety throughout the application
+- **Vite** - Fast development and optimized builds
+- **TanStack Router** - File-based routing with type-safe navigation
+- **Tailwind CSS v4** - Utility-first styling with latest features
+- **Radix UI** - Accessible, unstyled component primitives
+- **Shadcn/ui** - Pre-built component library built on Radix
+
+### Backend
+- **Convex** - Real-time database with serverless functions
+- **Vector Search** - Embedded memories with semantic search (3072 dimensions)
+- **File Storage** - Built-in file storage for images and documents
+- **Migrations** - Database schema versioning and migrations
+
+### AI & Integrations
+- **AI SDK** - Vercel AI SDK for LLM integration
+- **OpenAI** - Primary AI provider for conversations
+- **Anthropic** - Alternative AI provider
+- **Google AI** - Additional AI capabilities
+- **Vector Embeddings** - For memory storage and retrieval
+
+### Development Tools
+- **Biome** - Fast linting and formatting
+- **ESLint** - Additional linting rules
+- **TypeScript** - Strict type checking
+- **Zod** - Runtime type validation
+
+## Project Structure
+
+```
+src/
+├── components/          # React components
+│   ├── ui/             # Reusable UI components (Shadcn/ui)
+│   ├── ChatInterface.tsx
+│   ├── CharacterSheet.tsx
+│   ├── DiceRoll.tsx
+│   └── ...
+├── routes/             # File-based routing
+│   ├── __root.tsx
+│   ├── index.tsx
+│   ├── campaigns.$campaignId.tsx
+│   └── systems.tsx
+├── hooks/              # Custom React hooks
+├── lib/                # Utility functions
+└── types.ts           # TypeScript type definitions
+
+convex/
+├── campaigns.ts        # Campaign management functions
+├── characters.ts       # Character management
+├── characterSheets.ts  # Character sheet operations
+├── gameSystems.ts      # Game system management
+├── messages.ts         # Chat and AI interactions
+├── memories.ts         # Memory storage and retrieval
+├── prompts/           # AI system prompts
+├── schema.ts          # Database schema
+└── tools/             # Custom tools for AI
+```
+
+## Key Data Models
+
+- **Campaigns**: Game sessions with descriptions and associated game systems
+- **Characters**: Player characters with names, descriptions, and images
+- **Character Sheets**: Detailed character data, inventory, and stats
+- **Messages**: Chat history with AI, including tool calls and results
+- **Memories**: Vector-embedded game memories for context retrieval
+- **Game Systems**: RPG rulesets with custom prompts and reference files
+
+## Development Guidelines
+
+### Code Style
+- Use TypeScript for all code
+- Follow React 19 patterns and concurrent features
+- Implement proper error boundaries
+- Use Tailwind CSS for styling
+- Follow Radix UI patterns for accessibility
+
+### Component Patterns
+- Use functional components with hooks
+- Implement proper TypeScript interfaces
+- Use Convex mutations/queries for data operations
+- Handle loading and error states consistently
+
+### AI Integration
+- Use tool calls for interactive game mechanics
+- Implement proper context management
+- Store relevant memories in vector database
+- Handle multiple AI providers gracefully
+
+### State Management
+- Use Convex for persistent state
+- Local state with React hooks for UI state
+- Real-time updates via Convex subscriptions
+- Proper error handling and loading states
+
+## Common Tasks
+
+### Adding New Components
+1. Create component in appropriate directory
+2. Use TypeScript interfaces for props
+3. Implement proper styling with Tailwind
+4. Add to exports if reusable
+
+### Adding New Database Tables
+1. Update `convex/schema.ts`
+2. Create corresponding functions in convex/
+3. Add TypeScript types
+4. Run migrations if needed
+
+### Adding New AI Tools
+1. Create tool function in `convex/tools/`
+2. Add to tool registry
+3. Update message handling
+4. Add UI components for tool results
+
+### Working with AI
+- System prompts are in `convex/prompts/`
+- Memory extraction and storage in `convex/memories.ts`
+- Tool calls handled in `convex/messages.ts`
+- UI components for tool results in `src/components/`
+
+## Testing & Deployment
+
+- Use `pnpm dev` for development
+- `pnpm build` for production builds
+- Convex handles backend deployment
+- Frontend can be deployed to any static host
+
+## Important Notes
+
+- This is a real-time application - expect live updates
+- AI responses include tool calls that users can interact with
+- Memory system uses vector embeddings for context
+- File uploads are stored in Convex storage
+- Multiple AI providers are supported for different use cases

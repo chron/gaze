@@ -41,7 +41,6 @@ export default defineSchema(
 						toolName: v.string(),
 						parameters: v.any(),
 						result: v.optional(v.any()),
-						timestamp: v.optional(v.number()),
 					}),
 				),
 			),
