@@ -1,8 +1,11 @@
 import { google } from "@ai-sdk/google"
 import { openai } from "@ai-sdk/openai"
+import { GoogleGenAI } from "@google/genai"
+import type { File } from "@google/genai"
 import {
 	type CoreAssistantMessage,
 	type CoreUserMessage,
+	type FilePart,
 	embed,
 	generateText,
 	streamText,
@@ -11,6 +14,7 @@ import {
 import { paginationOptsValidator } from "convex/server"
 import { v } from "convex/values"
 import { z } from "zod"
+import { compact } from "../src/utils/compact"
 import { api, internal } from "./_generated/api"
 import type { Doc, Id } from "./_generated/dataModel"
 import {
@@ -142,6 +146,22 @@ export const addAssistantMessage = mutation({
 		})
 
 		return messageId
+	},
+})
+
+export const regenerateLastMessage = mutation({
+	args: {
+		messageId: v.id("messages"),
+	},
+	handler: async (ctx, args) => {
+		const message = await ctx.db.get(args.messageId)
+		if (!message) throw new Error("Message not found")
+
+		await ctx.db.delete(args.messageId)
+
+		await ctx.scheduler.runAfter(0, internal.messages.sendToLLM, {
+			campaignId: message.campaignId,
+		})
 	},
 })
 
@@ -324,12 +344,7 @@ export const sendToLLM = internalAction({
 			},
 		)
 
-		let formattedFiles: {
-			type: "file"
-			data: string
-			mimeType: string
-			filename: string
-		}[] = []
+		let uploadedFiles: (FilePart | null)[] = []
 
 		let gameSystem: // TODO: there MUST be a way to get this type properly
 			| (Omit<Doc<"gameSystems">, "files"> & {
@@ -347,12 +362,60 @@ export const sendToLLM = internalAction({
 			})
 
 			if (gameSystem) {
-				formattedFiles = gameSystem.files.slice(0, 2).map((file) => ({
-					type: "file",
-					data: file.url || "", // TODO: filter these out maybe
-					mimeType: "application/pdf", // TODO: unhardcode this
-					filename: file.filename,
-				}))
+				const ai = new GoogleGenAI({
+					apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+				})
+
+				const listCurrentFiles = await ai.files.list()
+
+				uploadedFiles = await Promise.all(
+					gameSystem.files.map(async (file) => {
+						// TODO: not handling pagination, but maybe we don't care
+						const existingFile = listCurrentFiles.page.find(
+							(f) => f.displayName === file.filename,
+						)
+
+						if (existingFile) {
+							return {
+								type: "file",
+								data: existingFile.uri || "",
+								mimeType: existingFile.mimeType || "",
+								filename: existingFile.displayName || "",
+							}
+						}
+
+						console.log("File not found, uploading", file.filename)
+
+						const blob = await ctx.storage.get(file.storageId)
+
+						if (!blob) {
+							return null
+						}
+
+						const myfile = await ai.files
+							.upload({
+								file: blob,
+								config: {
+									displayName: file.filename,
+								},
+							})
+							.catch((error) => {
+								console.error("Error uploading file", error)
+								return null
+							})
+
+						if (!myfile) {
+							return null
+						}
+
+						return {
+							type: "file",
+							data: myfile.uri || "",
+							mimeType: myfile.mimeType || "",
+							filename: myfile.displayName || "",
+						}
+					}),
+				)
 			}
 		}
 
@@ -435,7 +498,10 @@ export const sendToLLM = internalAction({
 			)}`
 		}
 
-		if (formattedFiles.length > 0) {
+		// Remove any that didn't upload successfully
+		const compactedFiles = compact(uploadedFiles)
+
+		if (compactedFiles.length > 0) {
 			formattedMessages.push({
 				role: "user",
 				content: [
@@ -443,25 +509,10 @@ export const sendToLLM = internalAction({
 						type: "text",
 						text: "Here are the files that are relevant to the game system:",
 					},
-					...formattedFiles,
+					...compactedFiles,
 				],
 			})
 		}
-
-		// I actually don't think this is necessary
-
-		// Check if this is a continuation after a dice roll
-		// const lastRawMessage = messages[messages.length - 1]
-		// const hasDiceRoll = lastRawMessage?.content.some(
-		// 	(c) => c.type === "tool_call" && c.toolName === "roll_dice",
-		// )
-
-		// if (hasDiceRoll) {
-		// 	formattedMessages.push({
-		// 		role: "user",
-		// 		content: "Continue based on the dice roll result above.",
-		// 	})
-		// }
 
 		const model = google("gemini-2.5-flash")
 		const { textStream, usage, finishReason, toolCalls } = streamText({
@@ -525,7 +576,7 @@ export const sendToLLM = internalAction({
 				}),
 				introduce_character: tool({
 					description:
-						"Whenever a new NPC is introduced, use this tool to describe the character. The NPC should have a name, and description, which will be used to generate an image.",
+						"Whenever a new NPC is introduced, use this tool to describe the character. The NPC should have a name, and description, which will be used to generate an image. Don't introduce characters that are already in the game.",
 					parameters: z.object({
 						name: z.string(),
 						description: z.string(),
@@ -535,6 +586,12 @@ export const sendToLLM = internalAction({
 							name,
 							description,
 							campaignId: args.campaignId,
+						})
+
+						await ctx.runMutation(api.messages.appendToolCallBlock, {
+							messageId: assistantMessageId,
+							toolName: "introduce_character",
+							parameters: { name, description },
 						})
 
 						await ctx.scheduler.runAfter(
@@ -548,10 +605,11 @@ export const sendToLLM = internalAction({
 				}),
 				roll_dice: tool({
 					description:
-						"Present one or more dice to the user, and ask them to roll them. The user will click the dice to roll them.",
+						"Present one or more dice to the user, and ask them to roll them. You can also add a bonus to the roll. The user will click the dice to roll them.",
 					parameters: z.object({
 						number: z.number().min(1).max(100),
 						faces: z.number().min(1).max(100),
+						bonus: z.number().min(-100).max(100),
 					}),
 				}),
 			},
@@ -571,6 +629,7 @@ export const sendToLLM = internalAction({
 		}
 
 		const usageInfo = await usage
+
 		await ctx.runMutation(api.messages.addUsageToMessage, {
 			messageId: assistantMessageId,
 			usage: {
@@ -584,12 +643,12 @@ export const sendToLLM = internalAction({
 		if ((await finishReason) === "tool-calls") {
 			for (const toolCall of await toolCalls) {
 				if (toolCall.toolName === "roll_dice") {
-					const { number, faces } = toolCall.args
+					const { number, faces, bonus } = toolCall.args
 
 					await ctx.runMutation(api.messages.appendToolCallBlock, {
 						messageId: assistantMessageId,
 						toolName: "roll_dice",
-						parameters: { number, faces },
+						parameters: { number, faces, bonus },
 						result: null, // null indicates pending user interaction
 					})
 				}

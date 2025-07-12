@@ -10,6 +10,7 @@ type DiceRollProps = {
 	parameters: {
 		number: number
 		faces: number
+		bonus: number
 	}
 	result: {
 		results: number[]
@@ -74,7 +75,12 @@ export const DiceRoll: React.FC<DiceRollProps> = ({
 		<div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
 			<div className="flex items-center gap-2 mb-3">
 				<span className="font-semibold text-gray-700">
-					Roll {parameters.number}d{parameters.faces}
+					Roll {parameters.number}d{parameters.faces}{" "}
+					{parameters.bonus > 0
+						? `+ ${parameters.bonus}`
+						: parameters.bonus < 0
+							? parameters.bonus
+							: ""}
 				</span>
 			</div>
 			<div className="flex flex-wrap gap-2 mb-3">

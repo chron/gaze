@@ -62,7 +62,11 @@ export const MessageList: React.FC<Props> = ({
 			)}
 
 			{reversedMessages?.map((message) => (
-				<Message key={message._id} message={message} />
+				<Message
+					key={message._id}
+					message={message}
+					isLastMessage={message._id === lastMessage?._id}
+				/>
 			))}
 
 			{usage && (

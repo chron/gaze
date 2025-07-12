@@ -1,15 +1,25 @@
+import { useMutation } from "convex/react"
+import { RefreshCcwIcon } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
 import { cn } from "../lib/utils"
+import { CharacterIntroduction } from "./CharacterIntroduction"
 import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
 import { DiceRoll } from "./DiceRoll"
+import { Button } from "./ui/button"
 
 type Props = {
 	message: Doc<"messages">
+	isLastMessage: boolean
 }
 
-export const Message: React.FC<Props> = ({ message }) => {
+export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
+	const regenerateLastMessageMutation = useMutation(
+		api.messages.regenerateLastMessage,
+	)
+
 	return (
 		<div
 			className={cn(
@@ -26,56 +36,74 @@ export const Message: React.FC<Props> = ({ message }) => {
 					<p>...</p>
 				</div>
 			) : (
-				<div className="flex flex-col gap-2 font-serif">
-					<div className="flex flex-col gap-2 font-serif">
-						{message.content.map((block, index) => {
-							if (block.type === "text") {
+				<div className="flex flex-col gap-2 font-serif relative group">
+					{message.content.map((block, index) => {
+						if (block.type === "text") {
+							return (
+								<ReactMarkdown
+									key={`${message._id}-text-${index}`}
+									remarkPlugins={[remarkGfm]}
+								>
+									{block.text}
+								</ReactMarkdown>
+							)
+						}
+
+						if (block.type === "tool_call") {
+							if (block.toolName === "change_scene") {
 								return (
-									<ReactMarkdown
-										key={`${message._id}-text-${index}`}
-										remarkPlugins={[remarkGfm]}
-									>
-										{block.text}
-									</ReactMarkdown>
+									<SceneChange
+										key={`${message._id}-scene-${index}`}
+										description={block.parameters.description}
+										backgroundColor={block.parameters.backgroundColor}
+									/>
 								)
 							}
 
-							if (block.type === "tool_call") {
-								if (block.toolName === "change_scene") {
-									return (
-										<SceneChange
-											key={`${message._id}-scene-${index}`}
-											description={block.parameters.description}
-											backgroundColor={block.parameters.backgroundColor}
-										/>
-									)
-								}
-
-								if (block.toolName === "roll_dice") {
-									return (
-										<DiceRoll
-											key={`${message._id}-dice-${index}`}
-											messageId={message._id}
-											toolCallIndex={index}
-											parameters={block.parameters}
-											result={block.result}
-										/>
-									)
-								}
-
-								if (block.toolName === "update_character_sheet") {
-									return (
-										<CharacterSheetUpdate
-											key={`${message._id}-character-sheet-${block.toolName}`}
-											parameters={block.parameters}
-										/>
-									)
-								}
+							if (block.toolName === "roll_dice") {
+								return (
+									<DiceRoll
+										key={`${message._id}-dice-${index}`}
+										messageId={message._id}
+										toolCallIndex={index}
+										parameters={block.parameters}
+										result={block.result}
+									/>
+								)
 							}
 
-							return null
-						})}
-					</div>
+							if (block.toolName === "update_character_sheet") {
+								return (
+									<CharacterSheetUpdate
+										key={`${message._id}-character-sheet-${block.toolName}`}
+										parameters={block.parameters}
+									/>
+								)
+							}
+
+							if (block.toolName === "introduce_character") {
+								return (
+									<CharacterIntroduction
+										key={`${message._id}-character-introduction-${block.toolName}`}
+										parameters={block.parameters}
+									/>
+								)
+							}
+						}
+
+						return null
+					})}
+
+					{isLastMessage && (
+						<Button
+							className="hidden group-hover:block absolute bottom-0 right-0"
+							onClick={() => {
+								regenerateLastMessageMutation({ messageId: message._id })
+							}}
+						>
+							<RefreshCcwIcon />
+						</Button>
+					)}
 				</div>
 			)}
 		</div>
