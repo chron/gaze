@@ -42,6 +42,7 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 		const name = formData.get("name") as string
 		const description = formData.get("description") as string
 		const imagePrompt = formData.get("imagePrompt") as string
+		const model = formData.get("model") as string
 		const gameSystemId =
 			formData.get("gameSystemId") === "none"
 				? undefined
@@ -54,6 +55,7 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 				description,
 				imagePrompt,
 				gameSystemId,
+				model,
 			})
 		} else {
 			const newId = await addCampaign({
@@ -61,6 +63,7 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 				description,
 				imagePrompt,
 				gameSystemId,
+				model,
 			})
 			navigate({
 				to: "/campaigns/$campaignId",
@@ -129,6 +132,79 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 									{gameSystem.name}
 								</SelectItem>
 							))}
+						</SelectContent>
+					</Select>
+				</div>
+
+				<div className="grid gap-3">
+					<Label htmlFor="model">Model</Label>
+					<Select name="model" defaultValue={campaign?.model}>
+						<SelectTrigger>
+							<SelectValue placeholder="Select a model" />
+						</SelectTrigger>
+
+						<SelectContent>
+							<SelectItem value="moonshotai/kimi-k2">
+								Moonshot AI Kimi K2
+							</SelectItem>
+
+							<SelectItem value="cognitivecomputations/dolphin3.0-r1-mistral-24b:free">
+								Dolphin 3.0 Mistral 24B (free)
+							</SelectItem>
+
+							<SelectItem value="cognitivecomputations/dolphin-mistral-24b-venice-edition:free">
+								Dolphin Mistral 24B Venice Edition (free)
+							</SelectItem>
+
+							<SelectItem value="thedrummer/skyfall-36b-v2">
+								Skyfall 36B v2
+							</SelectItem>
+
+							<SelectItem value="thedrummer/anubis-pro-105b-v1">
+								Anubis Pro 105B v1
+							</SelectItem>
+
+							<SelectItem value="sao10k/l3.3-euryale-70b">
+								Llama 3.3 Euryale 70B
+							</SelectItem>
+
+							<SelectItem value="x-ai/grok-4">Grok 4</SelectItem>
+
+							<SelectItem value="thedrummer/anubis-70b-v1.1">
+								Anubis 70B v1.1
+							</SelectItem>
+
+							<SelectItem value="google/gemini-2.5-pro">
+								Gemini 2.5 Pro
+							</SelectItem>
+
+							<SelectItem value="google/gemini-2.5-flash">
+								Gemini 2.5 Flash
+							</SelectItem>
+
+							<SelectItem value="openai/o3">O3</SelectItem>
+
+							<SelectItem value="openai/o3-pro">O3 Pro</SelectItem>
+
+							<SelectItem value="openai/o4-mini-high">O4 Mini High</SelectItem>
+
+							<SelectItem value="openai/gpt-4.1">GPT-4.1</SelectItem>
+
+							<SelectItem value="meta-llama/llama-4-maverick">
+								Llama 4 Maverick
+							</SelectItem>
+
+							<SelectItem value="anthropic/claude-3.7-sonnet">
+								Claude 3.7 Sonnet
+							</SelectItem>
+
+							<SelectItem value="anthropic/claude-3.7-sonnet:thinking">
+								Claude 3.7 Sonnet Thinking
+							</SelectItem>
+
+							<SelectItem value="anthropic/claude-sonnet-4">
+								Claude Sonnet 4
+							</SelectItem>
 						</SelectContent>
 					</Select>
 				</div>

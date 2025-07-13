@@ -2,6 +2,7 @@ NEXT
 
 - Do something different with the scene background colours
 - Automate an initial welcome message once you create a campaign
+- Show reasoning text for models that provide it
 
 OTHER STUFF
 

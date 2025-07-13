@@ -7,6 +7,7 @@ import type { DataModel, Id } from "../_generated/dataModel"
 export const introduceCharacter = (
 	ctx: GenericActionCtx<DataModel>,
 	assistantMessageId: Id<"messages">,
+	campaignId: Id<"campaigns">,
 ) => {
 	return tool({
 		description:
@@ -16,12 +17,26 @@ export const introduceCharacter = (
 			description: z.string(),
 		}),
 		execute: async ({ name, description }, toolCall) => {
+			const characterId = await ctx.runMutation(api.characters.create, {
+				name,
+				description,
+				campaignId,
+			})
+
 			await ctx.runMutation(api.messages.appendToolCallBlock, {
 				messageId: assistantMessageId,
 				toolName: "introduce_character",
 				parameters: { name, description },
 				toolCallId: toolCall.toolCallId,
 			})
+
+			await ctx.scheduler.runAfter(
+				0,
+				api.characters.generateImageForCharacter,
+				{
+					characterId,
+				},
+			)
 		},
 	})
 }

@@ -29,9 +29,10 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 					: "self-start bg-gray-100 text-gray-800",
 			)}
 		>
-			{message.content.length === 1 &&
-			message.content[0].type === "text" &&
-			message.content[0].text.trim().length === 0 ? (
+			{message.content.length === 0 ||
+			(message.content.length === 1 &&
+				message.content[0].type === "text" &&
+				message.content[0].text.trim().length === 0) ? (
 				<div className="flex flex-col gap-2 font-serif">
 					<p>...</p>
 				</div>
@@ -44,6 +45,12 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 									key={`${message._id}-text-${index}`}
 									remarkPlugins={[remarkGfm]}
 									components={{
+										h1: ({ children }) => (
+											<h1 className="text-xl font-bold">{children}</h1>
+										),
+										h2: ({ children }) => (
+											<h2 className="font-bold">{children}</h2>
+										),
 										pre: ({ children }) => (
 											<pre className="bg-gray-800 text-white p-2 rounded-md whitespace-pre-wrap">
 												{children}
@@ -67,7 +74,7 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 								)
 							}
 
-							if (block.toolName === "roll_dice") {
+							if (block.toolName === "request_dice_roll") {
 								return (
 									<DiceRoll
 										key={`${message._id}-dice-${index}`}

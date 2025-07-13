@@ -28,7 +28,7 @@ import {
 import systemPrompt from "./prompts/system"
 import { changeScene } from "./tools/changeScene"
 import { introduceCharacter } from "./tools/introduceCharacter"
-import { rollDice } from "./tools/rollDice"
+import { requestDiceRoll } from "./tools/requestDiceRoll"
 import { updateCharacterSheet } from "./tools/updateCharacterSheet"
 
 export const get = query({
@@ -276,7 +276,7 @@ export const performUserDiceRoll = mutation({
 		if (
 			!toolCall ||
 			toolCall.type !== "tool_call" ||
-			toolCall.toolName !== "roll_dice"
+			toolCall.toolName !== "request_dice_roll"
 		) {
 			throw new Error("Invalid dice roll tool call")
 		}
@@ -373,7 +373,7 @@ export const sendToLLM = internalAction({
 		)
 
 		const diceRolls = lastMessageToolCalls.filter(
-			(block) => block.toolName === "roll_dice",
+			(block) => block.toolName === "request_dice_roll",
 		)
 
 		for (const diceRoll of diceRolls) {
@@ -381,14 +381,8 @@ export const sendToLLM = internalAction({
 				role: "user",
 				content: [
 					{
-						// @ts-expect-error - TODO: claude is mad
-						type: "tool_result",
-						toolCallId: diceRoll.toolCallId || "",
-						toolName: "roll_dice",
-						result: {
-							results: diceRoll.result.results,
-							total: diceRoll.result.total + diceRoll.parameters.bonus,
-						},
+						type: "text",
+						text: `I rolled: [${diceRoll.result.results.join(", ")}] for a total of ${diceRoll.result.total + diceRoll.parameters.bonus}`,
 					},
 				],
 			})
@@ -600,52 +594,61 @@ export const sendToLLM = internalAction({
 			})
 		}
 
-		console.log("formattedMessages", formattedMessages)
-
 		const openrouter = createOpenRouter({
 			apiKey: process.env.OPENROUTER_API_KEY,
 		})
-		const { response, textStream, usage, finishReason, toolCalls } = streamText(
-			{
-				system: prompt,
-				model: campaign.model
-					? openrouter(campaign.model)
-					: google("gemini-2.5-pro"),
-				messages: formattedMessages,
-				maxSteps: 10,
-				tools:
-					campaign.model && !campaign.model.startsWith("anthropic")
-						? undefined
-						: {
-								update_character_sheet: updateCharacterSheet(
-									ctx,
-									assistantMessageId,
-									characterSheet,
-								),
-								change_scene: changeScene(ctx, assistantMessageId),
-								introduce_character: introduceCharacter(
-									ctx,
-									assistantMessageId,
-								),
-								roll_dice: rollDice(ctx),
-							},
-				onError: async (error) => {
-					await ctx.runMutation(api.messages.appendTextBlock, {
-						messageId: assistantMessageId,
-						text: JSON.stringify(error.error),
-					})
-				},
+		const { textStream, usage, response } = streamText({
+			system: prompt,
+			model: campaign.model
+				? openrouter(campaign.model)
+				: google("gemini-2.5-pro"),
+			messages: formattedMessages,
+			maxSteps: 10,
+			tools:
+				campaign.model && !campaign.model.startsWith("anthropic")
+					? undefined
+					: {
+							update_character_sheet: updateCharacterSheet(
+								ctx,
+								assistantMessageId,
+								characterSheet,
+							),
+							change_scene: changeScene(ctx, assistantMessageId),
+							introduce_character: introduceCharacter(
+								ctx,
+								assistantMessageId,
+								args.campaignId,
+							),
+							request_dice_roll: requestDiceRoll(ctx, assistantMessageId),
+						},
+			onError: async (error) => {
+				await ctx.runMutation(api.messages.appendTextBlock, {
+					messageId: assistantMessageId,
+					text: JSON.stringify(error.error),
+				})
 			},
-		)
+		})
 
-		for await (const textPart of textStream) {
-			await ctx.runMutation(api.messages.appendTextBlock, {
-				messageId: assistantMessageId,
-				text: textPart,
-			})
+		try {
+			for await (const textPart of textStream) {
+				await ctx.runMutation(api.messages.appendTextBlock, {
+					messageId: assistantMessageId,
+					text: textPart,
+				})
+			}
+		} catch (error) {
+			console.error("Error streaming text", error)
+
+			if (error instanceof Error && "reason" in error) {
+				console.log("Reason", error.reason)
+			} else {
+				console.log("Unknown error", error)
+			}
 		}
 
 		const usageInfo = await usage
+		const finalMessages = (await response).messages
+		console.log(finalMessages)
 
 		await ctx.runMutation(api.messages.addUsageToMessage, {
 			messageId: assistantMessageId,
@@ -654,28 +657,6 @@ export const sendToLLM = internalAction({
 				completionTokens: usageInfo.completionTokens,
 			},
 		})
-
-		const toolResultMessages = (await response).messages.filter(
-			(msg) => msg.role === "tool",
-		)
-
-		// We need to handle dice rolls without an execute because we don't want to feed back into the LLM,
-		// we need to wait for user input.
-		if ((await finishReason) === "tool-calls") {
-			for (const toolCall of await toolCalls) {
-				if (toolCall.toolName === "roll_dice") {
-					const { number, faces, bonus } = toolCall.args
-
-					await ctx.runMutation(api.messages.appendToolCallBlock, {
-						messageId: assistantMessageId,
-						toolName: "roll_dice",
-						parameters: { number, faces, bonus },
-						result: null, // null indicates pending user interaction
-						toolCallId: toolCall.toolCallId,
-					})
-				}
-			}
-		}
 	},
 })
 

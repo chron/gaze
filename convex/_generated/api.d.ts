@@ -19,7 +19,7 @@ import type * as prompts_extractMemories from "../prompts/extractMemories.js";
 import type * as prompts_system from "../prompts/system.js";
 import type * as tools_changeScene from "../tools/changeScene.js";
 import type * as tools_introduceCharacter from "../tools/introduceCharacter.js";
-import type * as tools_rollDice from "../tools/rollDice.js";
+import type * as tools_requestDiceRoll from "../tools/requestDiceRoll.js";
 import type * as tools_updateCharacterSheet from "../tools/updateCharacterSheet.js";
 
 import type {
@@ -48,7 +48,7 @@ declare const fullApi: ApiFromModules<{
   "prompts/system": typeof prompts_system;
   "tools/changeScene": typeof tools_changeScene;
   "tools/introduceCharacter": typeof tools_introduceCharacter;
-  "tools/rollDice": typeof tools_rollDice;
+  "tools/requestDiceRoll": typeof tools_requestDiceRoll;
   "tools/updateCharacterSheet": typeof tools_updateCharacterSheet;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
