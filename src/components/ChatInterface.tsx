@@ -2,7 +2,6 @@ import { useMutation, useQuery } from "convex/react"
 import { useRef, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
-import { CampaignDetailsModal } from "./CampaignDetailsModal"
 import { CharacterList } from "./CharacterList"
 import { MessageList } from "./MessageList"
 import { Button } from "./ui/button"
@@ -50,14 +49,6 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 				backgroundColor: lastScene?.scene?.backgroundColor ?? "white",
 			}}
 		>
-			<div className="flex items-center p-4 group">
-				<h1 className="text-4xl font-bold p-4">{campaign.name}</h1>
-
-				<div className="group-hover:block hidden">
-					<CampaignDetailsModal campaignId={campaign._id} />
-				</div>
-			</div>
-
 			<div ref={messagePanelRef} className="flex-1 min-h-0 overflow-y-auto">
 				<MessageList
 					campaignId={campaign._id}
