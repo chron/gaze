@@ -43,6 +43,13 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 								<ReactMarkdown
 									key={`${message._id}-text-${index}`}
 									remarkPlugins={[remarkGfm]}
+									components={{
+										pre: ({ children }) => (
+											<pre className="bg-gray-800 text-white p-2 rounded-md whitespace-pre-wrap">
+												{children}
+											</pre>
+										),
+									}}
 								>
 									{block.text}
 								</ReactMarkdown>

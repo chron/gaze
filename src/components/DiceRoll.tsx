@@ -49,7 +49,12 @@ export const DiceRoll: React.FC<DiceRollProps> = ({
 			<div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
 				<div className="flex items-center gap-2 mb-2">
 					<span className="font-semibold text-gray-700">
-						Roll {parameters.number}d{parameters.faces}
+						Roll {parameters.number}d{parameters.faces}{" "}
+						{parameters.bonus > 0
+							? `+ ${parameters.bonus}`
+							: parameters.bonus < 0
+								? parameters.bonus
+								: ""}
 					</span>
 				</div>
 				<div className="flex flex-wrap items-center gap-2 mb-2">
@@ -63,14 +68,13 @@ export const DiceRoll: React.FC<DiceRollProps> = ({
 						</span>
 					))}
 				</div>
-				<div className="text-xl font-bold text-green-700">
-					Total: {result.total}
+				<div className="text-xl font-bold">
+					Total: {result.total + parameters.bonus}
 				</div>
 			</div>
 		)
 	}
 
-	// Show pending dice roll (clickable)
 	return (
 		<div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
 			<div className="flex items-center gap-2 mb-3">

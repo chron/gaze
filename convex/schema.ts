@@ -19,6 +19,7 @@ export default defineSchema(
 			description: v.string(),
 			imagePrompt: v.string(),
 			gameSystemId: v.optional(v.id("gameSystems")),
+			model: v.optional(v.string()),
 		}),
 		characterSheets: defineTable({
 			campaignId: v.id("campaigns"),
@@ -42,6 +43,7 @@ export default defineSchema(
 						toolName: v.string(),
 						parameters: v.any(),
 						result: v.optional(v.any()),
+						toolCallId: v.optional(v.string()),
 					}),
 				),
 			),

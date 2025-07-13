@@ -1,5 +1,5 @@
+import { useNavigate } from "@tanstack/react-router"
 import { useMutation, useQuery } from "convex/react"
-import { Pencil } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
@@ -17,12 +17,22 @@ import {
 } from "./ui/select"
 
 type Props = {
-	campaignId: Id<"campaigns">
+	campaignId: Id<"campaigns"> | null
+	trigger: React.ReactNode
 }
 
-export const CampaignDetailsModal: React.FC<Props> = ({ campaignId }) => {
+export const CampaignDetailsModal: React.FC<Props> = ({
+	campaignId,
+	trigger,
+}) => {
+	const navigate = useNavigate()
 	const [open, setOpen] = useState(false)
-	const campaign = useQuery(api.campaigns.get, { id: campaignId })
+	const campaign = useQuery(
+		api.campaigns.get,
+		campaignId ? { id: campaignId } : "skip",
+	)
+
+	const addCampaign = useMutation(api.campaigns.addCampaign)
 	const updateCampaign = useMutation(api.campaigns.update)
 	const gameSystems = useQuery(api.gameSystems.list)
 
@@ -30,13 +40,33 @@ export const CampaignDetailsModal: React.FC<Props> = ({ campaignId }) => {
 		e.preventDefault()
 		const formData = new FormData(e.target as HTMLFormElement)
 		const name = formData.get("name") as string
+		const description = formData.get("description") as string
 		const imagePrompt = formData.get("imagePrompt") as string
 		const gameSystemId =
 			formData.get("gameSystemId") === "none"
 				? undefined
 				: (formData.get("gameSystemId") as Id<"gameSystems">)
 
-		await updateCampaign({ id: campaignId, name, imagePrompt, gameSystemId })
+		if (campaignId) {
+			await updateCampaign({
+				id: campaignId,
+				name,
+				description,
+				imagePrompt,
+				gameSystemId,
+			})
+		} else {
+			const newId = await addCampaign({
+				name,
+				description,
+				imagePrompt,
+				gameSystemId,
+			})
+			navigate({
+				to: "/campaigns/$campaignId",
+				params: { campaignId: newId },
+			})
+		}
 
 		setOpen(false)
 	}
@@ -45,13 +75,9 @@ export const CampaignDetailsModal: React.FC<Props> = ({ campaignId }) => {
 		<ResponsiveModal
 			open={open}
 			setOpen={setOpen}
-			title="Edit campaign"
+			title={campaignId ? "Edit campaign" : "Add campaign"}
 			description="Make changes to your campaign here. Click save when you're done."
-			trigger={
-				<Button variant="ghost" size="icon">
-					<Pencil />
-				</Button>
-			}
+			trigger={trigger}
 		>
 			<form className="grid items-start gap-6 px-4" onSubmit={handleSubmit}>
 				<div className="grid gap-3">
@@ -61,6 +87,16 @@ export const CampaignDetailsModal: React.FC<Props> = ({ campaignId }) => {
 						id="name"
 						name="name"
 						defaultValue={campaign?.name}
+					/>
+				</div>
+
+				<div className="grid gap-3">
+					<Label htmlFor="description">Description</Label>
+					<Input
+						type="text"
+						id="description"
+						name="description"
+						defaultValue={campaign?.description}
 					/>
 				</div>
 

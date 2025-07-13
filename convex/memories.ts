@@ -33,6 +33,19 @@ export const add = mutation({
 	},
 })
 
+export const count = internalQuery({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		return (
+			await ctx.db
+				.query("memories")
+				.filter((q) => q.eq(q.field("campaignId"), args.campaignId))
+				.collect()
+		).length
+	},
+})
 export const findMany = internalQuery({
 	args: {
 		ids: v.array(v.id("memories")),
@@ -79,7 +92,7 @@ export const scanForNewMemories = internalAction({
 						return block.text
 					}
 
-					return `[${block.toolName}: ${JSON.stringify(block.parameters)} -> ${JSON.stringify(block.result)}]`
+					return ""
 				})
 				.join(""),
 		}))
@@ -114,7 +127,9 @@ export const scanForNewMemories = internalAction({
 		for (const memoryList of toolCalls) {
 			for (const memory of memoryList.args.memories) {
 				const { embedding } = await embed({
-					model: google.textEmbeddingModel("gemini-embedding-exp-03-07"),
+					model: google.textEmbeddingModel("gemini-embedding-exp-03-07", {
+						taskType: "RETRIEVAL_DOCUMENT",
+					}),
 					value: memory.summary,
 				})
 

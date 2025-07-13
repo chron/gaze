@@ -1,9 +1,10 @@
 import { google } from "@ai-sdk/google"
 import { openai } from "@ai-sdk/openai"
 import { GoogleGenAI } from "@google/genai"
-import type { File } from "@google/genai"
+import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import {
 	type CoreAssistantMessage,
+	type CoreMessage,
 	type CoreUserMessage,
 	type FilePart,
 	embed,
@@ -25,6 +26,10 @@ import {
 	query,
 } from "./_generated/server"
 import systemPrompt from "./prompts/system"
+import { changeScene } from "./tools/changeScene"
+import { introduceCharacter } from "./tools/introduceCharacter"
+import { rollDice } from "./tools/rollDice"
+import { updateCharacterSheet } from "./tools/updateCharacterSheet"
 
 export const get = query({
 	args: {
@@ -207,6 +212,7 @@ export const appendToolCallBlock = mutation({
 		toolName: v.string(),
 		parameters: v.any(),
 		result: v.optional(v.any()),
+		toolCallId: v.string(),
 	},
 	handler: async (ctx, args) => {
 		const message = await ctx.db.get(args.messageId)
@@ -220,6 +226,7 @@ export const appendToolCallBlock = mutation({
 					toolName: args.toolName,
 					parameters: args.parameters,
 					result: args.result,
+					toolCallId: args.toolCallId,
 				},
 			],
 		})
@@ -322,19 +329,70 @@ export const sendToLLM = internalAction({
 			campaignId: args.campaignId,
 		})
 
-		const formattedMessages: (CoreUserMessage | CoreAssistantMessage)[] =
-			messages.map((msg) => ({
-				role: msg.role,
-				content: msg.content
-					.map((block) => {
+		const formattedMessages: CoreMessage[] = messages.map((msg) => {
+			if (msg.role === "user") {
+				return {
+					role: "user",
+					content: msg.content.map((block) => {
 						if (block.type === "text") {
-							return block.text
+							return block
 						}
 
-						return `[${block.toolName}: ${JSON.stringify(block.parameters)} -> ${JSON.stringify(block.result)}]`
-					})
-					.join(""),
-			}))
+						throw new Error("Unexpected tool call in user message")
+					}),
+				}
+			}
+
+			return {
+				role: "assistant",
+				content: msg.content.map((block) => {
+					if (block.type === "tool_call") {
+						// legacy
+						if (!block.toolCallId) {
+							return {
+								type: "text",
+								text: `[${block.toolName}: ${JSON.stringify(block.parameters)} -> ${JSON.stringify(block.result)}]`,
+							}
+						}
+
+						return {
+							type: "tool-call",
+							toolName: block.toolName,
+							args: block.parameters,
+							toolCallId: block.toolCallId,
+						}
+					}
+
+					return block
+				}),
+			}
+		})
+
+		const lastMessageToolCalls = messages[messages.length - 1].content.filter(
+			(block) => block.type === "tool_call",
+		)
+
+		const diceRolls = lastMessageToolCalls.filter(
+			(block) => block.toolName === "roll_dice",
+		)
+
+		for (const diceRoll of diceRolls) {
+			formattedMessages.push({
+				role: "user",
+				content: [
+					{
+						// @ts-expect-error - TODO: claude is mad
+						type: "tool_result",
+						toolCallId: diceRoll.toolCallId || "",
+						toolName: "roll_dice",
+						result: {
+							results: diceRoll.result.results,
+							total: diceRoll.result.total + diceRoll.parameters.bonus,
+						},
+					},
+				],
+			})
+		}
 
 		const assistantMessageId = await ctx.runMutation(
 			api.messages.addAssistantMessage,
@@ -361,7 +419,7 @@ export const sendToLLM = internalAction({
 				id: campaign.gameSystemId,
 			})
 
-			if (gameSystem) {
+			if (gameSystem && !campaign.model) {
 				const ai = new GoogleGenAI({
 					apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 				})
@@ -439,32 +497,58 @@ export const sendToLLM = internalAction({
 			campaignId: args.campaignId,
 		})
 
-		const lastMessage = formattedMessages[formattedMessages.length - 1]
-		const { embedding } = await embed({
-			model: google.textEmbeddingModel("gemini-embedding-exp-03-07"),
-			value: lastMessage.content,
+		const anyMemories = await ctx.runQuery(internal.memories.count, {
+			campaignId: args.campaignId,
 		})
 
-		const memoryRefs = await ctx.vectorSearch("memories", "by_embedding", {
-			vector: embedding,
-			limit: 10,
-			filter: (q) => q.eq("campaignId", args.campaignId),
-		})
+		let serializedMemories: {
+			type: string
+			summary: string
+			context: string
+			tags: string[]
+		}[] = []
 
-		const memories = await ctx.runQuery(internal.memories.findMany, {
-			ids: memoryRefs.map((ref) => ref._id),
-		})
+		if (anyMemories > 0) {
+			const lastMessage = formattedMessages[formattedMessages.length - 1]
+			const { embedding } = await embed({
+				model: google.textEmbeddingModel("gemini-embedding-exp-03-07", {
+					taskType: "RETRIEVAL_QUERY",
+				}),
+				value:
+					typeof lastMessage.content === "string"
+						? lastMessage.content
+						: lastMessage.content
+								.map((block) => {
+									if (block.type === "text") {
+										return block.text
+									}
+
+									return ""
+								})
+								.join(""),
+			})
+
+			const memoryRefs = await ctx.vectorSearch("memories", "by_embedding", {
+				vector: embedding,
+				limit: 10,
+				filter: (q) => q.eq("campaignId", args.campaignId),
+			})
+
+			const memories = await ctx.runQuery(internal.memories.findMany, {
+				ids: memoryRefs.map((ref) => ref._id),
+			})
+
+			serializedMemories = memories.map((memory) => ({
+				type: memory.type,
+				summary: memory.summary,
+				context: memory.context,
+				tags: memory.tags,
+			}))
+		}
 
 		const serializedCharacters = characters.map((character) => ({
 			name: character.name,
 			description: character.description,
-		}))
-
-		const serializedMemories = memories.map((memory) => ({
-			type: memory.type,
-			summary: memory.summary,
-			context: memory.context,
-			tags: memory.tags,
 		}))
 
 		const formattedCharacterSheet = characterSheet
@@ -481,6 +565,8 @@ export const sendToLLM = internalAction({
 		prompt += gameSystem
 			? `\n\nYou are hosting a game of ${gameSystem.name}\n\n${gameSystem.prompt}`
 			: ""
+
+		prompt += `\n\nThe campaign is called ${campaign.name}, and the description is: ${campaign.description}`
 
 		prompt += `\n\nHere is the character sheet for the player: ${JSON.stringify(
 			formattedCharacterSheet,
@@ -514,112 +600,43 @@ export const sendToLLM = internalAction({
 			})
 		}
 
-		const model = google("gemini-2.5-flash")
-		const { textStream, usage, finishReason, toolCalls } = streamText({
-			system: prompt,
-			model,
-			messages: formattedMessages,
-			maxSteps: 10,
-			tools: {
-				update_character_sheet: tool({
-					description:
-						"Update the player's character sheet with any changes, including changes to their name, stats, conditions, or notes.",
-					parameters: z.object({
-						name: z.string(),
-						description: z.string(),
-						data: z.record(z.string(), z.any()),
-					}),
-					execute: async ({ name, description, data }) => {
-						if (!characterSheet) {
-							throw new Error("Character sheet not found")
-						}
+		console.log("formattedMessages", formattedMessages)
 
-						await ctx.runMutation(api.characterSheets.update, {
-							characterSheetId: characterSheet._id,
-							name,
-							description,
-							data,
-						})
-
-						await ctx.runMutation(api.messages.appendToolCallBlock, {
-							messageId: assistantMessageId,
-							toolName: "update_character_sheet",
-							parameters: { name, description, data },
-							result: "Successfully updated character sheet",
-						})
-
-						return `Character sheet updated: ${name}, ${JSON.stringify(data)}`
-					},
-				}),
-				change_scene: tool({
-					description:
-						"Whenever the scene changes, use this tool to describe the new scene. The background color should be a hex code that can be used with black text in the main chat interface. The description will be used to create an image.",
-					parameters: z.object({
-						description: z.string(),
-						backgroundColor: z.string(),
-					}),
-					execute: async ({ description, backgroundColor }) => {
-						await ctx.runMutation(api.messages.addSceneToMessage, {
-							messageId: assistantMessageId,
-							scene: {
-								description,
-								backgroundColor,
-							},
-						})
-
-						await ctx.runMutation(api.messages.appendToolCallBlock, {
-							messageId: assistantMessageId,
-							toolName: "change_scene",
-							parameters: { description, backgroundColor },
-						})
-					},
-				}),
-				introduce_character: tool({
-					description:
-						"Whenever a new NPC is introduced, use this tool to describe the character. The NPC should have a name, and description, which will be used to generate an image. Don't introduce characters that are already in the game.",
-					parameters: z.object({
-						name: z.string(),
-						description: z.string(),
-					}),
-					execute: async ({ name, description }) => {
-						const characterId = await ctx.runMutation(api.characters.create, {
-							name,
-							description,
-							campaignId: args.campaignId,
-						})
-
-						await ctx.runMutation(api.messages.appendToolCallBlock, {
-							messageId: assistantMessageId,
-							toolName: "introduce_character",
-							parameters: { name, description },
-						})
-
-						await ctx.scheduler.runAfter(
-							0,
-							api.characters.generateImageForCharacter,
-							{
-								characterId,
-							},
-						)
-					},
-				}),
-				roll_dice: tool({
-					description:
-						"Present one or more dice to the user, and ask them to roll them. You can also add a bonus to the roll. The user will click the dice to roll them.",
-					parameters: z.object({
-						number: z.number().min(1).max(100),
-						faces: z.number().min(1).max(100),
-						bonus: z.number().min(-100).max(100),
-					}),
-				}),
-			},
-			onError: async (error) => {
-				await ctx.runMutation(api.messages.appendTextBlock, {
-					messageId: assistantMessageId,
-					text: JSON.stringify(error.error),
-				})
-			},
+		const openrouter = createOpenRouter({
+			apiKey: process.env.OPENROUTER_API_KEY,
 		})
+		const { response, textStream, usage, finishReason, toolCalls } = streamText(
+			{
+				system: prompt,
+				model: campaign.model
+					? openrouter(campaign.model)
+					: google("gemini-2.5-pro"),
+				messages: formattedMessages,
+				maxSteps: 10,
+				tools:
+					campaign.model && !campaign.model.startsWith("anthropic")
+						? undefined
+						: {
+								update_character_sheet: updateCharacterSheet(
+									ctx,
+									assistantMessageId,
+									characterSheet,
+								),
+								change_scene: changeScene(ctx, assistantMessageId),
+								introduce_character: introduceCharacter(
+									ctx,
+									assistantMessageId,
+								),
+								roll_dice: rollDice(ctx),
+							},
+				onError: async (error) => {
+					await ctx.runMutation(api.messages.appendTextBlock, {
+						messageId: assistantMessageId,
+						text: JSON.stringify(error.error),
+					})
+				},
+			},
+		)
 
 		for await (const textPart of textStream) {
 			await ctx.runMutation(api.messages.appendTextBlock, {
@@ -638,6 +655,10 @@ export const sendToLLM = internalAction({
 			},
 		})
 
+		const toolResultMessages = (await response).messages.filter(
+			(msg) => msg.role === "tool",
+		)
+
 		// We need to handle dice rolls without an execute because we don't want to feed back into the LLM,
 		// we need to wait for user input.
 		if ((await finishReason) === "tool-calls") {
@@ -650,6 +671,7 @@ export const sendToLLM = internalAction({
 						toolName: "roll_dice",
 						parameters: { number, faces, bonus },
 						result: null, // null indicates pending user interaction
+						toolCallId: toolCall.toolCallId,
 					})
 				}
 			}

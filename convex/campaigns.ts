@@ -23,17 +23,19 @@ export const addCampaign = mutation({
 	args: {
 		name: v.string(),
 		description: v.string(),
+		imagePrompt: v.string(),
+		gameSystemId: v.optional(v.id("gameSystems")),
 	},
-
 	handler: async (ctx, args) => {
 		const campaign = {
 			name: args.name,
 			description: args.description,
-			imagePrompt: "A simple cartoon style",
+			imagePrompt: args.imagePrompt,
+			gameSystemId: args.gameSystemId,
 		}
-		const id = await ctx.db.insert("campaigns", campaign)
 
-		return await ctx.db.get(id)
+		const id = await ctx.db.insert("campaigns", campaign)
+		return id
 	},
 })
 
@@ -41,12 +43,14 @@ export const update = mutation({
 	args: {
 		id: v.id("campaigns"),
 		name: v.string(),
+		description: v.string(),
 		imagePrompt: v.string(),
 		gameSystemId: v.optional(v.id("gameSystems")),
 	},
 	handler: async (ctx, args) => {
 		await ctx.db.patch(args.id, {
 			name: args.name,
+			description: args.description,
 			imagePrompt: args.imagePrompt,
 			gameSystemId: args.gameSystemId,
 		})

@@ -1,8 +1,15 @@
 NEXT
-- Moves reference
+
+- Do something different with the scene background colours
+- Automate an initial welcome message once you create a campaign
 
 OTHER STUFF
 
+- Claude + tool use is broken, it wants result messages
+- Moves reference, esp for TSL
+- BUG: <SidebarTrigger /> isn't floating, adds extra whitespace below
+- Disable text input when there's an active roll to do
+- Look into Gemini implicit caching — not sure it's being applied
 - BUG: When you use newlines in your message the ReactMarkdown component doesn't render them
 - If we're going to take JSON directly in the modal, need some friendly errors
 - Also the modal is too long with long JSON and files
@@ -11,6 +18,12 @@ OTHER STUFF
 - Drop chat messages out of the pagination so you don't have to hard refresh to go back to 10.
 - Compress older context using the summarisation action
 - Track age of memories in case that's useful for tapering their importance off over time
+
+PROMPT THINGS
+
+- It's not that reliable at introducing characters (always works when you ask if specifically though)
+- Sometimes it asks you to describe your action and then roll, but the UI kinda makes you roll first
+- Sometimes a tool call (like updating character sheet) comes at the natural end of a message, and then the new message after kind of doubles things up
 
 DONE
 
