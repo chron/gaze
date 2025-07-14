@@ -29,6 +29,29 @@ export const get = query({
 	},
 })
 
+export const sumTokens = query({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		const messages = await ctx.db
+			.query("messages")
+			.withIndex("by_campaign", (q) => q.eq("campaignId", args.campaignId))
+			.collect()
+		const tokens = messages.reduce(
+			(acc, message) => {
+				return {
+					promptTokens: acc.promptTokens + (message.usage?.promptTokens ?? 0),
+					completionTokens:
+						acc.completionTokens + (message.usage?.completionTokens ?? 0),
+				}
+			},
+			{ promptTokens: 0, completionTokens: 0 },
+		)
+		return tokens
+	},
+})
+
 export const addCampaign = mutation({
 	args: {
 		name: v.string(),

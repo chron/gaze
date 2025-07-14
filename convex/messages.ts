@@ -2,16 +2,7 @@ import { google } from "@ai-sdk/google"
 import { openai } from "@ai-sdk/openai"
 import { GoogleGenAI } from "@google/genai"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
-import {
-	type CoreAssistantMessage,
-	type CoreMessage,
-	type CoreUserMessage,
-	type FilePart,
-	embed,
-	generateText,
-	streamText,
-	tool,
-} from "ai"
+import { type CoreMessage, type FilePart, embed, streamText } from "ai"
 import { paginationOptsValidator } from "convex/server"
 import { v } from "convex/values"
 import { compact } from "../src/utils/compact"
@@ -79,20 +70,6 @@ export const paginatedList = query({
 			.withIndex("by_campaign", (q) => q.eq("campaignId", args.campaignId))
 			.order("desc")
 			.paginate(args.paginationOpts)
-	},
-})
-
-export const getLastScene = query({
-	args: {
-		campaignId: v.id("campaigns"),
-	},
-	handler: async (ctx, args) => {
-		return await ctx.db
-			.query("messages")
-			.filter((q) => q.eq(q.field("campaignId"), args.campaignId))
-			.filter((q) => q.neq(q.field("scene"), undefined))
-			.order("desc")
-			.first()
 	},
 })
 
@@ -228,21 +205,6 @@ export const appendToolCallBlock = mutation({
 					toolCallId: args.toolCallId,
 				},
 			],
-		})
-	},
-})
-
-export const addSceneToMessage = mutation({
-	args: {
-		messageId: v.id("messages"),
-		scene: v.object({
-			description: v.string(),
-			backgroundColor: v.string(),
-		}),
-	},
-	handler: async (ctx, args) => {
-		await ctx.db.patch(args.messageId, {
-			scene: args.scene,
 		})
 	},
 })

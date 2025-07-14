@@ -8,8 +8,7 @@ OTHER STUFF
 
 - Sum up tokens for a whole campaign
 - Claude + tool use is broken, it wants result messages?
-- Moves reference, esp for TSL
-- Disable text input when there's an active roll to do
+- Disable text input when there's an active roll to do (maybe?)
 - Look into Gemini implicit caching — not sure it's being applied
 - BUG: When you use newlines in your message the ReactMarkdown component doesn't render them
 - If we're going to take JSON directly in the modal, need some friendly errors
@@ -33,3 +32,4 @@ DONE
 - Allow regenerating the last message
 - Edit campaign upfront, navigate to it after creating
 - BUG: <SidebarTrigger /> isn't floating, adds extra whitespace below
+- Moves reference, esp for TSL

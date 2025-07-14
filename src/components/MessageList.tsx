@@ -1,4 +1,4 @@
-import { useAction, usePaginatedQuery } from "convex/react"
+import { useAction, usePaginatedQuery, useQuery } from "convex/react"
 import { useEffect, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
@@ -17,6 +17,7 @@ export const MessageList: React.FC<Props> = ({
 	const [summary, setSummary] = useState<string | null>(null)
 	const [isLoading, setIsLoading] = useState(false)
 	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
+	const totalTokens = useQuery(api.campaigns.sumTokens, { campaignId })
 	const {
 		results: messages,
 		isLoading: isLoadingMessages,
@@ -70,9 +71,10 @@ export const MessageList: React.FC<Props> = ({
 			))}
 
 			{usage && (
-				<div className="text-sm text-gray-500">
+				<div className="text-sm text-gray-200">
 					{usage.promptTokens} input tokens, {usage.completionTokens} output
-					tokens
+					tokens (total: {totalTokens?.promptTokens} input +{" "}
+					{totalTokens?.completionTokens} output)
 				</div>
 			)}
 
