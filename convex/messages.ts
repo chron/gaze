@@ -14,7 +14,6 @@ import {
 } from "ai"
 import { paginationOptsValidator } from "convex/server"
 import { v } from "convex/values"
-import { z } from "zod"
 import { compact } from "../src/utils/compact"
 import { api, internal } from "./_generated/api"
 import type { Doc, Id } from "./_generated/dataModel"
@@ -602,7 +601,12 @@ export const sendToLLM = internalAction({
 
 		const openrouter = createOpenRouter({
 			apiKey: process.env.OPENROUTER_API_KEY,
+			headers: {
+				// 'HTTP-Referer' once we have a public URL
+				"X-Title": "Gaze Dev",
+			},
 		})
+
 		const { textStream, usage, response } = streamText({
 			system: prompt,
 			model: campaign.model
