@@ -14,12 +14,14 @@ export const CharacterSheet: React.FC<Props> = ({ campaignId }) => {
 	}
 
 	return (
-		<div className="flex flex-col gap-2 px-4">
-			<h1 className="text-2xl font-bold">{characterSheet.name}</h1>
-			<p className="text-sm text-gray-500">{characterSheet.description}</p>
-			<pre className="text-sm text-gray-500 whitespace-pre-wrap">
-				{JSON.stringify(characterSheet.data, null, 2)}
-			</pre>
+		<div className="flex flex-col gap-2 px-4 h-full">
+			<div className="flex flex-col gap-2 rounded-lg bg-white p-4">
+				<h1 className="text-2xl font-title">{characterSheet.name}</h1>
+				<p className="text-sm text-gray-500">{characterSheet.description}</p>
+				<pre className="text-sm text-gray-500 whitespace-pre-wrap">
+					{JSON.stringify(characterSheet.data, null, 2)}
+				</pre>
+			</div>
 		</div>
 	)
 }

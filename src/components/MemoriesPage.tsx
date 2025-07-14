@@ -13,8 +13,8 @@ export const MemoriesPage: React.FC<Props> = ({ campaignId }) => {
 	})
 
 	return (
-		<div className="flex flex-col gap-4  px-4">
-			<h1 className="text-2xl font-bold">Memories</h1>
+		<div className="flex flex-col gap-4 px-4 h-full">
+			<h1 className="text-2xl font-title text-white">Memories</h1>
 			<div className="flex flex-col gap-2">
 				{memories?.map((memory) => (
 					<MemoryCard key={memory._id} memory={memory} />

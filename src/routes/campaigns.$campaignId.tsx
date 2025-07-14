@@ -24,11 +24,11 @@ function ChatPage() {
 	if (!campaign) return null
 
 	return (
-		<div className="flex w-full flex-col gap-6">
+		<div className="flex w-full flex-col gap-6 bg-blue-500">
 			<Tabs defaultValue="chat">
-				<div className="flex justify-between items-center group">
+				<div className="flex justify-between items-center group ms-10 me-2 mt-2 text-white">
 					<div className="flex items-center gap-2">
-						<h1 className="text-xl font-bold">{campaign.name}</h1>
+						<h1 className="text-3xl font-title uppercase">{campaign.name}</h1>
 
 						<div className="group-hover:block hidden">
 							<CampaignDetailsModal
@@ -42,7 +42,7 @@ function ChatPage() {
 						</div>
 					</div>
 
-					<TabsList className="mx-4 mt-2">
+					<TabsList>
 						<TabsTrigger value="chat">Chat</TabsTrigger>
 						<TabsTrigger value="character_sheet">Character sheet</TabsTrigger>
 						<TabsTrigger value="characters">Characters</TabsTrigger>

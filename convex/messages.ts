@@ -594,6 +594,12 @@ export const sendToLLM = internalAction({
 			})
 		}
 
+		// TODO: put this somewhere smart
+		const modelCanUseTools =
+			!campaign.model ||
+			campaign.model.startsWith("anthropic") ||
+			campaign.model === "moonshotai/kimi-k2"
+
 		const openrouter = createOpenRouter({
 			apiKey: process.env.OPENROUTER_API_KEY,
 		})
@@ -604,23 +610,22 @@ export const sendToLLM = internalAction({
 				: google("gemini-2.5-pro"),
 			messages: formattedMessages,
 			maxSteps: 10,
-			tools:
-				campaign.model && !campaign.model.startsWith("anthropic")
-					? undefined
-					: {
-							update_character_sheet: updateCharacterSheet(
-								ctx,
-								assistantMessageId,
-								characterSheet,
-							),
-							change_scene: changeScene(ctx, assistantMessageId),
-							introduce_character: introduceCharacter(
-								ctx,
-								assistantMessageId,
-								args.campaignId,
-							),
-							request_dice_roll: requestDiceRoll(ctx, assistantMessageId),
-						},
+			tools: modelCanUseTools
+				? {
+						update_character_sheet: updateCharacterSheet(
+							ctx,
+							assistantMessageId,
+							characterSheet,
+						),
+						change_scene: changeScene(ctx, assistantMessageId),
+						introduce_character: introduceCharacter(
+							ctx,
+							assistantMessageId,
+							args.campaignId,
+						),
+						request_dice_roll: requestDiceRoll(ctx, assistantMessageId),
+					}
+				: undefined,
 			onError: async (error) => {
 				await ctx.runMutation(api.messages.appendTextBlock, {
 					messageId: assistantMessageId,

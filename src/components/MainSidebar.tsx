@@ -1,7 +1,6 @@
 import { Link } from "@tanstack/react-router"
 import { useQuery } from "convex/react"
 import { Plus } from "lucide-react"
-import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import { CampaignDetailsModal } from "./CampaignDetailsModal"
 import {
@@ -23,14 +22,14 @@ export const MainSidebar: React.FC = () => {
 	return (
 		<>
 			<Sidebar>
-				<SidebarHeader>
+				<SidebarHeader className="bg-blue-500">
 					<div className="flex items-center gap-1">
-						<Link to="/" className="font-bold">
+						<Link to="/" className="font-title uppercase text-3xl">
 							Gaze
 						</Link>
 					</div>
 				</SidebarHeader>
-				<SidebarContent>
+				<SidebarContent className="bg-blue-500">
 					<SidebarGroup>
 						<SidebarGroupLabel>Campaigns</SidebarGroupLabel>
 

@@ -7,8 +7,12 @@ export const Route = createRootRoute({
 	component: () => (
 		<SidebarProvider>
 			<MainSidebar />
-			<SidebarTrigger />
-			<Outlet />
+
+			<main className="w-full relative">
+				<SidebarTrigger className="absolute top-3 left-2 text-white" />
+				<Outlet />
+			</main>
+
 			<TanStackRouterDevtools />
 		</SidebarProvider>
 	),
