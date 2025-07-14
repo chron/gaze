@@ -6,7 +6,6 @@ NEXT
 
 OTHER STUFF
 
-- Sum up tokens for a whole campaign
 - Claude + tool use is broken, it wants result messages?
 - Disable text input when there's an active roll to do (maybe?)
 - Look into Gemini implicit caching — not sure it's being applied
@@ -18,6 +17,7 @@ OTHER STUFF
 - Compress older context using the summarisation action
 - Track age of memories in case that's useful for tapering their importance off over time
 - CMD+K
+- Move LLM models to their own table with a bool for tool use
 
 PROMPT THINGS
 
@@ -33,3 +33,4 @@ DONE
 - Edit campaign upfront, navigate to it after creating
 - BUG: <SidebarTrigger /> isn't floating, adds extra whitespace below
 - Moves reference, esp for TSL
+- Sum up tokens for a whole campaign
