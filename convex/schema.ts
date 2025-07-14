@@ -13,6 +13,7 @@ export default defineSchema(
 					filename: v.string(),
 				}),
 			),
+			reference: v.optional(v.string()),
 		}),
 		campaigns: defineTable({
 			name: v.string(),

@@ -8,8 +8,9 @@ export const Route = createRootRoute({
 		<SidebarProvider>
 			<MainSidebar />
 
-			<main className="w-full relative">
-				<SidebarTrigger className="absolute top-3 left-2 text-white" />
+			<main className="w-full relative max-h-screen overflow-hidden">
+				<SidebarTrigger className="absolute top-3 left-2 text-white z-1" />
+
 				<Outlet />
 			</main>
 

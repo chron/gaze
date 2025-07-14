@@ -15,7 +15,17 @@ export const get = query({
 		id: v.id("campaigns"),
 	},
 	handler: async (ctx, args) => {
-		return await ctx.db.get(args.id)
+		const campaign = await ctx.db.get(args.id)
+		if (!campaign) {
+			return null
+		}
+
+		return {
+			...campaign,
+			gameSystemName: campaign.gameSystemId
+				? (await ctx.db.get(campaign.gameSystemId))?.name
+				: null,
+		}
 	},
 })
 

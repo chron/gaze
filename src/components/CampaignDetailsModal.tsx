@@ -182,6 +182,8 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 								Gemini 2.5 Flash
 							</SelectItem>
 
+							<SelectItem value="openai/gpt-4o">GPT 4o</SelectItem>
+
 							<SelectItem value="openai/o3">O3</SelectItem>
 
 							<SelectItem value="openai/o3-pro">O3 Pro</SelectItem>

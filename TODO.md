@@ -9,7 +9,6 @@ OTHER STUFF
 - Sum up tokens for a whole campaign
 - Claude + tool use is broken, it wants result messages?
 - Moves reference, esp for TSL
-- BUG: <SidebarTrigger /> isn't floating, adds extra whitespace below
 - Disable text input when there's an active roll to do
 - Look into Gemini implicit caching — not sure it's being applied
 - BUG: When you use newlines in your message the ReactMarkdown component doesn't render them
@@ -19,6 +18,7 @@ OTHER STUFF
 - Drop chat messages out of the pagination so you don't have to hard refresh to go back to 10.
 - Compress older context using the summarisation action
 - Track age of memories in case that's useful for tapering their importance off over time
+- CMD+K
 
 PROMPT THINGS
 
@@ -32,3 +32,4 @@ DONE
 - figure out if there's a better way to get the files in context
 - Allow regenerating the last message
 - Edit campaign upfront, navigate to it after creating
+- BUG: <SidebarTrigger /> isn't floating, adds extra whitespace below
