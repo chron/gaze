@@ -20,7 +20,7 @@ export default defineSchema(
 			description: v.string(),
 			imagePrompt: v.string(),
 			gameSystemId: v.optional(v.id("gameSystems")),
-			model: v.optional(v.string()),
+			model: v.string(),
 		}),
 		characterSheets: defineTable({
 			campaignId: v.id("campaigns"),

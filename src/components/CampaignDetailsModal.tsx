@@ -138,7 +138,7 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 
 				<div className="grid gap-3">
 					<Label htmlFor="model">Model</Label>
-					<Select name="model" defaultValue={campaign?.model}>
+					<Select name="model" defaultValue={campaign?.model} required>
 						<SelectTrigger>
 							<SelectValue placeholder="Select a model" />
 						</SelectTrigger>

@@ -9,6 +9,16 @@ import { CharacterIntroduction } from "./CharacterIntroduction"
 import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
 import { DiceRoll } from "./DiceRoll"
 import { Button } from "./ui/button"
+import {
+	Table,
+	TableBody,
+	TableCaption,
+	TableCell,
+	TableFooter,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "./ui/table"
 
 type Props = {
 	message: Doc<"messages">
@@ -55,6 +65,20 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 											<pre className="bg-gray-800 text-white p-2 rounded-md whitespace-pre-wrap">
 												{children}
 											</pre>
+										),
+										table: ({ children }) => <Table>{children}</Table>,
+										thead: ({ children }) => (
+											<TableHeader>{children}</TableHeader>
+										),
+										tbody: ({ children }) => <TableBody>{children}</TableBody>,
+										tfoot: ({ children }) => (
+											<TableFooter>{children}</TableFooter>
+										),
+										tr: ({ children }) => <TableRow>{children}</TableRow>,
+										th: ({ children }) => <TableHead>{children}</TableHead>,
+										td: ({ children }) => <TableCell>{children}</TableCell>,
+										caption: ({ children }) => (
+											<TableCaption>{children}</TableCaption>
 										),
 									}}
 								>

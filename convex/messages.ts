@@ -380,7 +380,9 @@ export const sendToLLM = internalAction({
 				id: campaign.gameSystemId,
 			})
 
-			if (gameSystem && !campaign.model) {
+			// The file upload stuff we're doing is google-specific so only Gemini models will have access
+			// to the uploade PDFs for now.
+			if (gameSystem && campaign.model.startsWith("google")) {
 				const ai = new GoogleGenAI({
 					apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 				})
@@ -525,9 +527,15 @@ export const sendToLLM = internalAction({
 
 		prompt += gameSystem
 			? `\n\nYou are hosting a game of ${gameSystem.name}\n\n${gameSystem.prompt}`
-			: ""
+			: "\n\nThe game will be a free-form narrative RPG without a specific ruleset."
 
-		prompt += `\n\nThe campaign is called ${campaign.name}, and the description is: ${campaign.description}`
+		if (campaign.name !== "") {
+			prompt += `\n\nThe campaign is called ${campaign.name}`
+		}
+
+		if (campaign.description !== "") {
+			prompt += `\n\nThe description of the campaign is: ${campaign.description}`
+		}
 
 		prompt += `\n\nHere is the character sheet for the player: ${JSON.stringify(
 			formattedCharacterSheet,
@@ -563,7 +571,7 @@ export const sendToLLM = internalAction({
 
 		// TODO: put this somewhere smart
 		const modelCanUseTools =
-			!campaign.model ||
+			campaign.model.startsWith("google") ||
 			campaign.model.startsWith("anthropic") ||
 			campaign.model === "moonshotai/kimi-k2"
 
@@ -577,9 +585,9 @@ export const sendToLLM = internalAction({
 
 		const { textStream, usage, response } = streamText({
 			system: prompt,
-			model: campaign.model
-				? openrouter(campaign.model)
-				: google("gemini-2.5-pro"),
+			model: campaign.model.startsWith("google")
+				? google(campaign.model.split("/")[1])
+				: openrouter(campaign.model),
 			messages: formattedMessages,
 			maxSteps: 10,
 			tools: modelCanUseTools

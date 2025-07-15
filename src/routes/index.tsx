@@ -93,9 +93,7 @@ function CampaignCard({ campaign }: { campaign: Doc<"campaigns"> }) {
 						<div className="flex items-center justify-between">
 							<span className="text-sm font-medium text-gray-500">Model:</span>
 							<span className="text-sm text-gray-900 font-mono truncate">
-								{campaign.model
-									? campaign.model.split("/")[1]
-									: "gemini-2.5-pro"}
+								{campaign.model.split("/")[1]}
 							</span>
 						</div>
 

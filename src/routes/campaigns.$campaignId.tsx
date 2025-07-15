@@ -34,11 +34,7 @@ function ChatPage() {
 					<div className="flex justify-between items-center group me-2 mt-2 ms-10 text-white">
 						<div className="flex items-center gap-2">
 							<h1 className="text-3xl font-title uppercase">{campaign.name}</h1>
-							<Badge>
-								{campaign.model
-									? campaign.model.split("/")[1]
-									: "gemini-2.5-pro"}
-							</Badge>
+							<Badge>{campaign.model.split("/")[1]}</Badge>
 
 							<div className="group-hover:block hidden">
 								<CampaignDetailsModal

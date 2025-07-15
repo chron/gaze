@@ -18,6 +18,7 @@ OTHER STUFF
 - Track age of memories in case that's useful for tapering their importance off over time
 - CMD+K
 - Move LLM models to their own table with a bool for tool use
+- A way to not have to name/describe the campaign upfront (and even AI-name it later once it's locked in?)
 
 PROMPT THINGS
 
