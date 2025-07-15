@@ -16,14 +16,6 @@ export const changeScene = (
 			backgroundColor: z.string(),
 		}),
 		execute: async ({ description, backgroundColor }, toolCall) => {
-			await ctx.runMutation(api.messages.addSceneToMessage, {
-				messageId: assistantMessageId,
-				scene: {
-					description,
-					backgroundColor,
-				},
-			})
-
 			await ctx.runMutation(api.messages.appendToolCallBlock, {
 				messageId: assistantMessageId,
 				toolName: "change_scene",

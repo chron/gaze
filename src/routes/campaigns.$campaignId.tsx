@@ -29,7 +29,7 @@ function ChatPage() {
 
 	return (
 		<>
-			<div className="flex w-full flex-col gap-6 bg-blue-500 relative">
+			<div className="flex h-full w-full flex-col gap-6 bg-blue-500 relative">
 				<Tabs defaultValue="chat">
 					<div className="flex justify-between items-center group me-2 mt-2 ms-10 text-white">
 						<div className="flex items-center gap-2">

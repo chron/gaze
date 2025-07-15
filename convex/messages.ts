@@ -2,7 +2,13 @@ import { google } from "@ai-sdk/google"
 import { openai } from "@ai-sdk/openai"
 import { GoogleGenAI } from "@google/genai"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
-import { type CoreMessage, type FilePart, embed, streamText } from "ai"
+import {
+	type CoreMessage,
+	type FilePart,
+	embed,
+	generateText,
+	streamText,
+} from "ai"
 import { paginationOptsValidator } from "convex/server"
 import { v } from "convex/values"
 import { compact } from "../src/utils/compact"
