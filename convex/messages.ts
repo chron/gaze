@@ -311,7 +311,7 @@ export const sendToLLM = internalAction({
 			campaignId: args.campaignId,
 		})
 
-		const formattedMessages: CoreMessage[] = messages.map((msg) => {
+		let formattedMessages: CoreMessage[] = messages.map((msg) => {
 			if (msg.role === "user") {
 				return {
 					role: "user",
@@ -350,9 +350,21 @@ export const sendToLLM = internalAction({
 			}
 		})
 
-		const lastMessageToolCalls = messages[messages.length - 1].content.filter(
-			(block) => block.type === "tool_call",
-		)
+		// Intro message for a new campaign
+		if (formattedMessages.length === 0) {
+			formattedMessages = [
+				{
+					role: "user",
+					content: "Hello! Let's play an RPG together!",
+				},
+			]
+		}
+
+		const lastMessageToolCalls = messages.length
+			? messages[messages.length - 1].content.filter(
+					(block) => block.type === "tool_call",
+				)
+			: []
 
 		const diceRolls = lastMessageToolCalls.filter(
 			(block) => block.toolName === "request_dice_roll",
@@ -587,6 +599,7 @@ export const sendToLLM = internalAction({
 		// TODO: put this somewhere smart
 		const modelCanUseTools =
 			campaign.model.startsWith("google") ||
+			campaign.model === "x-ai/grok-4" ||
 			campaign.model.startsWith("anthropic") ||
 			campaign.model === "moonshotai/kimi-k2"
 
@@ -638,8 +651,6 @@ export const sendToLLM = internalAction({
 				})
 			},
 			onChunk: async ({ chunk }) => {
-				console.log(chunk)
-
 				if (chunk.type === "reasoning") {
 					await ctx.runMutation(api.messages.appendReasoning, {
 						messageId: assistantMessageId,

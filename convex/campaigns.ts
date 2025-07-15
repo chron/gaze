@@ -1,5 +1,5 @@
 import { v } from "convex/values"
-import { nanoid } from "nanoid"
+import { internal } from "./_generated/api"
 import { query } from "./_generated/server"
 import { mutation } from "./_generated/server"
 
@@ -69,8 +69,13 @@ export const addCampaign = mutation({
 			model: args.model,
 		}
 
-		const id = await ctx.db.insert("campaigns", campaign)
-		return id
+		const campaignId = await ctx.db.insert("campaigns", campaign)
+
+		await ctx.scheduler.runAfter(0, internal.messages.sendToLLM, {
+			campaignId,
+		})
+
+		return campaignId
 	},
 })
 
