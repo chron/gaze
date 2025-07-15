@@ -8,7 +8,7 @@ type Props = {
 
 export const CharacterSheetUpdate: React.FC<Props> = () => {
 	return (
-		<div className="rounded-md border border-gray-200 bg-teal-600 text-white p-2">
+		<div className="rounded-md border border-gray-200 bg-blue-800 text-white p-2">
 			<h3 className="text-lg font-bold">Character Sheet Updated!</h3>
 		</div>
 	)

@@ -19,6 +19,9 @@ OTHER STUFF
 - CMD+K
 - Move LLM models to their own table with a bool for tool use
 - A way to not have to name/describe the campaign upfront (and even AI-name it later once it's locked in?)
+- If the LLM produces multiple dice-roll tool calls at once we need to wait until they're ALL rolled before reporting back (and then report them all at once)
+- Some indicator of progress when files are being uploaded
+- validation messages or errors when saving forms (form lib?)
 
 PROMPT THINGS
 

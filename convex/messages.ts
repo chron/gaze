@@ -188,6 +188,21 @@ export const appendTextBlock = mutation({
 	},
 })
 
+export const appendReasoning = mutation({
+	args: {
+		messageId: v.id("messages"),
+		text: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const message = await ctx.db.get(args.messageId)
+		if (!message) throw new Error("Message not found")
+
+		await ctx.db.patch(args.messageId, {
+			reasoning: message.reasoning ? message.reasoning + args.text : args.text,
+		})
+	},
+})
+
 export const appendToolCallBlock = mutation({
 	args: {
 		messageId: v.id("messages"),
@@ -588,6 +603,16 @@ export const sendToLLM = internalAction({
 			model: campaign.model.startsWith("google")
 				? google(campaign.model.split("/")[1])
 				: openrouter(campaign.model),
+			providerOptions: campaign.model.startsWith("google")
+				? {
+						google: {
+							thinkingConfig: {
+								thinkingBudget: 1000,
+								includeThoughts: true,
+							},
+						},
+					}
+				: undefined,
 			messages: formattedMessages,
 			maxSteps: 10,
 			tools: modelCanUseTools
@@ -612,23 +637,31 @@ export const sendToLLM = internalAction({
 					text: JSON.stringify(error.error),
 				})
 			},
+			onChunk: async ({ chunk }) => {
+				console.log(chunk)
+
+				if (chunk.type === "reasoning") {
+					await ctx.runMutation(api.messages.appendReasoning, {
+						messageId: assistantMessageId,
+						text: chunk.textDelta,
+					})
+				}
+				// This didn't work but I'm not 100% sure why
+
+				// else if (chunk.type === "text-delta") {
+				// 	await ctx.runMutation(api.messages.appendTextBlock, {
+				// 		messageId: assistantMessageId,
+				// 		text: chunk.textDelta,
+				// 	})
+				// }
+			},
 		})
 
-		try {
-			for await (const textPart of textStream) {
-				await ctx.runMutation(api.messages.appendTextBlock, {
-					messageId: assistantMessageId,
-					text: textPart,
-				})
-			}
-		} catch (error) {
-			console.error("Error streaming text", error)
-
-			if (error instanceof Error && "reason" in error) {
-				console.log("Reason", error.reason)
-			} else {
-				console.log("Unknown error", error)
-			}
+		for await (const textPart of textStream) {
+			await ctx.runMutation(api.messages.appendTextBlock, {
+				messageId: assistantMessageId,
+				text: textPart,
+			})
 		}
 
 		const usageInfo = await usage

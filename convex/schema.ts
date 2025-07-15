@@ -48,6 +48,7 @@ export default defineSchema(
 					}),
 				),
 			),
+			reasoning: v.optional(v.string()),
 			scene: v.optional(
 				v.object({
 					description: v.string(),

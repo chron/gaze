@@ -1,24 +1,18 @@
 import { useMutation } from "convex/react"
-import { RefreshCcwIcon } from "lucide-react"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
+import { Brain, RefreshCcwIcon } from "lucide-react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
 import { cn } from "../lib/utils"
 import { CharacterIntroduction } from "./CharacterIntroduction"
 import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
 import { DiceRoll } from "./DiceRoll"
+import { MessageMarkdown } from "./MessageMarkdown"
 import { Button } from "./ui/button"
 import {
-	Table,
-	TableBody,
-	TableCaption,
-	TableCell,
-	TableFooter,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "./ui/table"
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "./ui/collapsible"
 
 type Props = {
 	message: Doc<"messages">
@@ -30,6 +24,12 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 		api.messages.regenerateLastMessage,
 	)
 
+	const noTextContent =
+		message.content.length === 0 ||
+		(message.content.length === 1 &&
+			message.content[0].type === "text" &&
+			message.content[0].text.trim().length === 0)
+
 	return (
 		<div
 			className={cn(
@@ -39,51 +39,33 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 					: "self-start bg-gray-100 text-gray-800",
 			)}
 		>
-			{message.content.length === 0 ||
-			(message.content.length === 1 &&
-				message.content[0].type === "text" &&
-				message.content[0].text.trim().length === 0) ? (
+			{!message.reasoning && noTextContent ? (
 				<div className="flex flex-col gap-2 font-serif">
 					<p>...</p>
 				</div>
 			) : (
 				<div className="flex flex-col gap-2 font-serif relative group">
+					{message.reasoning && (
+						<Collapsible open={noTextContent}>
+							<CollapsibleTrigger>
+								<Button variant="outline" size="sm">
+									<Brain /> Reasoning
+								</Button>
+							</CollapsibleTrigger>
+							<CollapsibleContent>
+								<div className="p-4 rounded-md bg-gray-200 text-gray-800">
+									<MessageMarkdown>{message.reasoning}</MessageMarkdown>
+								</div>
+							</CollapsibleContent>
+						</Collapsible>
+					)}
+
 					{message.content.map((block, index) => {
 						if (block.type === "text") {
 							return (
-								<ReactMarkdown
-									key={`${message._id}-text-${index}`}
-									remarkPlugins={[remarkGfm]}
-									components={{
-										h1: ({ children }) => (
-											<h1 className="text-xl font-bold">{children}</h1>
-										),
-										h2: ({ children }) => (
-											<h2 className="font-bold">{children}</h2>
-										),
-										pre: ({ children }) => (
-											<pre className="bg-gray-800 text-white p-2 rounded-md whitespace-pre-wrap">
-												{children}
-											</pre>
-										),
-										table: ({ children }) => <Table>{children}</Table>,
-										thead: ({ children }) => (
-											<TableHeader>{children}</TableHeader>
-										),
-										tbody: ({ children }) => <TableBody>{children}</TableBody>,
-										tfoot: ({ children }) => (
-											<TableFooter>{children}</TableFooter>
-										),
-										tr: ({ children }) => <TableRow>{children}</TableRow>,
-										th: ({ children }) => <TableHead>{children}</TableHead>,
-										td: ({ children }) => <TableCell>{children}</TableCell>,
-										caption: ({ children }) => (
-											<TableCaption>{children}</TableCaption>
-										),
-									}}
-								>
+								<MessageMarkdown key={`${message._id}-text-${index}`}>
 									{block.text}
-								</ReactMarkdown>
+								</MessageMarkdown>
 							)
 						}
 
@@ -150,13 +132,12 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 
 const SceneChange = ({
 	description,
-	backgroundColor,
 }: {
 	description: string
 	backgroundColor: string
 }) => {
 	return (
-		<div className="px-4 py-2 rounded-md" style={{ backgroundColor }}>
+		<div className="px-4 py-2 rounded-md bg-blue-800 text-white">
 			<p>{description}</p>
 		</div>
 	)
