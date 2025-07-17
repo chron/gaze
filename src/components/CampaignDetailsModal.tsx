@@ -144,8 +144,8 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 						</SelectTrigger>
 
 						<SelectContent>
-							<SelectItem value="moonshotai/kimi-k2">
-								Moonshot AI Kimi K2
+							<SelectItem value="moonshotai/kimi-k2-instruct">
+								Moonshot AI Kimi K2 (Groq)
 							</SelectItem>
 
 							<SelectItem value="cognitivecomputations/dolphin3.0-r1-mistral-24b:free">

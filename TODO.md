@@ -24,6 +24,8 @@ OTHER STUFF
 - validation messages or errors when saving forms (form lib?)
 - nested list formatting is still a bit weird
 - Scrape the content at https://charsmith.com/wildsea-compendium to make a Wildsea doc?
+- Add options, including whether reasoning shows collapsed by default (or hidden completely)
+- Also maybe turning reasoning on and off per model or setting limits
 
 PROMPT THINGS
 

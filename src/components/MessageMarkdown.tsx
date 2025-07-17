@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { cn } from "../lib/utils"
 import {
 	Table,
 	TableBody,
@@ -30,6 +31,18 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 						{children}
 					</pre>
 				),
+				code: ({ children, className }) => {
+					return (
+						<code
+							className={cn(
+								className?.includes("language-error") && "text-red-400",
+								"p-1 rounded-md",
+							)}
+						>
+							{children}
+						</code>
+					)
+				},
 				table: ({ children }) => <Table>{children}</Table>,
 				thead: ({ children }) => <TableHeader>{children}</TableHeader>,
 				tbody: ({ children }) => <TableBody>{children}</TableBody>,

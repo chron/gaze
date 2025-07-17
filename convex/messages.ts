@@ -1,4 +1,5 @@
 import { google } from "@ai-sdk/google"
+import { groq } from "@ai-sdk/groq"
 import { openai } from "@ai-sdk/openai"
 import { GoogleGenAI } from "@google/genai"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
@@ -601,7 +602,7 @@ export const sendToLLM = internalAction({
 			campaign.model.startsWith("google") ||
 			campaign.model === "x-ai/grok-4" ||
 			campaign.model.startsWith("anthropic") ||
-			campaign.model === "moonshotai/kimi-k2"
+			campaign.model.startsWith("moonshotai")
 
 		const openrouter = createOpenRouter({
 			apiKey: process.env.OPENROUTER_API_KEY,
@@ -615,7 +616,9 @@ export const sendToLLM = internalAction({
 			system: prompt,
 			model: campaign.model.startsWith("google")
 				? google(campaign.model.split("/")[1])
-				: openrouter(campaign.model),
+				: campaign.model.startsWith("moonshotai")
+					? groq(campaign.model)
+					: openrouter(campaign.model),
 			providerOptions: campaign.model.startsWith("google")
 				? {
 						google: {
@@ -647,7 +650,7 @@ export const sendToLLM = internalAction({
 			onError: async (error) => {
 				await ctx.runMutation(api.messages.appendTextBlock, {
 					messageId: assistantMessageId,
-					text: JSON.stringify(error.error),
+					text: `\n\n\`\`\`\error n${JSON.stringify(error.error, null, 2)}\n\`\`\``,
 				})
 			},
 			onChunk: async ({ chunk }) => {
