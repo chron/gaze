@@ -19,6 +19,7 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 		<ReactMarkdown
 			remarkPlugins={[remarkGfm]}
 			components={{
+				p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
 				h1: ({ children }) => (
 					<h1 className="text-2xl font-bold">{children}</h1>
 				),
@@ -42,6 +43,9 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 				),
 				ul: ({ children }) => (
 					<ul className="list-disc pl-4 list-inside">{children}</ul>
+				),
+				li: ({ children }) => (
+					<li className="[&>p]:inline [&>p]:m-0 mb-1">{children}</li>
 				),
 				blockquote: ({ children }) => (
 					<blockquote className="border-l-4 border-gray-300 bg-gray-200 p-4 pl-4">

@@ -41,19 +41,19 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 		>
 			{!message.reasoning && noTextContent ? (
 				<div className="flex flex-col gap-2 font-serif">
-					<p>...</p>
+					<p className="animate-pulse text-xl">...</p>
 				</div>
 			) : (
-				<div className="flex flex-col gap-2 font-serif relative group">
+				<div className="flex flex-col font-serif relative group">
 					{message.reasoning && (
-						<Collapsible open={noTextContent}>
+						<Collapsible defaultOpen={noTextContent}>
 							<CollapsibleTrigger>
-								<Button variant="outline" size="sm">
+								<Button variant="outline" size="sm" className="mb-2">
 									<Brain /> Reasoning
 								</Button>
 							</CollapsibleTrigger>
 							<CollapsibleContent>
-								<div className="p-4 rounded-md bg-gray-200 text-gray-800">
+								<div className="p-4 rounded-md bg-gray-200 text-gray-800 mb-4">
 									<MessageMarkdown>{message.reasoning}</MessageMarkdown>
 								</div>
 							</CollapsibleContent>

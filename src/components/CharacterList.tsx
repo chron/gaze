@@ -14,7 +14,7 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 	})
 
 	if (characters === undefined) {
-		return <div>Loading...</div>
+		return null
 	}
 
 	return (

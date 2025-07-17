@@ -47,10 +47,16 @@ export const MessageList: React.FC<Props> = ({
 	const reversedMessages = [...(messages ?? [])]
 	reversedMessages.reverse()
 
+	if (isLoadingMessages) {
+		return (
+			<div className="flex justify-center items-center w-full h-full">
+				<div className="text-8xl font-title text-white animate-pulse">GAZE</div>
+			</div>
+		)
+	}
+
 	return (
 		<div className="flex-1 flex flex-col justify-end gap-4 min-h-0 py-4 px-4">
-			{isLoadingMessages && <div>Loading...</div>}
-
 			{status === "CanLoadMore" && (
 				<Button
 					variant="outline"

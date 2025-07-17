@@ -22,6 +22,8 @@ OTHER STUFF
 - If the LLM produces multiple dice-roll tool calls at once we need to wait until they're ALL rolled before reporting back (and then report them all at once)
 - Some indicator of progress when files are being uploaded
 - validation messages or errors when saving forms (form lib?)
+- nested list formatting is still a bit weird
+- Scrape the content at https://charsmith.com/wildsea-compendium to make a Wildsea doc?
 
 PROMPT THINGS
 

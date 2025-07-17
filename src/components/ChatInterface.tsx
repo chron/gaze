@@ -14,24 +14,6 @@ type Props = {
 export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 	const messagePanelRef = useRef<HTMLDivElement>(null)
 	const campaign = useQuery(api.campaigns.get, { id: campaignId })
-	const addUserMessage = useMutation(api.messages.addUserMessage)
-
-	const [isLoading, setIsLoading] = useState(false)
-	const [input, setInput] = useState("")
-
-	const handleSend = async () => {
-		if (!campaign) throw new Error("No campaign found")
-
-		setIsLoading(true)
-		const newMessage = {
-			campaignId: campaign._id,
-			content: input,
-		} as const
-
-		setInput("")
-		await addUserMessage(newMessage)
-		setIsLoading(false)
-	}
 
 	if (campaign === undefined) {
 		return null
@@ -52,35 +34,62 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 
 			<div className="flex items-end gap-4 p-4 relative">
 				<CharacterList campaignId={campaign._id} />
-				<Textarea
-					autoFocus
-					rows={1}
-					value={input}
-					onChange={(e) => setInput(e.target.value)}
-					placeholder="Enter your message"
-					className="flex-grow py-[7px]"
-					onKeyDown={(e) => {
-						if (
-							e.key === "Enter" &&
-							!isLoading &&
-							input.length > 0 &&
-							!e.shiftKey
-						) {
-							e.preventDefault()
-							handleSend()
-						}
-					}}
-				/>
-
-				<Button
-					variant="outline"
-					onClick={handleSend}
-					isLoading={isLoading}
-					disabled={isLoading || input.length === 0}
-				>
-					Send
-				</Button>
+				<ChatInput campaignId={campaign._id} />
 			</div>
 		</div>
+	)
+}
+
+const ChatInput: React.FC<{ campaignId: Id<"campaigns"> }> = ({
+	campaignId,
+}) => {
+	const addUserMessage = useMutation(api.messages.addUserMessage)
+
+	const [isLoading, setIsLoading] = useState(false)
+	const [input, setInput] = useState("")
+
+	const handleSend = async () => {
+		setIsLoading(true)
+		const newMessage = {
+			campaignId: campaignId,
+			content: input,
+		} as const
+
+		setInput("")
+		await addUserMessage(newMessage)
+		setIsLoading(false)
+	}
+
+	return (
+		<>
+			<Textarea
+				autoFocus
+				rows={1}
+				value={input}
+				onChange={(e) => setInput(e.target.value)}
+				placeholder="Enter your message"
+				className="flex-grow py-[7px]"
+				onKeyDown={(e) => {
+					if (
+						e.key === "Enter" &&
+						!isLoading &&
+						input.length > 0 &&
+						!e.shiftKey
+					) {
+						e.preventDefault()
+						handleSend()
+					}
+				}}
+			/>
+
+			<Button
+				variant="outline"
+				onClick={handleSend}
+				isLoading={isLoading}
+				disabled={isLoading || input.length === 0}
+			>
+				Send
+			</Button>
+		</>
 	)
 }
