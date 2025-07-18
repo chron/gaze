@@ -2,6 +2,7 @@ import type { PropsWithChildren } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { cn } from "../lib/utils"
+import { Wiggly } from "./Wiggly"
 import {
 	Table,
 	TableBody,
@@ -68,6 +69,11 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 					<blockquote className="border-l-4 border-gray-300 bg-gray-200 p-4 pl-4">
 						{children}
 					</blockquote>
+				),
+				del: ({ children }) => (
+					<Wiggly>
+						{typeof children === "string" ? children : "(non-string children)"}
+					</Wiggly>
 				),
 			}}
 		>
