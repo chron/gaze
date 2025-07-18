@@ -13,7 +13,7 @@ export const MemoriesPage: React.FC<Props> = ({ campaignId }) => {
 	})
 
 	return (
-		<div className="flex flex-col gap-4 px-4 h-full">
+		<div className="flex flex-col gap-4 px-4 pb-4 h-full max-h-[calc(100dvh-52px)] overflow-y-auto">
 			<h1 className="text-2xl font-title text-white">Memories</h1>
 			<div className="flex flex-col gap-2">
 				{memories?.map((memory) => (

@@ -1,11 +1,11 @@
 NEXT
 
-- Do something different with the scene background colours
 - Automate an initial welcome message once you create a campaign
-- Show reasoning text for models that provide it
+- Try out having the LLM plan a few steps ahead and store it secretly
 
 OTHER STUFF
 
+- Do something different with the scene background colours
 - Claude + tool use is broken, it wants result messages?
 - Disable text input when there's an active roll to do (maybe?)
 - Look into Gemini implicit caching — not sure it's being applied
@@ -26,6 +26,8 @@ OTHER STUFF
 - Scrape the content at https://charsmith.com/wildsea-compendium to make a Wildsea doc?
 - Add options, including whether reasoning shows collapsed by default (or hidden completely)
 - Also maybe turning reasoning on and off per model or setting limits
+- Look into the DB bandwidth. Not sure if it's just HMR that's refreshing stuff too much?
+  - maybe when streaming we need to not get the whole paginated list endpoint?
 
 PROMPT THINGS
 
@@ -42,3 +44,4 @@ DONE
 - BUG: <SidebarTrigger /> isn't floating, adds extra whitespace below
 - Moves reference, esp for TSL
 - Sum up tokens for a whole campaign
+- Show reasoning text for models that provide it

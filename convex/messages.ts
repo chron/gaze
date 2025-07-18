@@ -618,17 +618,20 @@ export const sendToLLM = internalAction({
 				? google(campaign.model.split("/")[1])
 				: campaign.model.startsWith("moonshotai")
 					? groq(campaign.model)
-					: openrouter(campaign.model),
-			providerOptions: campaign.model.startsWith("google")
-				? {
-						google: {
-							thinkingConfig: {
-								thinkingBudget: 1000,
-								includeThoughts: true,
-							},
-						},
-					}
-				: undefined,
+					: openrouter(campaign.model, {}),
+			providerOptions: {
+				google: {
+					thinkingConfig: {
+						thinkingBudget: 1000,
+						includeThoughts: true,
+					},
+				},
+				openrouter: {
+					reasoning: {
+						max_tokens: 1000,
+					},
+				},
+			},
 			messages: formattedMessages,
 			maxSteps: 10,
 			tools: modelCanUseTools

@@ -22,10 +22,14 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 			components={{
 				p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
 				h1: ({ children }) => (
-					<h1 className="text-2xl font-bold">{children}</h1>
+					<h1 className="text-2xl font-bold mt-2 mb-2">{children}</h1>
 				),
-				h2: ({ children }) => <h2 className="text-xl font-bold">{children}</h2>,
-				h3: ({ children }) => <h3 className="text-lg font-bold">{children}</h3>,
+				h2: ({ children }) => (
+					<h2 className="text-xl font-bold mb-1">{children}</h2>
+				),
+				h3: ({ children }) => (
+					<h3 className="text-lg font-bold mb-1">{children}</h3>
+				),
 				pre: ({ children }) => (
 					<pre className="bg-gray-800 text-white p-2 rounded-md whitespace-pre-wrap">
 						{children}
@@ -52,10 +56,10 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 				td: ({ children }) => <TableCell>{children}</TableCell>,
 				caption: ({ children }) => <TableCaption>{children}</TableCaption>,
 				ol: ({ children }) => (
-					<ol className="list-decimal pl-4 list-inside">{children}</ol>
+					<ol className="list-decimal pl-4 list-inside mb-4">{children}</ol>
 				),
 				ul: ({ children }) => (
-					<ul className="list-disc pl-4 list-inside">{children}</ul>
+					<ul className="list-disc pl-4 list-inside mb-4">{children}</ul>
 				),
 				li: ({ children }) => (
 					<li className="[&>p]:inline [&>p]:m-0 mb-1">{children}</li>
