@@ -66,7 +66,7 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 					<li className="[&>p]:inline [&>p]:m-0 mb-1">{children}</li>
 				),
 				blockquote: ({ children }) => (
-					<blockquote className="border-l-4 border-gray-300 bg-gray-200 p-4 pl-4">
+					<blockquote className="border-gray-300 bg-gray-700 rounded-lg text-gray-200 p-4 pl-4 mb-2">
 						{children}
 					</blockquote>
 				),

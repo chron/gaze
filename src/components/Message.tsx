@@ -137,7 +137,7 @@ const SceneChange = ({
 	backgroundColor: string
 }) => {
 	return (
-		<div className="px-4 py-2 rounded-md bg-blue-800 text-white">
+		<div className="px-4 py-2 rounded-md bg-blue-800 text-white mt-2 mb-4">
 			<p>{description}</p>
 		</div>
 	)

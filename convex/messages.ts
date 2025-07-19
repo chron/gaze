@@ -1,3 +1,4 @@
+import { anthropic } from "@ai-sdk/anthropic"
 import { google } from "@ai-sdk/google"
 import { groq } from "@ai-sdk/groq"
 import { openai } from "@ai-sdk/openai"
@@ -616,20 +617,25 @@ export const sendToLLM = internalAction({
 			system: prompt,
 			model: campaign.model.startsWith("google")
 				? google(campaign.model.split("/")[1])
-				: campaign.model.startsWith("moonshotai")
-					? groq(campaign.model)
-					: openrouter(campaign.model, {}),
+				: campaign.model.startsWith("anthropic")
+					? anthropic("claude-4-sonnet-20250514") // Temporarily hardcoded for testing
+					: campaign.model.startsWith("moonshotai")
+						? groq(campaign.model)
+						: openrouter(campaign.model, {}),
 			providerOptions: {
 				google: {
 					thinkingConfig: {
-						thinkingBudget: 1000,
+						thinkingBudget: 1024,
 						includeThoughts: true,
 					},
 				},
 				openrouter: {
 					reasoning: {
-						max_tokens: 1000,
+						max_tokens: 1024,
 					},
+				},
+				anthropic: {
+					thinking: { type: "enabled", budgetTokens: 1024 },
 				},
 			},
 			messages: formattedMessages,

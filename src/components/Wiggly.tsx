@@ -8,7 +8,7 @@ export const Wiggly: React.FC<Props> = ({ children }) => {
 	const offset = -Math.random()
 
 	return (
-		<span className="inline-flex gap-[1px]">
+		<span className="inline-flex gap-[2px]">
 			{children.split("").map((char, index) => (
 				<motion.span
 					key={`${index}-${char}`}

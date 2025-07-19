@@ -5,8 +5,8 @@ NEXT
 
 OTHER STUFF
 
-- Do something different with the scene background colours
 - Claude + tool use is broken, it wants result messages?
+- Do something different with the scene background colours (and scenes in general)
 - Disable text input when there's an active roll to do (maybe?)
 - Look into Gemini implicit caching — not sure it's being applied
 - BUG: When you use newlines in your message the ReactMarkdown component doesn't render them
@@ -22,7 +22,6 @@ OTHER STUFF
 - If the LLM produces multiple dice-roll tool calls at once we need to wait until they're ALL rolled before reporting back (and then report them all at once)
 - Some indicator of progress when files are being uploaded
 - validation messages or errors when saving forms (form lib?)
-- nested list formatting is still a bit weird
 - Scrape the content at https://charsmith.com/wildsea-compendium to make a Wildsea doc?
 - Add options, including whether reasoning shows collapsed by default (or hidden completely)
 - Also maybe turning reasoning on and off per model or setting limits
@@ -34,6 +33,8 @@ PROMPT THINGS
 - It's not that reliable at introducing characters (always works when you ask if specifically though)
 - Sometimes it asks you to describe your action and then roll, but the UI kinda makes you roll first
 - Sometimes a tool call (like updating character sheet) comes at the natural end of a message, and then the new message after kind of doubles things up
+- model specific tweaks maybe
+  - Claude uses A/B/C lists instead of markdown lists which don't render properly
 
 DONE
 
@@ -45,3 +46,4 @@ DONE
 - Moves reference, esp for TSL
 - Sum up tokens for a whole campaign
 - Show reasoning text for models that provide it
+- nested list formatting is still a bit weird
