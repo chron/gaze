@@ -71,9 +71,9 @@ export const addCampaign = mutation({
 
 		const campaignId = await ctx.db.insert("campaigns", campaign)
 
-		await ctx.scheduler.runAfter(0, internal.messages.sendToLLM, {
-			campaignId,
-		})
+		// await ctx.scheduler.runAfter(0, internal.messages.sendToLLM, {
+		// 	campaignId,
+		// })
 
 		return campaignId
 	},

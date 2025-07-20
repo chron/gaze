@@ -52,7 +52,9 @@ export default defineSchema(
 			scene: v.optional(
 				v.object({
 					description: v.string(),
-					backgroundColor: v.string(),
+					backgroundColor: v.optional(v.string()),
+					image: v.optional(v.id("_storage")),
+					prompt: v.optional(v.string()),
 				}),
 			),
 			usage: v.optional(

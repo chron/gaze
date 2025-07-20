@@ -10,17 +10,23 @@ export const changeScene = (
 ) =>
 	tool({
 		description:
-			"Whenever the scene changes, use this tool to describe the new scene. The background color should be a hex code that can be used with black text in the main chat interface. The description will be used to create an image.",
+			"Whenever the scene changes, use this tool to describe the new scene. The description will be shown to the player, and the prompt will be given to an AI to generate an image.",
 		parameters: z.object({
 			description: z.string(),
-			backgroundColor: z.string(),
+			prompt: z.string(),
 		}),
-		execute: async ({ description, backgroundColor }, toolCall) => {
+		execute: async ({ description, prompt }, toolCall) => {
 			await ctx.runMutation(api.messages.appendToolCallBlock, {
 				messageId: assistantMessageId,
 				toolName: "change_scene",
-				parameters: { description, backgroundColor },
+				parameters: { description, prompt },
 				toolCallId: toolCall.toolCallId,
+			})
+
+			await ctx.scheduler.runAfter(0, api.messages.generateSceneImage, {
+				messageId: assistantMessageId,
+				description,
+				prompt,
 			})
 		},
 	})

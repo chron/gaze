@@ -8,6 +8,7 @@ import {
 	type CoreMessage,
 	type FilePart,
 	embed,
+	experimental_generateImage as generateImage,
 	generateText,
 	streamText,
 } from "ai"
@@ -60,10 +61,26 @@ export const list = query({
 		campaignId: v.id("campaigns"),
 	},
 	handler: async (ctx, args) => {
-		return await ctx.db
+		const messages = await ctx.db
 			.query("messages")
 			.withIndex("by_campaign", (q) => q.eq("campaignId", args.campaignId))
 			.collect()
+
+		// Add scene image URLs
+		return await Promise.all(
+			messages.map(async (message) => {
+				if (message.scene?.image) {
+					return {
+						...message,
+						scene: {
+							...message.scene,
+							imageUrl: await ctx.storage.getUrl(message.scene.image),
+						},
+					}
+				}
+				return message
+			}),
+		)
 	},
 })
 
@@ -73,11 +90,32 @@ export const paginatedList = query({
 		paginationOpts: paginationOptsValidator,
 	},
 	handler: async (ctx, args) => {
-		return await ctx.db
+		const result = await ctx.db
 			.query("messages")
 			.withIndex("by_campaign", (q) => q.eq("campaignId", args.campaignId))
 			.order("desc")
 			.paginate(args.paginationOpts)
+
+		// Add scene image URLs
+		const page = await Promise.all(
+			result.page.map(async (message) => {
+				if (message.scene?.image) {
+					return {
+						...message,
+						scene: {
+							...message.scene,
+							imageUrl: await ctx.storage.getUrl(message.scene.image),
+						},
+					}
+				}
+				return message
+			}),
+		)
+
+		return {
+			...result,
+			page,
+		}
 	},
 })
 
@@ -743,5 +781,97 @@ export const summarizeChatHistory = action({
 		})
 
 		return text
+	},
+})
+
+export const storeSceneImage = mutation({
+	args: {
+		messageId: v.id("messages"),
+		description: v.string(),
+		prompt: v.string(),
+		storageId: v.id("_storage"),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.db.patch(args.messageId, {
+			scene: {
+				description: args.description,
+				prompt: args.prompt,
+				image: args.storageId,
+			},
+		})
+	},
+})
+
+export const generateSceneImage = action({
+	args: {
+		messageId: v.id("messages"),
+		description: v.string(),
+		prompt: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const message = await ctx.runQuery(api.messages.get, {
+			messageId: args.messageId,
+		})
+
+		if (!message) throw new Error("Message not found")
+
+		const campaign = await ctx.runQuery(api.campaigns.get, {
+			id: message.campaignId,
+		})
+
+		if (!campaign) throw new Error("Campaign not found")
+
+		const prompt = `
+      Generate an image of a scene. ${args.prompt}.
+
+      This should be a landscape or environment scene, not a character portrait.
+      The image should be wide format. Don't include any text.
+
+      The style of the image should be ${campaign.imagePrompt}.
+    `
+
+		const result = await generateImage({
+			model: openai.image("gpt-image-1"),
+			providerOptions: {
+				openai: { quality: "medium" },
+			},
+			aspectRatio: "16:9",
+			prompt,
+		})
+
+		for (const file of result.images) {
+			if (file.mimeType.startsWith("image/")) {
+				const blob = new Blob([file.uint8Array], { type: file.mimeType })
+				const storageId = await ctx.storage.store(blob)
+				await ctx.runMutation(api.messages.storeSceneImage, {
+					messageId: args.messageId,
+					description: args.description,
+					prompt: args.prompt,
+					storageId,
+				})
+			}
+		}
+	},
+})
+
+export const regenerateSceneImage = action({
+	args: {
+		messageId: v.id("messages"),
+	},
+	handler: async (ctx, args) => {
+		const message = await ctx.runQuery(api.messages.get, {
+			messageId: args.messageId,
+		})
+
+		if (!message?.scene) {
+			throw new Error("Message or scene not found")
+		}
+
+		await ctx.runAction(api.messages.generateSceneImage, {
+			messageId: args.messageId,
+			description: message.scene.description,
+			// Old scenes don't have prompt, so this is just a fallback - won't happen going forward
+			prompt: message.scene.prompt ?? message.scene.description,
+		})
 	},
 })

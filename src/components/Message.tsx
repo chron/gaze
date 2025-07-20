@@ -1,7 +1,8 @@
-import { useMutation } from "convex/react"
+import { useAction, useMutation } from "convex/react"
 import { Brain, RefreshCcwIcon } from "lucide-react"
+import { useEffect, useState } from "react"
 import { api } from "../../convex/_generated/api"
-import type { Doc } from "../../convex/_generated/dataModel"
+import type { Doc, Id } from "../../convex/_generated/dataModel"
 import { cn } from "../lib/utils"
 import { CharacterIntroduction } from "./CharacterIntroduction"
 import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
@@ -20,6 +21,7 @@ type Props = {
 }
 
 export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
+	const [showReasoning, setShowReasoning] = useState(true)
 	const regenerateLastMessageMutation = useMutation(
 		api.messages.regenerateLastMessage,
 	)
@@ -29,6 +31,12 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 		(message.content.length === 1 &&
 			message.content[0].type === "text" &&
 			message.content[0].text.trim().length === 0)
+
+	useEffect(() => {
+		if (!noTextContent) {
+			setShowReasoning(false)
+		}
+	}, [noTextContent])
 
 	return (
 		<div
@@ -46,14 +54,19 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 			) : (
 				<div className="flex flex-col font-serif relative group">
 					{message.reasoning && (
-						<Collapsible defaultOpen={noTextContent}>
+						<Collapsible open={showReasoning}>
 							<CollapsibleTrigger>
-								<Button variant="outline" size="sm" className="mb-2">
+								<Button
+									variant="outline"
+									size="sm"
+									className="mb-2"
+									onClick={() => setShowReasoning((v) => !v)}
+								>
 									<Brain /> Reasoning
 								</Button>
 							</CollapsibleTrigger>
 							<CollapsibleContent>
-								<div className="p-4 rounded-md bg-gray-200 text-gray-800 mb-4">
+								<div className="p-4 rounded-md bg-blue-200 text-gray-800 mb-4">
 									<MessageMarkdown>{message.reasoning}</MessageMarkdown>
 								</div>
 							</CollapsibleContent>
@@ -74,8 +87,8 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 								return (
 									<SceneChange
 										key={`${message._id}-scene-${index}`}
-										description={block.parameters.description}
-										backgroundColor={block.parameters.backgroundColor}
+										messageId={message._id}
+										scene={message.scene}
 									/>
 								)
 							}
@@ -131,14 +144,50 @@ export const Message: React.FC<Props> = ({ message, isLastMessage }) => {
 }
 
 const SceneChange = ({
-	description,
+	messageId,
+	scene,
 }: {
+	messageId: Id<"messages">
 	description: string
-	backgroundColor: string
+	prompt: string
+	scene?: {
+		description: string
+		prompt?: string
+		image?: string
+		imageUrl?: string
+	}
 }) => {
+	const regenerateImage = useAction(api.messages.regenerateSceneImage)
+
+	if (!scene) {
+		return null
+	}
+
+	const handleRegenerate = () => {
+		regenerateImage({ messageId })
+	}
+
 	return (
-		<div className="px-4 py-2 rounded-md bg-blue-800 text-white mt-2 mb-4">
-			<p>{description}</p>
+		<div className="relative group my-4">
+			{scene.imageUrl && (
+				<img
+					src={scene.imageUrl}
+					alt={scene.description}
+					className="h-full w-full object-contain rounded-md"
+				/>
+			)}
+			<div className="absolute bottom-0 right-0 m-4 bg-black/50 rounded-md p-2 hidden group-hover:block">
+				<p className="text-white text-sm">{scene.description}</p>
+			</div>
+
+			<Button
+				onClick={handleRegenerate}
+				className="absolute top-2 right-2 hidden group-hover:block"
+				aria-label="Click to regenerate scene image"
+				title="Click to regenerate scene image"
+			>
+				<RefreshCcwIcon />
+			</Button>
 		</div>
 	)
 }

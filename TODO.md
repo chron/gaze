@@ -27,6 +27,7 @@ OTHER STUFF
 - Also maybe turning reasoning on and off per model or setting limits
 - Look into the DB bandwidth. Not sure if it's just HMR that's refreshing stuff too much?
   - maybe when streaming we need to not get the whole paginated list endpoint?
+- Try out other image gen (Higgsfield? Midjourney? Gemini?), and add images for scenes maybe?
 
 PROMPT THINGS
 
@@ -47,3 +48,4 @@ DONE
 - Sum up tokens for a whole campaign
 - Show reasoning text for models that provide it
 - nested list formatting is still a bit weird
+- Go back to the gap-based spacing for messages, margins are too annoying
