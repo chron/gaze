@@ -1,6 +1,6 @@
 import { google } from "@ai-sdk/google"
 import { openai } from "@ai-sdk/openai"
-import { embed, generateText, tool } from "ai"
+import { type CoreMessage, embed, generateText, tool } from "ai"
 import { v } from "convex/values"
 import z from "zod"
 import { api, internal } from "./_generated/api"
@@ -84,18 +84,26 @@ export const scanForNewMemories = internalAction({
 			ids: args.messageIds,
 		})
 
-		const formattedMessages = messages.map((message) => ({
-			role: message.role,
-			content: message.content
-				.map((block) => {
-					if (block.type === "text") {
-						return block.text
-					}
+		const formattedMessages = messages
+			.map((message) => {
+				if (message.role === "tool") {
+					return null
+				}
 
-					return ""
-				})
-				.join(""),
-		}))
+				return {
+					role: message.role,
+					content: message.content
+						.map((block) => {
+							if (block.type === "text") {
+								return block.text
+							}
+
+							return ""
+						})
+						.join(""),
+				}
+			})
+			.filter((message) => message !== null)
 
 		// See if any memories are worth saving based on the content
 		const { toolCalls } = await generateText({

@@ -23,6 +23,9 @@ dependencies:
   '@convex-dev/migrations':
     specifier: ^0.2.9
     version: 0.2.9(convex@1.24.8)
+  '@convex-dev/persistent-text-streaming':
+    specifier: ^0.2.3
+    version: 0.2.3(convex@1.24.8)(react-dom@19.1.0)(react@19.1.0)
   '@google/genai':
     specifier: ^1.9.0
     version: 1.9.0
@@ -756,6 +759,18 @@ packages:
       convex: ~1.16.5 || >=1.17.0 <1.35.0
     dependencies:
       convex: 1.24.8(react@19.1.0)
+    dev: false
+
+  /@convex-dev/persistent-text-streaming@0.2.3(convex@1.24.8)(react-dom@19.1.0)(react@19.1.0):
+    resolution: {integrity: sha512-v6by8JB2lXyd+ZBH0I5TOsd98zk+tvmfPt6ofRuxC2GtNkqUpy6F7CdijRaXiGW+ozlUiQyRsBzhvhTUwVUAHg==}
+    peerDependencies:
+      convex: '>=1.23.0 <1.35.0'
+      react: ~18.3.1 || ^19.0.0
+      react-dom: ~18.3.1 || ^19.0.0
+    dependencies:
+      convex: 1.24.8(react@19.1.0)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
     dev: false
 
   /@esbuild/aix-ppc64@0.25.2:

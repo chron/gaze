@@ -29,14 +29,6 @@ export const updateCharacterSheet = (
 				data,
 			})
 
-			await ctx.runMutation(api.messages.appendToolCallBlock, {
-				messageId: assistantMessageId,
-				toolName: "update_character_sheet",
-				parameters: { name, description, data },
-				result: "Successfully updated character sheet",
-				toolCallId: toolCall.toolCallId,
-			})
-
 			return `Character sheet updated: ${name}, ${JSON.stringify(data)}`
 		},
 	})

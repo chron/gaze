@@ -1,12 +1,20 @@
 NEXT
 
+- Fix up data (or reset DB?) so we can turn `schemaValidation: true` back on
 - Automate an initial welcome message once you create a campaign
 - Try out having the LLM plan a few steps ahead and store it secretly
+- New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
+
+TIDY UP AFTER STREAMING REFACTOR
+
+- disable dice roll buttons after usage
+- maybe don't send old reasoning to LLM on every message?
+- fix the autoscroll behaviour (add back a check for manual scroll thing?)
+- re-add the summary thing
 
 OTHER STUFF
 
-- Claude + tool use is broken, it wants result messages?
-- Do something different with the scene background colours (and scenes in general)
+- Claude + tool use is broken, it wants result messages for ALL tool calls
 - Disable text input when there's an active roll to do (maybe?)
 - Look into Gemini implicit caching — not sure it's being applied
 - BUG: When you use newlines in your message the ReactMarkdown component doesn't render them
@@ -19,7 +27,6 @@ OTHER STUFF
 - CMD+K
 - Move LLM models to their own table with a bool for tool use
 - A way to not have to name/describe the campaign upfront (and even AI-name it later once it's locked in?)
-- If the LLM produces multiple dice-roll tool calls at once we need to wait until they're ALL rolled before reporting back (and then report them all at once)
 - Some indicator of progress when files are being uploaded
 - validation messages or errors when saving forms (form lib?)
 - Scrape the content at https://charsmith.com/wildsea-compendium to make a Wildsea doc?
@@ -28,15 +35,16 @@ OTHER STUFF
 - Look into the DB bandwidth. Not sure if it's just HMR that's refreshing stuff too much?
   - maybe when streaming we need to not get the whole paginated list endpoint?
 - Try out other image gen (Higgsfield? Midjourney? Gemini?), and add images for scenes maybe?
+- Different dice display stuff: diff shapes for number of sides (SVG?), maybe cool rolling animations
+  - Also: for dice pool thresholds show number of successes instead of total somehow?
 
 PROMPT THINGS
 
 - It's not that reliable at introducing characters (always works when you ask if specifically though)
-- Sometimes it asks you to describe your action and then roll, but the UI kinda makes you roll first
 - Sometimes a tool call (like updating character sheet) comes at the natural end of a message, and then the new message after kind of doubles things up
 - model specific tweaks maybe
   - Claude uses A/B/C lists instead of markdown lists which don't render properly
-
+- Claude uses A/B/C lists instead of markdown lists which don't render properly
 DONE
 
 - store tool calls along with other messages (string -> string[]? or more structured?)
@@ -49,3 +57,6 @@ DONE
 - Show reasoning text for models that provide it
 - nested list formatting is still a bit weird
 - Go back to the gap-based spacing for messages, margins are too annoying
+- Sometimes it asks you to describe your action and then roll, but the UI kinda makes you roll first
+- Do something different with the scene background colours (and scenes in general)
+- If the LLM produces multiple dice-roll tool calls at once we need to wait until they're ALL rolled before reporting back (and then report them all at once)

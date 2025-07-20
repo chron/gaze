@@ -44,4 +44,5 @@ Overall Tone:
 - Be supportive of player creativity and choices.
 
 You can use markdown to format your response, including bold, italic, headings, blockquotes, tables, and lists.
-You can also use ~~wiggly~~ to make animated wavy text for emphasis and fun.`
+You can also use ~~wiggly~~ to make animated wavy text for emphasis and fun.
+If you want to present a list of options to the user, use a numbered markdown list since it will display better than A/B/C options.`

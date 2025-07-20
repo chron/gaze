@@ -12,6 +12,7 @@ import type * as campaigns from "../campaigns.js";
 import type * as characterSheets from "../characterSheets.js";
 import type * as characters from "../characters.js";
 import type * as gameSystems from "../gameSystems.js";
+import type * as http from "../http.js";
 import type * as memories from "../memories.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   characterSheets: typeof characterSheets;
   characters: typeof characters;
   gameSystems: typeof gameSystems;
+  http: typeof http;
   memories: typeof memories;
   messages: typeof messages;
   migrations: typeof migrations;
@@ -145,6 +147,41 @@ export declare const components: {
           processed: number;
           state: "inProgress" | "success" | "failed" | "canceled" | "unknown";
         }
+      >;
+    };
+  };
+  persistentTextStreaming: {
+    lib: {
+      addChunk: FunctionReference<
+        "mutation",
+        "internal",
+        { final: boolean; streamId: string; text: string },
+        any
+      >;
+      createStream: FunctionReference<"mutation", "internal", {}, any>;
+      getStreamStatus: FunctionReference<
+        "query",
+        "internal",
+        { streamId: string },
+        "pending" | "streaming" | "done" | "error" | "timeout"
+      >;
+      getStreamText: FunctionReference<
+        "query",
+        "internal",
+        { streamId: string },
+        {
+          status: "pending" | "streaming" | "done" | "error" | "timeout";
+          text: string;
+        }
+      >;
+      setStreamStatus: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          status: "pending" | "streaming" | "done" | "error" | "timeout";
+          streamId: string;
+        },
+        any
       >;
     };
   };
