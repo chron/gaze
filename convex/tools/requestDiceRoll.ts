@@ -17,13 +17,7 @@ export const requestDiceRoll = (
 			bonus: z.number().min(-100).max(100),
 		}),
 		execute: async ({ number, faces, bonus }, toolCall) => {
-			await ctx.runMutation(api.messages.appendToolCallBlock, {
-				messageId: assistantMessageId,
-				toolName: "request_dice_roll",
-				parameters: { number, faces, bonus },
-				toolCallId: toolCall.toolCallId,
-				result: null, // null indicates pending user interaction
-			})
+			// TODO: something?
 		},
 	})
 }

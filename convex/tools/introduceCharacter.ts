@@ -23,13 +23,6 @@ export const introduceCharacter = (
 				campaignId,
 			})
 
-			await ctx.runMutation(api.messages.appendToolCallBlock, {
-				messageId: assistantMessageId,
-				toolName: "introduce_character",
-				parameters: { name, description },
-				toolCallId: toolCall.toolCallId,
-			})
-
 			await ctx.scheduler.runAfter(
 				0,
 				api.characters.generateImageForCharacter,

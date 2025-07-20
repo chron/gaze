@@ -1,12 +1,23 @@
 import { anthropic } from "@ai-sdk/anthropic"
-import { google } from "@ai-sdk/google"
+import { type GoogleGenerativeAIProviderOptions, google } from "@ai-sdk/google"
 import { groq } from "@ai-sdk/groq"
 import { openai } from "@ai-sdk/openai"
+import {
+	PersistentTextStreaming,
+	type StreamId,
+	StreamIdValidator,
+} from "@convex-dev/persistent-text-streaming"
 import { GoogleGenAI } from "@google/genai"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import {
+	type AssistantContent,
+	type CoreAssistantMessage,
 	type CoreMessage,
+	type CoreUserMessage,
 	type FilePart,
+	type TextPart,
+	type ToolCallPart,
+	type ToolContent,
 	embed,
 	experimental_generateImage as generateImage,
 	generateText,
@@ -15,10 +26,11 @@ import {
 import { paginationOptsValidator } from "convex/server"
 import { v } from "convex/values"
 import { compact } from "../src/utils/compact"
-import { api, internal } from "./_generated/api"
+import { api, components, internal } from "./_generated/api"
 import type { Doc, Id } from "./_generated/dataModel"
 import {
 	action,
+	httpAction,
 	internalAction,
 	internalQuery,
 	mutation,
@@ -29,6 +41,13 @@ import { changeScene } from "./tools/changeScene"
 import { introduceCharacter } from "./tools/introduceCharacter"
 import { requestDiceRoll } from "./tools/requestDiceRoll"
 import { updateCharacterSheet } from "./tools/updateCharacterSheet"
+
+type ArrayElement<ArrayType extends readonly unknown[]> =
+	ArrayType extends readonly (infer ElementType)[] ? ElementType : never
+
+const persistentTextStreaming = new PersistentTextStreaming(
+	components.persistentTextStreaming,
+)
 
 export const get = query({
 	args: {
@@ -119,12 +138,59 @@ export const paginatedList = query({
 	},
 })
 
+export const getByStreamId = query({
+	args: {
+		streamId: StreamIdValidator,
+	},
+	handler: async (ctx, args) => {
+		return await ctx.db
+			.query("messages")
+			.withIndex("by_streamId", (q) => q.eq("streamId", args.streamId))
+			.unique()
+	},
+})
+
+export const update = mutation({
+	args: {
+		messageId: v.id("messages"),
+		content: v.array(
+			v.union(
+				v.object({
+					type: v.literal("text"),
+					text: v.string(),
+				}),
+				v.object({
+					type: v.literal("tool-call"),
+					toolName: v.string(),
+					args: v.any(),
+					toolCallId: v.string(),
+				}),
+				// v.object({
+				// 	type: v.literal("tool-result"),
+				// 	toolName: v.string(),
+				// 	result: v.any(),
+				// 	toolCallId: v.string(),
+				// }),
+				v.object({
+					type: v.literal("reasoning"),
+					text: v.string(),
+				}),
+			),
+		),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.messageId, {
+			content: args.content,
+		})
+	},
+})
+
 export const addUserMessage = mutation({
 	args: {
 		campaignId: v.id("campaigns"),
 		content: v.string(),
 	},
-	handler: async (ctx, args) => {
+	handler: async (ctx, args): Promise<{ streamId: StreamId }> => {
 		if (args.content.length === 0) {
 			throw new Error("Content cannot be empty")
 		}
@@ -140,39 +206,32 @@ export const addUserMessage = mutation({
 			],
 		})
 
-		await ctx.scheduler.runAfter(0, internal.messages.sendToLLM, {
-			campaignId: args.campaignId,
-		})
+		const { streamId } = await ctx.runMutation(
+			api.messages.addAssistantMessage,
+			{
+				campaignId: args.campaignId,
+			},
+		)
+
+		return { streamId }
 	},
 })
 
 export const addAssistantMessage = mutation({
 	args: {
 		campaignId: v.id("campaigns"),
-		content: v.array(
-			v.union(
-				v.object({
-					type: v.literal("text"),
-					text: v.string(),
-				}),
-				v.object({
-					type: v.literal("tool_call"),
-					toolName: v.string(),
-					parameters: v.any(),
-					result: v.optional(v.any()),
-					timestamp: v.optional(v.number()),
-				}),
-			),
-		),
 	},
 	handler: async (ctx, args) => {
+		const streamId = await persistentTextStreaming.createStream(ctx)
+
 		const messageId = await ctx.db.insert("messages", {
 			campaignId: args.campaignId,
 			role: "assistant",
-			content: args.content,
+			content: [{ type: "text", text: "" }],
+			streamId,
 		})
 
-		return messageId
+		return { messageId, streamId }
 	},
 })
 
@@ -180,15 +239,20 @@ export const regenerateLastMessage = mutation({
 	args: {
 		messageId: v.id("messages"),
 	},
-	handler: async (ctx, args) => {
+	handler: async (ctx, args): Promise<{ streamId: StreamId }> => {
 		const message = await ctx.db.get(args.messageId)
 		if (!message) throw new Error("Message not found")
 
 		await ctx.db.delete(args.messageId)
 
-		await ctx.scheduler.runAfter(0, internal.messages.sendToLLM, {
-			campaignId: message.campaignId,
-		})
+		const { streamId } = await ctx.runMutation(
+			api.messages.addAssistantMessage,
+			{
+				campaignId: message.campaignId,
+			},
+		)
+
+		return { streamId }
 	},
 })
 
@@ -243,30 +307,15 @@ export const appendReasoning = mutation({
 	},
 })
 
-export const appendToolCallBlock = mutation({
+export const getMessageBody = query({
 	args: {
-		messageId: v.id("messages"),
-		toolName: v.string(),
-		parameters: v.any(),
-		result: v.optional(v.any()),
-		toolCallId: v.string(),
+		streamId: StreamIdValidator,
 	},
 	handler: async (ctx, args) => {
-		const message = await ctx.db.get(args.messageId)
-		if (!message) throw new Error("Message not found")
-
-		await ctx.db.patch(args.messageId, {
-			content: [
-				...message.content,
-				{
-					type: "tool_call",
-					toolName: args.toolName,
-					parameters: args.parameters,
-					result: args.result,
-					toolCallId: args.toolCallId,
-				},
-			],
-		})
+		return await persistentTextStreaming.getStreamBody(
+			ctx,
+			args.streamId as StreamId,
+		)
 	},
 })
 
@@ -297,17 +346,17 @@ export const performUserDiceRoll = mutation({
 		const toolCall = message.content[args.toolCallIndex]
 		if (
 			!toolCall ||
-			toolCall.type !== "tool_call" ||
+			toolCall.type !== "tool-call" ||
 			toolCall.toolName !== "request_dice_roll"
 		) {
 			throw new Error("Invalid dice roll tool call")
 		}
 
-		if (toolCall.result !== null) {
-			throw new Error("Dice roll has already been performed")
-		}
+		// if (toolCall.result !== null) {
+		// 	throw new Error("Dice roll has already been performed")
+		// }
 
-		const { number, faces } = toolCall.parameters
+		const { number, faces } = toolCall.args
 
 		// Generate the dice roll results
 		const results: number[] = []
@@ -317,472 +366,505 @@ export const performUserDiceRoll = mutation({
 		const total = results.reduce((acc, curr) => acc + curr, 0)
 
 		// Update the tool call with the results
-		const updatedContent = [...message.content]
-		updatedContent[args.toolCallIndex] = {
-			...toolCall,
-			result: { results, total },
-		}
+		// const updatedContent = [...message.content]
+		// updatedContent[args.toolCallIndex] = {
+		// 	...toolCall,
+		// 	result: { results, total },
+		// }
 
-		await ctx.db.patch(args.messageId, {
-			content: updatedContent,
-		})
-
-		await ctx.scheduler.runAfter(0, internal.messages.sendToLLM, {
-			campaignId: message.campaignId,
-		})
+		// await ctx.db.patch(args.messageId, {
+		// 	content: updatedContent,
+		// })
 
 		return { results, total }
 	},
 })
 
-export const sendToLLM = internalAction({
-	args: { campaignId: v.id("campaigns") },
-	handler: async (ctx, args) => {
-		const campaign = await ctx.runQuery(api.campaigns.get, {
-			id: args.campaignId,
-		})
+export const sendToLLM = httpAction(async (ctx, request) => {
+	const args = (await request.json()) as {
+		streamId: StreamId
+	}
 
-		if (!campaign) {
-			throw new Error("Campaign not found")
-		}
+	const message = await ctx.runQuery(api.messages.getByStreamId, {
+		streamId: args.streamId,
+	})
 
-		// Fetch previous messages for the campaign
-		const messages = await ctx.runQuery(api.messages.list, {
-			campaignId: args.campaignId,
-		})
+	if (!message) {
+		throw new Error("Message not found")
+	}
 
-		let formattedMessages: CoreMessage[] = messages.map((msg) => {
-			if (msg.role === "user") {
-				return {
-					role: "user",
-					content: msg.content.map((block) => {
-						if (block.type === "text") {
-							return block
-						}
+	const campaign = await ctx.runQuery(api.campaigns.get, {
+		id: message.campaignId,
+	})
 
-						throw new Error("Unexpected tool call in user message")
-					}),
-				}
-			}
+	if (!campaign) {
+		throw new Error("Campaign not found")
+	}
 
+	// Fetch previous messages for the campaign
+	const allMessages = await ctx.runQuery(api.messages.list, {
+		campaignId: campaign._id,
+	})
+
+	// Don't include the current message when sending message history to the LLM!
+	const messages = allMessages.slice(0, -1)
+
+	let formattedMessages: CoreMessage[] = messages.map((msg) => {
+		if (msg.role === "user") {
 			return {
-				role: "assistant",
-				content: msg.content.map((block) => {
-					if (block.type === "tool_call") {
-						// legacy
-						if (!block.toolCallId) {
-							return {
-								type: "text",
-								text: `[${block.toolName}: ${JSON.stringify(block.parameters)} -> ${JSON.stringify(block.result)}]`,
-							}
-						}
+				role: "user",
+				content: msg.content.filter((block) => block.type === "text"),
+			} satisfies CoreUserMessage
+		}
 
-						return {
-							type: "tool-call",
-							toolName: block.toolName,
-							args: block.parameters,
-							toolCallId: block.toolCallId,
-						}
-					}
+		return {
+			role: "assistant",
+			content: msg.content.filter(
+				(block) =>
+					block.type !== "text" &&
+					block.type !== "reasoning" &&
+					block.type !== "tool-call",
+			),
+		} satisfies CoreAssistantMessage
+	})
 
-					return block
-				}),
-			}
+	// Intro message for a new campaign
+	if (formattedMessages.length === 0) {
+		formattedMessages = [
+			{
+				role: "user",
+				content: "Hello! Let's play an RPG together!",
+			},
+		]
+	}
+
+	const lastMessageToolCalls = messages.length
+		? messages[messages.length - 1].content.filter(
+				(block) => block.type === "tool-call",
+			)
+		: []
+
+	const diceRolls = lastMessageToolCalls.filter(
+		(block) => block.toolName === "request_dice_roll",
+	)
+
+	// for (const diceRoll of diceRolls) {
+	// 	formattedMessages.push({
+	// 		role: "user",
+	// 		content: [
+	// 			{
+	// 				type: "text",
+	// 				text: `I rolled: [${diceRoll.result.results.join(", ")}] for a total of ${diceRoll.result.total + diceRoll.parameters.bonus}`,
+	// 			},
+	// 		],
+	// 	})
+	// }
+
+	let uploadedFiles: (FilePart | null)[] = []
+
+	let gameSystem: // TODO: there MUST be a way to get this type properly
+		| (Omit<Doc<"gameSystems">, "files"> & {
+				files: {
+					storageId: Id<"_storage">
+					filename: string
+					url: string | null
+				}[]
+		  })
+		| null = null
+
+	if (campaign.gameSystemId) {
+		gameSystem = await ctx.runQuery(api.gameSystems.get, {
+			id: campaign.gameSystemId,
 		})
 
-		// Intro message for a new campaign
-		if (formattedMessages.length === 0) {
-			formattedMessages = [
-				{
-					role: "user",
-					content: "Hello! Let's play an RPG together!",
-				},
-			]
-		}
-
-		const lastMessageToolCalls = messages.length
-			? messages[messages.length - 1].content.filter(
-					(block) => block.type === "tool_call",
-				)
-			: []
-
-		const diceRolls = lastMessageToolCalls.filter(
-			(block) => block.toolName === "request_dice_roll",
-		)
-
-		for (const diceRoll of diceRolls) {
-			formattedMessages.push({
-				role: "user",
-				content: [
-					{
-						type: "text",
-						text: `I rolled: [${diceRoll.result.results.join(", ")}] for a total of ${diceRoll.result.total + diceRoll.parameters.bonus}`,
-					},
-				],
-			})
-		}
-
-		const assistantMessageId = await ctx.runMutation(
-			api.messages.addAssistantMessage,
-			{
-				campaignId: args.campaignId,
-				content: [],
-			},
-		)
-
-		let uploadedFiles: (FilePart | null)[] = []
-
-		let gameSystem: // TODO: there MUST be a way to get this type properly
-			| (Omit<Doc<"gameSystems">, "files"> & {
-					files: {
-						storageId: Id<"_storage">
-						filename: string
-						url: string | null
-					}[]
-			  })
-			| null = null
-
-		if (campaign.gameSystemId) {
-			gameSystem = await ctx.runQuery(api.gameSystems.get, {
-				id: campaign.gameSystemId,
+		// The file upload stuff we're doing is google-specific so only Gemini models will have access
+		// to the uploade PDFs for now.
+		if (gameSystem && campaign.model.startsWith("google")) {
+			const ai = new GoogleGenAI({
+				apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
 			})
 
-			// The file upload stuff we're doing is google-specific so only Gemini models will have access
-			// to the uploade PDFs for now.
-			if (gameSystem && campaign.model.startsWith("google")) {
-				const ai = new GoogleGenAI({
-					apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-				})
+			const listCurrentFiles = await ai.files.list()
 
-				const listCurrentFiles = await ai.files.list()
+			uploadedFiles = await Promise.all(
+				gameSystem.files.map(async (file) => {
+					// TODO: not handling pagination, but maybe we don't care
+					const existingFile = listCurrentFiles.page.find(
+						(f) => f.displayName === file.filename,
+					)
 
-				uploadedFiles = await Promise.all(
-					gameSystem.files.map(async (file) => {
-						// TODO: not handling pagination, but maybe we don't care
-						const existingFile = listCurrentFiles.page.find(
-							(f) => f.displayName === file.filename,
-						)
-
-						if (existingFile) {
-							return {
-								type: "file",
-								data: existingFile.uri || "",
-								mimeType: existingFile.mimeType || "",
-								filename: existingFile.displayName || "",
-							}
-						}
-
-						console.log("File not found, uploading", file.filename)
-
-						const blob = await ctx.storage.get(file.storageId)
-
-						if (!blob) {
-							return null
-						}
-
-						const myfile = await ai.files
-							.upload({
-								file: blob,
-								config: {
-									displayName: file.filename,
-								},
-							})
-							.catch((error) => {
-								console.error("Error uploading file", error)
-								return null
-							})
-
-						if (!myfile) {
-							return null
-						}
-
+					if (existingFile) {
 						return {
 							type: "file",
-							data: myfile.uri || "",
-							mimeType: myfile.mimeType || "",
-							filename: myfile.displayName || "",
+							data: existingFile.uri || "",
+							mimeType: existingFile.mimeType || "",
+							filename: existingFile.displayName || "",
 						}
-					}),
-				)
-			}
-		}
-
-		let characterSheet = await ctx.runQuery(api.characterSheets.get, {
-			campaignId: args.campaignId,
-		})
-
-		if (!characterSheet) {
-			// TODO: can you do this in one operation?
-			await ctx.runMutation(api.characterSheets.create, {
-				campaignId: args.campaignId,
-				data: gameSystem?.defaultCharacterData ?? {},
-			})
-
-			characterSheet = await ctx.runQuery(api.characterSheets.get, {
-				campaignId: args.campaignId,
-			})
-		}
-
-		const characters = await ctx.runQuery(api.characters.list, {
-			campaignId: args.campaignId,
-		})
-
-		const anyMemories = await ctx.runQuery(internal.memories.count, {
-			campaignId: args.campaignId,
-		})
-
-		let serializedMemories: {
-			type: string
-			summary: string
-			context: string
-			tags: string[]
-		}[] = []
-
-		if (anyMemories > 0) {
-			const lastMessage = formattedMessages[formattedMessages.length - 1]
-			const { embedding } = await embed({
-				model: google.textEmbeddingModel("gemini-embedding-exp-03-07", {
-					taskType: "RETRIEVAL_QUERY",
-				}),
-				value:
-					typeof lastMessage.content === "string"
-						? lastMessage.content
-						: lastMessage.content
-								.map((block) => {
-									if (block.type === "text") {
-										return block.text
-									}
-
-									return ""
-								})
-								.join(""),
-			})
-
-			const memoryRefs = await ctx.vectorSearch("memories", "by_embedding", {
-				vector: embedding,
-				limit: 10,
-				filter: (q) => q.eq("campaignId", args.campaignId),
-			})
-
-			const memories = await ctx.runQuery(internal.memories.findMany, {
-				ids: memoryRefs.map((ref) => ref._id),
-			})
-
-			serializedMemories = memories.map((memory) => ({
-				type: memory.type,
-				summary: memory.summary,
-				context: memory.context,
-				tags: memory.tags,
-			}))
-		}
-
-		const serializedCharacters = characters.map((character) => ({
-			name: character.name,
-			description: character.description,
-		}))
-
-		const formattedCharacterSheet = characterSheet
-			? {
-					name: characterSheet.name,
-					description: characterSheet.description,
-					data: characterSheet.data,
-				}
-			: null
-
-		// TODO: let's move to a real templating engine
-		let prompt = systemPrompt
-
-		prompt += gameSystem
-			? `\n\nYou are hosting a game of ${gameSystem.name}\n\n${gameSystem.prompt}`
-			: "\n\nThe game will be a free-form narrative RPG without a specific ruleset."
-
-		if (campaign.name !== "") {
-			prompt += `\n\nThe campaign is called ${campaign.name}`
-		}
-
-		if (campaign.description !== "") {
-			prompt += `\n\nThe description of the campaign is: ${campaign.description}`
-		}
-
-		prompt += `\n\nHere is the character sheet for the player: ${JSON.stringify(
-			formattedCharacterSheet,
-		)}`
-
-		if (serializedCharacters.length > 0) {
-			prompt += `\n\nHere are the existing characters: ${JSON.stringify(
-				serializedCharacters,
-			)}`
-		}
-
-		if (serializedMemories.length > 0) {
-			prompt += `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
-				serializedMemories,
-			)}`
-		}
-
-		// Remove any that didn't upload successfully
-		const compactedFiles = compact(uploadedFiles)
-
-		if (compactedFiles.length > 0) {
-			formattedMessages.push({
-				role: "user",
-				content: [
-					{
-						type: "text",
-						text: "Here are the files that are relevant to the game system:",
-					},
-					...compactedFiles,
-				],
-			})
-		}
-
-		// TODO: put this somewhere smart
-		const modelCanUseTools =
-			campaign.model.startsWith("google") ||
-			campaign.model === "x-ai/grok-4" ||
-			campaign.model.startsWith("anthropic") ||
-			campaign.model.startsWith("moonshotai")
-
-		const openrouter = createOpenRouter({
-			apiKey: process.env.OPENROUTER_API_KEY,
-			headers: {
-				// 'HTTP-Referer' once we have a public URL
-				"X-Title": "Gaze Dev",
-			},
-		})
-
-		const { textStream, usage, response } = streamText({
-			system: prompt,
-			model: campaign.model.startsWith("google")
-				? google(campaign.model.split("/")[1])
-				: campaign.model.startsWith("anthropic")
-					? anthropic("claude-4-sonnet-20250514") // Temporarily hardcoded for testing
-					: campaign.model.startsWith("moonshotai")
-						? groq(campaign.model)
-						: openrouter(campaign.model, {}),
-			providerOptions: {
-				google: {
-					thinkingConfig: {
-						thinkingBudget: 1024,
-						includeThoughts: true,
-					},
-				},
-				openrouter: {
-					reasoning: {
-						max_tokens: 1024,
-					},
-				},
-				anthropic: {
-					thinking: { type: "enabled", budgetTokens: 1024 },
-				},
-			},
-			messages: formattedMessages,
-			maxSteps: 10,
-			tools: modelCanUseTools
-				? {
-						update_character_sheet: updateCharacterSheet(
-							ctx,
-							assistantMessageId,
-							characterSheet,
-						),
-						change_scene: changeScene(ctx, assistantMessageId),
-						introduce_character: introduceCharacter(
-							ctx,
-							assistantMessageId,
-							args.campaignId,
-						),
-						request_dice_roll: requestDiceRoll(ctx, assistantMessageId),
 					}
-				: undefined,
-			onError: async (error) => {
-				await ctx.runMutation(api.messages.appendTextBlock, {
-					messageId: assistantMessageId,
-					text: `\n\n\`\`\`\error n${JSON.stringify(error.error, null, 2)}\n\`\`\``,
-				})
-			},
-			onChunk: async ({ chunk }) => {
-				if (chunk.type === "reasoning") {
-					await ctx.runMutation(api.messages.appendReasoning, {
-						messageId: assistantMessageId,
-						text: chunk.textDelta,
-					})
-				}
-				// This didn't work but I'm not 100% sure why
 
-				// else if (chunk.type === "text-delta") {
-				// 	await ctx.runMutation(api.messages.appendTextBlock, {
-				// 		messageId: assistantMessageId,
-				// 		text: chunk.textDelta,
-				// 	})
-				// }
-			},
-		})
+					console.log("File not found, uploading", file.filename)
 
-		for await (const textPart of textStream) {
-			await ctx.runMutation(api.messages.appendTextBlock, {
-				messageId: assistantMessageId,
-				text: textPart,
-			})
-		}
+					const blob = await ctx.storage.get(file.storageId)
 
-		const usageInfo = await usage
-		const finalMessages = (await response).messages
-		console.log(finalMessages)
+					if (!blob) {
+						return null
+					}
 
-		await ctx.runMutation(api.messages.addUsageToMessage, {
-			messageId: assistantMessageId,
-			usage: {
-				promptTokens: usageInfo.promptTokens,
-				completionTokens: usageInfo.completionTokens,
-			},
-		})
-	},
-})
-
-export const summarizeChatHistory = action({
-	args: {
-		campaignId: v.id("campaigns"),
-	},
-	handler: async (ctx, args): Promise<string> => {
-		// TODO: Don't summarise ALL messages, wait until a threshold and leave x tokens of recent messages.
-		// Then mark all the summarised messages as summarised and store the summary somewhere (new table?)
-		const messages = await ctx.runQuery(api.messages.list, {
-			campaignId: args.campaignId,
-		})
-
-		const prompt =
-			"You are an expert game master, compiling notes from a RPG session. Summarize the following transcript:"
-
-		const { text } = await generateText({
-			system: prompt,
-			model: openai("gpt-4o-mini"),
-			messages: [
-				...messages.map((msg) => ({
-					role: msg.role,
-					content: msg.content
-						.map((block) => {
-							if (block.type === "text") {
-								return block.text
-							}
-
-							return `[${block.toolName}: ${JSON.stringify(block.parameters)} -> ${JSON.stringify(block.result)}]`
+					const myfile = await ai.files
+						.upload({
+							file: blob,
+							config: {
+								displayName: file.filename,
+							},
 						})
-						.join(""),
-				})),
+						.catch((error) => {
+							console.error("Error uploading file", error)
+							return null
+						})
+
+					if (!myfile) {
+						return null
+					}
+
+					return {
+						type: "file",
+						data: myfile.uri || "",
+						mimeType: myfile.mimeType || "",
+						filename: myfile.displayName || "",
+					}
+				}),
+			)
+		}
+	}
+
+	let characterSheet = await ctx.runQuery(api.characterSheets.get, {
+		campaignId: campaign._id,
+	})
+
+	if (!characterSheet) {
+		// TODO: can you do this in one operation?
+		await ctx.runMutation(api.characterSheets.create, {
+			campaignId: campaign._id,
+			data: gameSystem?.defaultCharacterData ?? {},
+		})
+
+		characterSheet = await ctx.runQuery(api.characterSheets.get, {
+			campaignId: campaign._id,
+		})
+	}
+
+	const characters = await ctx.runQuery(api.characters.list, {
+		campaignId: campaign._id,
+	})
+
+	const anyMemories = await ctx.runQuery(internal.memories.count, {
+		campaignId: campaign._id,
+	})
+
+	let serializedMemories: {
+		type: string
+		summary: string
+		context: string
+		tags: string[]
+	}[] = []
+
+	if (anyMemories > 0) {
+		const lastMessage = formattedMessages[formattedMessages.length - 1]
+		const { embedding } = await embed({
+			model: google.textEmbeddingModel("gemini-embedding-exp-03-07", {
+				taskType: "RETRIEVAL_QUERY",
+			}),
+			value:
+				typeof lastMessage.content === "string"
+					? lastMessage.content
+					: lastMessage.content
+							.map((block) => {
+								if (block.type === "text") {
+									return block.text
+								}
+
+								return ""
+							})
+							.join(""),
+		})
+
+		const memoryRefs = await ctx.vectorSearch("memories", "by_embedding", {
+			vector: embedding,
+			limit: 10,
+			filter: (q) => q.eq("campaignId", campaign._id),
+		})
+
+		const memories = await ctx.runQuery(internal.memories.findMany, {
+			ids: memoryRefs.map((ref) => ref._id),
+		})
+
+		serializedMemories = memories.map((memory) => ({
+			type: memory.type,
+			summary: memory.summary,
+			context: memory.context,
+			tags: memory.tags,
+		}))
+	}
+
+	const serializedCharacters = characters.map((character) => ({
+		name: character.name,
+		description: character.description,
+	}))
+
+	const formattedCharacterSheet = characterSheet
+		? {
+				name: characterSheet.name,
+				description: characterSheet.description,
+				data: characterSheet.data,
+			}
+		: null
+
+	// TODO: let's move to a real templating engine
+	let prompt = systemPrompt
+
+	prompt += gameSystem
+		? `\n\nYou are hosting a game of ${gameSystem.name}\n\n${gameSystem.prompt}`
+		: "\n\nThe game will be a free-form narrative RPG without a specific ruleset."
+
+	if (campaign.name !== "") {
+		prompt += `\n\nThe campaign is called ${campaign.name}`
+	}
+
+	if (campaign.description !== "") {
+		prompt += `\n\nThe description of the campaign is: ${campaign.description}`
+	}
+
+	prompt += `\n\nHere is the character sheet for the player: ${JSON.stringify(
+		formattedCharacterSheet,
+	)}`
+
+	if (serializedCharacters.length > 0) {
+		prompt += `\n\nHere are the existing characters: ${JSON.stringify(
+			serializedCharacters,
+		)}`
+	}
+
+	if (serializedMemories.length > 0) {
+		prompt += `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
+			serializedMemories,
+		)}`
+	}
+
+	// Remove any that didn't upload successfully
+	const compactedFiles = compact(uploadedFiles)
+
+	if (compactedFiles.length > 0) {
+		formattedMessages.push({
+			role: "user",
+			content: [
 				{
-					role: "user",
-					content: "Summarize the storyline so far.",
+					type: "text",
+					text: "Here are the files that are relevant to the game system:",
 				},
+				...compactedFiles,
 			],
 		})
+	}
 
-		await ctx.scheduler.runAfter(0, internal.memories.scanForNewMemories, {
-			messageIds: messages.map((msg) => msg._id),
-		})
+	// TODO: put this somewhere smart
+	const modelCanUseTools =
+		campaign.model.startsWith("google") ||
+		campaign.model === "x-ai/grok-4" ||
+		campaign.model.startsWith("anthropic") ||
+		campaign.model.startsWith("moonshotai")
 
-		return text
-	},
+	const openrouter = createOpenRouter({
+		apiKey: process.env.OPENROUTER_API_KEY,
+		headers: {
+			// 'HTTP-Referer' once we have a public URL
+			"X-Title": "Gaze Dev",
+		},
+	})
+
+	const {
+		fullStream,
+		usage,
+		response: aiResponse,
+	} = streamText({
+		system: prompt,
+		model: campaign.model.startsWith("google")
+			? google(campaign.model.split("/")[1])
+			: campaign.model.startsWith("anthropic")
+				? anthropic("claude-4-sonnet-20250514") // Temporarily hardcoded for testing
+				: campaign.model.startsWith("moonshotai")
+					? groq(campaign.model)
+					: openrouter(campaign.model, {}),
+		providerOptions: {
+			google: {
+				thinkingConfig: { thinkingBudget: 1024, includeThoughts: true },
+			} satisfies GoogleGenerativeAIProviderOptions,
+			openrouter: {
+				reasoning: {
+					max_tokens: 1024,
+				},
+			},
+			anthropic: {
+				thinking: { type: "enabled", budgetTokens: 1024 },
+			},
+		},
+		messages: formattedMessages,
+		maxSteps: 10,
+		tools: modelCanUseTools
+			? {
+					update_character_sheet: updateCharacterSheet(
+						ctx,
+						message._id,
+						characterSheet,
+					),
+					change_scene: changeScene(ctx, message._id),
+					introduce_character: introduceCharacter(
+						ctx,
+						message._id,
+						campaign._id,
+					),
+					request_dice_roll: requestDiceRoll(ctx, message._id),
+				}
+			: undefined,
+		onError: async (error) => {
+			await ctx.runMutation(api.messages.appendTextBlock, {
+				messageId: message._id,
+				text: `\n\n\`\`\`\error n${JSON.stringify(error.error, null, 2)}\n\`\`\``,
+			})
+		},
+		onFinish: async ({ response }) => {
+			console.log("onFinish", response.messages)
+			const content = response.messages[0].content
+			const mappedContent: Extract<
+				ArrayElement<Exclude<AssistantContent, string>>,
+				{ type: "text" | "reasoning" | "tool-call" }
+			>[] =
+				typeof content === "string"
+					? [{ type: "text", text: content }]
+					: content
+							.map((block) => {
+								if (block.type === "text") {
+									return {
+										type: "text",
+										text: block.text,
+									} as const satisfies TextPart
+								}
+
+								if (block.type === "reasoning") {
+									return { type: "reasoning", text: block.text } as const
+								}
+
+								if (block.type === "tool-call") {
+									return {
+										type: "tool-call",
+										toolName: block.toolName,
+										toolCallId: block.toolCallId,
+										args: block.args,
+									} as const satisfies ToolCallPart
+								}
+
+								return null
+							})
+							.filter((block) => block !== null)
+
+			await ctx.runMutation(api.messages.update, {
+				messageId: message._id,
+				content: mappedContent,
+			})
+		},
+	})
+
+	const response = await persistentTextStreaming.stream(
+		ctx,
+		request,
+		args.streamId as StreamId,
+		async (ctx, _request, _streamId, chunkAppender) => {
+			let reasoning = ""
+			let text = ""
+
+			for await (const chunk of fullStream) {
+				if (chunk.type === "reasoning") {
+					reasoning += chunk.textDelta
+					chunkAppender(chunk.textDelta)
+				} else if (chunk.type === "text-delta") {
+					text += chunk.textDelta
+					chunkAppender(chunk.textDelta)
+				} else if (chunk.type === "tool-call") {
+					chunkAppender(JSON.stringify(chunk.args))
+				} else if (chunk.type === "tool-result") {
+					chunkAppender(JSON.stringify(chunk.result))
+				} else if (chunk.type === "finish") {
+					await ctx.runMutation(api.messages.addUsageToMessage, {
+						messageId: message._id,
+						usage: {
+							promptTokens: chunk.usage.promptTokens,
+							completionTokens: chunk.usage.completionTokens,
+						},
+					})
+				}
+			}
+
+			await ctx.runMutation(api.messages.appendReasoning, {
+				messageId: message._id,
+				text: reasoning,
+			})
+
+			await ctx.runMutation(api.messages.appendTextBlock, {
+				messageId: message._id,
+				text,
+			})
+		},
+	)
+
+	response.headers.set("Access-Control-Allow-Origin", "*")
+	response.headers.set("Vary", "Origin")
+
+	return response
 })
+
+// export const summarizeChatHistory = action({
+// 	args: {
+// 		campaignId: v.id("campaigns"),
+// 	},
+// 	handler: async (ctx, args): Promise<string> => {
+// 		// TODO: Don't summarise ALL messages, wait until a threshold and leave x tokens of recent messages.
+// 		// Then mark all the summarised messages as summarised and store the summary somewhere (new table?)
+// 		const messages = await ctx.runQuery(api.messages.list, {
+// 			campaignId: args.campaignId,
+// 		})
+
+// 		const prompt =
+// 			"You are an expert game master, compiling notes from a RPG session. Summarize the following transcript:"
+
+// 		const { text } = await generateText({
+// 			system: prompt,
+// 			model: openai("gpt-4o-mini"),
+// 			messages: [
+// 				...messages.map((msg) => ({
+// 					role: msg.role,
+// 					content: msg.content
+// 						.map((block) => {
+// 							if (block.type === "text") {
+// 								return block.text
+// 							}
+
+// 							return `[${block.toolName}: ${JSON.stringify(block.parameters)} -> ${JSON.stringify(block.result)}]`
+// 						})
+// 						.join(""),
+// 				})),
+// 				{
+// 					role: "user",
+// 					content: "Summarize the storyline so far.",
+// 				},
+// 			],
+// 		})
+
+// 		await ctx.scheduler.runAfter(0, internal.memories.scanForNewMemories, {
+// 			messageIds: messages.map((msg) => msg._id),
+// 		})
+
+// 		return text
+// 	},
+// })
 
 export const storeSceneImage = mutation({
 	args: {

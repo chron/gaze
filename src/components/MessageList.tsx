@@ -1,3 +1,4 @@
+import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { useAction, usePaginatedQuery, useQuery } from "convex/react"
 import { useEffect, useState } from "react"
 import { api } from "../../convex/_generated/api"
@@ -8,15 +9,19 @@ import { Button } from "./ui/button"
 type Props = {
 	campaignId: Id<"campaigns">
 	messagePanelRef: React.RefObject<HTMLDivElement | null>
+	streamId: StreamId | null
+	setStreamId: (streamId: StreamId) => void
 }
 
 export const MessageList: React.FC<Props> = ({
 	campaignId,
 	messagePanelRef,
+	streamId,
+	setStreamId,
 }) => {
 	const [summary, setSummary] = useState<string | null>(null)
 	const [isLoading, setIsLoading] = useState(false)
-	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
+	// const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
 	const totalTokens = useQuery(api.campaigns.sumTokens, { campaignId })
 	const {
 		results: messages,
@@ -73,6 +78,8 @@ export const MessageList: React.FC<Props> = ({
 					key={message._id}
 					message={message}
 					isLastMessage={message._id === lastMessage?._id}
+					isStreaming={message.streamId === streamId}
+					setStreamId={setStreamId}
 				/>
 			))}
 
@@ -96,7 +103,7 @@ export const MessageList: React.FC<Props> = ({
 						onClick={async () => {
 							setIsLoading(true)
 							try {
-								const summary = await summarizeChatHistory({ campaignId })
+								const summary = "TODO" //await summarizeChatHistory({ campaignId })
 								setSummary(summary)
 							} finally {
 								setIsLoading(false)

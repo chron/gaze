@@ -1,3 +1,4 @@
+import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { useMutation, useQuery } from "convex/react"
 import { useRef, useState } from "react"
 import { api } from "../../convex/_generated/api"
@@ -14,6 +15,7 @@ type Props = {
 export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 	const messagePanelRef = useRef<HTMLDivElement>(null)
 	const campaign = useQuery(api.campaigns.get, { id: campaignId })
+	const [streamId, setStreamId] = useState<StreamId | null>(null)
 
 	if (campaign === undefined) {
 		return null
@@ -29,20 +31,23 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 				<MessageList
 					campaignId={campaign._id}
 					messagePanelRef={messagePanelRef}
+					streamId={streamId}
+					setStreamId={setStreamId}
 				/>
 			</div>
 
 			<div className="flex items-end gap-4 p-4 relative">
 				<CharacterList campaignId={campaign._id} />
-				<ChatInput campaignId={campaign._id} />
+				<ChatInput campaignId={campaign._id} setStreamId={setStreamId} />
 			</div>
 		</div>
 	)
 }
 
-const ChatInput: React.FC<{ campaignId: Id<"campaigns"> }> = ({
-	campaignId,
-}) => {
+const ChatInput: React.FC<{
+	campaignId: Id<"campaigns">
+	setStreamId: (streamId: StreamId) => void
+}> = ({ campaignId, setStreamId }) => {
 	const addUserMessage = useMutation(api.messages.addUserMessage)
 
 	const [isLoading, setIsLoading] = useState(false)
@@ -56,7 +61,8 @@ const ChatInput: React.FC<{ campaignId: Id<"campaigns"> }> = ({
 		} as const
 
 		setInput("")
-		await addUserMessage(newMessage)
+		const { streamId } = await addUserMessage(newMessage)
+		setStreamId(streamId)
 		setIsLoading(false)
 	}
 

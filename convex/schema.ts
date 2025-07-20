@@ -32,6 +32,7 @@ export default defineSchema(
 		}),
 		messages: defineTable({
 			campaignId: v.id("campaigns"),
+			streamId: v.optional(v.string()),
 			role: v.union(v.literal("user"), v.literal("assistant")),
 			content: v.array(
 				v.union(
@@ -40,12 +41,30 @@ export default defineSchema(
 						text: v.string(),
 					}),
 					v.object({
-						type: v.literal("tool_call"),
-						toolName: v.string(),
-						parameters: v.any(),
-						result: v.optional(v.any()),
-						toolCallId: v.optional(v.string()),
+						type: v.literal("reasoning"),
+						text: v.string(),
 					}),
+					v.object({
+						type: v.literal("tool-call"),
+						toolName: v.string(),
+						toolCallId: v.string(),
+						args: v.any(),
+					}),
+					// v.object({
+					// 	type: v.literal("tool-result"),
+					// 	toolCallId: v.string(),
+					// 	toolName: v.string(),
+					// 	result: v.any(),
+					// 	isError: v.optional(v.boolean()),
+					// }),
+					// Legacy tool call
+					// v.object({
+					// 	type: v.literal("tool_call"),
+					// 	toolName: v.string(),
+					// 	parameters: v.any(),
+					// 	result: v.optional(v.any()),
+					// 	toolCallId: v.optional(v.string()),
+					// }),
 				),
 			),
 			reasoning: v.optional(v.string()),
@@ -63,7 +82,9 @@ export default defineSchema(
 					completionTokens: v.number(),
 				}),
 			),
-		}).index("by_campaign", ["campaignId"]),
+		})
+			.index("by_campaign", ["campaignId"])
+			.index("by_streamId", ["streamId"]),
 		memories: defineTable({
 			campaignId: v.id("campaigns"),
 			type: v.string(),
@@ -84,7 +105,7 @@ export default defineSchema(
 		}),
 	},
 	// For doing migrations and whatnot
-	// {
-	// 	schemaValidation: false,
-	// },
+	{
+		schemaValidation: false,
+	},
 )
