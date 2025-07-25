@@ -22,6 +22,7 @@ import type * as tools_changeScene from "../tools/changeScene.js";
 import type * as tools_introduceCharacter from "../tools/introduceCharacter.js";
 import type * as tools_requestDiceRoll from "../tools/requestDiceRoll.js";
 import type * as tools_updateCharacterSheet from "../tools/updateCharacterSheet.js";
+import type * as tools_updatePlan from "../tools/updatePlan.js";
 
 import type {
   ApiFromModules,
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   "tools/introduceCharacter": typeof tools_introduceCharacter;
   "tools/requestDiceRoll": typeof tools_requestDiceRoll;
   "tools/updateCharacterSheet": typeof tools_updateCharacterSheet;
+  "tools/updatePlan": typeof tools_updatePlan;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

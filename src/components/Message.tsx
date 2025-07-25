@@ -11,6 +11,7 @@ import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
 import { DiceRoll } from "./DiceRoll"
 import { DiceRollResult } from "./DiceRollResult"
 import { MessageMarkdown } from "./MessageMarkdown"
+import { PlanUpdate } from "./PlanUpdate"
 import { SceneChange } from "./SceneChange"
 import { Button } from "./ui/button"
 import {
@@ -188,6 +189,15 @@ export const Message: React.FC<Props> = ({
 										/>
 									)
 								}
+
+								if (block.toolName === "update_plan") {
+									return (
+										<PlanUpdate
+											key={`plan-update-${block.toolCallId}`}
+											parameters={block.args as { plan: string }}
+										/>
+									)
+								}
 							}
 
 							return null
@@ -260,6 +270,15 @@ export const Message: React.FC<Props> = ({
 																description: string
 															}
 														}
+													/>
+												)
+											}
+
+											if (toolCall.toolName === "update_plan") {
+												return (
+													<PlanUpdate
+														key={`${message._id}-step-${stepIndex}-plan-update-${index}`}
+														parameters={toolCall.args as { plan: string }}
 													/>
 												)
 											}

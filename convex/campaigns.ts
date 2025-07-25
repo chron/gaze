@@ -98,3 +98,15 @@ export const update = mutation({
 		})
 	},
 })
+
+export const updatePlan = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		plan: v.string(),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.campaignId, {
+			plan: args.plan,
+		})
+	},
+})

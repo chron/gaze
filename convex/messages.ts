@@ -42,6 +42,7 @@ import { changeScene } from "./tools/changeScene"
 import { introduceCharacter } from "./tools/introduceCharacter"
 import { requestDiceRoll } from "./tools/requestDiceRoll"
 import { updateCharacterSheet } from "./tools/updateCharacterSheet"
+import { updatePlan } from "./tools/updatePlan"
 
 type ArrayElement<ArrayType extends readonly unknown[]> =
 	ArrayType extends readonly (infer ElementType)[] ? ElementType : never
@@ -647,6 +648,10 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		)}`
 	}
 
+	if (campaign.plan) {
+		prompt += `\n\nYour current internal plan for the session: ${campaign.plan}`
+	}
+
 	// Remove any that didn't upload successfully
 	const compactedFiles = compact(uploadedFiles)
 
@@ -718,6 +723,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						campaign._id,
 					),
 					request_dice_roll: requestDiceRoll(ctx, message._id),
+					update_plan: updatePlan(ctx, message._id, campaign._id),
 				}
 			: undefined,
 		onError: async (error) => {

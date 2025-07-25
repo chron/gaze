@@ -37,6 +37,7 @@ OTHER STUFF
 - Try out other image gen (Higgsfield? Midjourney? Gemini?), and add images for scenes maybe?
 - Different dice display stuff: diff shapes for number of sides (SVG?), maybe cool rolling animations
   - Also: for dice pool thresholds show number of successes instead of total somehow?
+- <Wiggly /> animation resets as new text streams in
 
 PROMPT THINGS
 

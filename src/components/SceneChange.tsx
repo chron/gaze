@@ -18,17 +18,13 @@ export const SceneChange = ({
 }) => {
 	const regenerateImage = useAction(api.messages.regenerateSceneImage)
 
-	if (!scene) {
-		return null
-	}
-
 	const handleRegenerate = () => {
 		regenerateImage({ messageId })
 	}
 
 	return (
 		<div className="relative group">
-			{scene.imageUrl ? (
+			{scene?.imageUrl ? (
 				<img
 					src={scene.imageUrl}
 					alt={scene.description}
@@ -39,7 +35,7 @@ export const SceneChange = ({
 			)}
 
 			<div className="absolute bottom-0 right-0 m-4 bg-black/50 rounded-md p-2 hidden group-hover:block">
-				<p className="text-white text-sm">{scene.description}</p>
+				<p className="text-white text-sm">{scene?.description}</p>
 			</div>
 
 			<Button

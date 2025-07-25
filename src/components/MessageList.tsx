@@ -54,13 +54,6 @@ export const MessageList: React.FC<Props> = ({
 		if (!messagePanelRef.current) return true
 		const { scrollTop, scrollHeight, clientHeight } = messagePanelRef.current
 
-		console.log("isNearBottom", {
-			scrollTop,
-			scrollHeight,
-			clientHeight,
-			total: scrollHeight - scrollTop - clientHeight,
-		})
-
 		return scrollHeight - scrollTop - clientHeight < 200 // Within 200px of bottom
 	}, [messagePanelRef])
 
@@ -71,6 +64,7 @@ export const MessageList: React.FC<Props> = ({
 		if (!panel) return
 
 		resizeObserverRef.current = new ResizeObserver(() => {
+			console.log("resizeObserverRef.current", isNearBottom())
 			if (isNearBottom()) {
 				scrollToBottom()
 			}
