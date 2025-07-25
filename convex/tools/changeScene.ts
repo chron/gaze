@@ -16,13 +16,6 @@ export const changeScene = (
 			prompt: z.string(),
 		}),
 		execute: async ({ description, prompt }, toolCall) => {
-			await ctx.runMutation(api.messages.appendToolCallBlock, {
-				messageId: assistantMessageId,
-				toolName: "change_scene",
-				parameters: { description, prompt },
-				toolCallId: toolCall.toolCallId,
-			})
-
 			await ctx.scheduler.runAfter(0, api.messages.generateSceneImage, {
 				messageId: assistantMessageId,
 				description,

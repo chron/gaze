@@ -1,7 +1,6 @@
 import { tool } from "ai"
 import type { GenericActionCtx } from "convex/server"
 import z from "zod"
-import { api } from "../_generated/api"
 import type { DataModel, Id } from "../_generated/dataModel"
 
 export const requestDiceRoll = (
@@ -16,14 +15,6 @@ export const requestDiceRoll = (
 			faces: z.number().min(1).max(100),
 			bonus: z.number().min(-100).max(100),
 		}),
-		execute: async ({ number, faces, bonus }, toolCall) => {
-			await ctx.runMutation(api.messages.appendToolCallBlock, {
-				messageId: assistantMessageId,
-				toolName: "request_dice_roll",
-				parameters: { number, faces, bonus },
-				toolCallId: toolCall.toolCallId,
-				result: null, // null indicates pending user interaction
-			})
-		},
+		// No execute function, we'll handle the result in the message stream
 	})
 }

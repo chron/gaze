@@ -18,7 +18,7 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 	}
 
 	return (
-		<div className="flex flex-wrap absolute bottom-[52px] right-0 ">
+		<div className="flex flex-wrap absolute top-[-64px] right-0 ">
 			{characters.map((character) => (
 				<Tooltip key={character._id}>
 					<TooltipContent className="max-w-[300px] p-4">

@@ -1,4 +1,3 @@
-import type { PropsWithChildren } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { cn } from "../lib/utils"
@@ -71,14 +70,13 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 							{children}
 						</blockquote>
 					),
-					del: ({ children }) => (
-						<Wiggly>
-							{typeof children === "string"
-								? children
-								: "(non-string children)"}
-						</Wiggly>
-					),
-					hr: ({ children }) => <hr className="text-gray-400 my-4 mx-4" />,
+					del: ({ children }) =>
+						typeof children === "string" ? (
+							<Wiggly>{children}</Wiggly>
+						) : (
+							children
+						),
+					hr: () => <hr className="text-gray-400 my-4 mx-4" />,
 				}}
 			>
 				{children}

@@ -1,3 +1,4 @@
+import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { useMutation } from "convex/react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
@@ -12,67 +13,34 @@ type DiceRollProps = {
 		faces: number
 		bonus: number
 	}
-	result: {
-		results: number[]
-		total: number
-	} | null
+	setStreamId: (streamId: StreamId) => void
 }
 
 export const DiceRoll: React.FC<DiceRollProps> = ({
 	messageId,
 	toolCallIndex,
 	parameters,
-	result,
+	setStreamId,
 }) => {
 	const [isRolling, setIsRolling] = useState(false)
 	const performUserDiceRoll = useMutation(api.messages.performUserDiceRoll)
 
 	const handleRoll = async () => {
-		if (result !== null || isRolling) return
+		if (isRolling) return
 
 		setIsRolling(true)
 		try {
-			await performUserDiceRoll({
+			const { streamId } = await performUserDiceRoll({
 				messageId,
 				toolCallIndex,
 			})
+
+			setStreamId(streamId)
 		} catch (error) {
 			console.error("Failed to roll dice:", error)
 		} finally {
 			setIsRolling(false)
 		}
-	}
-
-	if (result !== null) {
-		// Show completed dice roll
-		return (
-			<div className="p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
-				<div className="flex items-center gap-2 mb-2">
-					<span className="font-semibold text-gray-700">
-						Roll {parameters.number}d{parameters.faces}{" "}
-						{parameters.bonus > 0
-							? `+ ${parameters.bonus}`
-							: parameters.bonus < 0
-								? parameters.bonus
-								: ""}
-					</span>
-				</div>
-				<div className="flex flex-wrap items-center gap-2 mb-2">
-					<span className="text-sm text-gray-600">Rolls:</span>
-					{result.results.map((roll, index) => (
-						<span
-							key={`roll-${index}-${roll}`}
-							className="inline-flex items-center justify-center w-8 h-8 bg-white rounded border-2 border-gray-300 font-bold text-gray-800"
-						>
-							{roll}
-						</span>
-					))}
-				</div>
-				<div className="text-xl font-bold">
-					Total: {result.total + parameters.bonus}
-				</div>
-			</div>
-		)
 	}
 
 	return (
@@ -108,7 +76,7 @@ export const DiceRoll: React.FC<DiceRollProps> = ({
 			<Button
 				onClick={handleRoll}
 				disabled={isRolling}
-				className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+				className="bg-blue-800 hover:bg-blue-700 text-white"
 			>
 				{isRolling ? "Rolling..." : "Roll the Dice!"}
 			</Button>
