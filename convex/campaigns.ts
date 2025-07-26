@@ -1,12 +1,14 @@
 import { v } from "convex/values"
-import { internal } from "./_generated/api"
 import { query } from "./_generated/server"
 import { mutation } from "./_generated/server"
 
 export const list = query({
 	args: {},
 	handler: async (ctx) => {
-		return await ctx.db.query("campaigns").collect()
+		return await ctx.db
+			.query("campaigns")
+			.withIndex("by_archived", (q) => q.eq("archived", false))
+			.collect()
 	},
 })
 

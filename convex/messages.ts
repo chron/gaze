@@ -690,7 +690,14 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 	const { fullStream } = streamText({
 		system: prompt,
 		model: campaign.model.startsWith("google")
-			? google(campaign.model.split("/")[1])
+			? google(campaign.model.split("/")[1], {
+					safetySettings: [
+						{
+							category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+							threshold: "BLOCK_NONE",
+						},
+					],
+				})
 			: campaign.model.startsWith("anthropic")
 				? anthropic("claude-4-sonnet-20250514") // Temporarily hardcoded for testing
 				: campaign.model.startsWith("moonshotai")
@@ -699,6 +706,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		providerOptions: {
 			google: {
 				thinkingConfig: { thinkingBudget: 1024, includeThoughts: true },
+				responseModalities: ["TEXT"],
 			} satisfies GoogleGenerativeAIProviderOptions,
 			openrouter: {
 				reasoning: {
@@ -946,6 +954,7 @@ export const generateSceneImage = action({
       The style of the image should be ${campaign.imagePrompt}.
     `
 
+		// TODO: error handling? AI_APICallError
 		const result = await generateImage({
 			...getImageModel(campaign.imageModel),
 			aspectRatio: "16:9",

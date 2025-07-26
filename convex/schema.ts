@@ -23,7 +23,8 @@ export default defineSchema(
 			model: v.string(),
 			imageModel: v.string(),
 			plan: v.optional(v.string()),
-		}),
+			archived: v.optional(v.boolean()),
+		}).index("by_archived", ["archived"]),
 		characterSheets: defineTable({
 			campaignId: v.id("campaigns"),
 			name: v.string(),

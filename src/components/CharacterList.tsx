@@ -27,11 +27,15 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 					</TooltipContent>
 					<TooltipTrigger>
 						<div
-							className="max-w-[80px] cursor-pointer"
+							className="w-[80px] aspect-square cursor-pointer"
 							onClick={() => regenerateImage({ characterId: character._id })}
 						>
 							{character.imageUrl && (
-								<img src={character.imageUrl} alt={character.name} />
+								<img
+									className="w-full h-full object-contain"
+									src={character.imageUrl}
+									alt={character.name}
+								/>
 							)}
 						</div>
 					</TooltipTrigger>

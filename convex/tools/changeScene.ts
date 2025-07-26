@@ -21,5 +21,7 @@ export const changeScene = (
 				description,
 				prompt,
 			})
+
+			return { description, prompt }
 		},
 	})
