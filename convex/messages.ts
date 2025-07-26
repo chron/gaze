@@ -28,6 +28,7 @@ import { paginationOptsValidator } from "convex/server"
 import { v } from "convex/values"
 import { compact } from "../src/utils/compact"
 import { api, components, internal } from "./_generated/api"
+
 import type { Doc, Id } from "./_generated/dataModel"
 import {
 	action,
@@ -37,6 +38,7 @@ import {
 	mutation,
 	query,
 } from "./_generated/server"
+import { getImageModel } from "./characters"
 import systemPrompt from "./prompts/system"
 import { changeScene } from "./tools/changeScene"
 import { introduceCharacter } from "./tools/introduceCharacter"
@@ -945,10 +947,7 @@ export const generateSceneImage = action({
     `
 
 		const result = await generateImage({
-			model: openai.image("gpt-image-1"),
-			providerOptions: {
-				openai: { quality: "medium" },
-			},
+			...getImageModel(campaign.imageModel),
 			aspectRatio: "16:9",
 			prompt,
 		})

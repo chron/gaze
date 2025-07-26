@@ -2,12 +2,22 @@
 
 A bad solo RPG chatbot
 
+## Philosophy
+
+- Sharp knives
+- Always an escape hatch
+
 ## Advantages over using a chatbot directly:
 
 Maintaining state
 
 - Store a character sheet and have the LLM maintain it with tool calls
 - Have separate lists of characters, scenes, etc.
+
+The AI can keep secrets
+
+- A planning tool that lets it maintain state not visible to the user
+- Better for coherent experiences that aren't just made up on the fly
 
 A specialized experience
 

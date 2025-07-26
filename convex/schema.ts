@@ -21,6 +21,7 @@ export default defineSchema(
 			imagePrompt: v.string(),
 			gameSystemId: v.optional(v.id("gameSystems")),
 			model: v.string(),
+			imageModel: v.string(),
 			plan: v.optional(v.string()),
 		}),
 		characterSheets: defineTable({

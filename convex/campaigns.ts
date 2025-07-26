@@ -59,6 +59,7 @@ export const addCampaign = mutation({
 		imagePrompt: v.string(),
 		gameSystemId: v.optional(v.id("gameSystems")),
 		model: v.string(),
+		imageModel: v.string(),
 	},
 	handler: async (ctx, args) => {
 		const campaign = {
@@ -67,6 +68,7 @@ export const addCampaign = mutation({
 			imagePrompt: args.imagePrompt,
 			gameSystemId: args.gameSystemId,
 			model: args.model,
+			imageModel: args.imageModel,
 		}
 
 		const campaignId = await ctx.db.insert("campaigns", campaign)
@@ -87,6 +89,7 @@ export const update = mutation({
 		imagePrompt: v.string(),
 		gameSystemId: v.optional(v.id("gameSystems")),
 		model: v.string(),
+		imageModel: v.string(),
 	},
 	handler: async (ctx, args) => {
 		await ctx.db.patch(args.id, {
@@ -95,6 +98,7 @@ export const update = mutation({
 			imagePrompt: args.imagePrompt,
 			gameSystemId: args.gameSystemId,
 			model: args.model,
+			imageModel: args.imageModel,
 		})
 	},
 })

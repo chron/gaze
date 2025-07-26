@@ -19,6 +19,20 @@ export const migrateMessageContent = migrations.define({
 	},
 })
 
+export const addImageModelToCampaigns2 = migrations.define({
+	table: "campaigns",
+	migrateOne: async (ctx, doc) => {
+		// Set default image model for existing campaigns
+		await ctx.db.patch(doc._id, {
+			imageModel: "gpt-image-1",
+		})
+	},
+})
+
 export const runIt = migrations.runner(
 	internal.migrations.migrateMessageContent,
+)
+
+export const runImageModelMigration2 = migrations.runner(
+	internal.migrations.addImageModelToCampaigns2,
 )

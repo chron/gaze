@@ -1,8 +1,40 @@
 import { openai } from "@ai-sdk/openai"
-import { experimental_generateImage as generateImage } from "ai"
+import {
+	type ImageModel,
+	type JSONValue,
+	experimental_generateImage as generateImage,
+} from "ai"
 import { v } from "convex/values"
 import { api } from "./_generated/api"
 import { action, mutation, query } from "./_generated/server"
+
+export function getImageModel(modelString: string): {
+	model: ImageModel
+	providerOptions: Record<string, Record<string, JSONValue>>
+} {
+	if (modelString === "gpt-image-1") {
+		return {
+			model: openai.image(modelString),
+			providerOptions: {
+				openai: { quality: "low" },
+			},
+		}
+	}
+
+	// if (modelString === "vertex/imagen-3.0-generate-002") {
+	// 	return {
+	// 		model: vertex.image(modelString.split("/")[1]),
+	// 		providerOptions: {
+	// 			vertex: {
+	// 				safetySetting: "block_none",
+	// 				personGeneration: "allow_all",
+	// 			} satisfies GoogleVertexImageProviderOptions,
+	// 		},
+	// 	}
+	// }
+
+	throw new Error(`Unknown image model: ${modelString}`)
+}
 
 export const list = query({
 	args: {
@@ -89,10 +121,7 @@ export const generateImageForCharacter = action({
     `
 
 		const result = await generateImage({
-			model: openai.image("gpt-image-1"),
-			providerOptions: {
-				openai: { quality: "medium" },
-			},
+			...getImageModel(campaign.imageModel),
 			aspectRatio: "1:1",
 			prompt,
 		})

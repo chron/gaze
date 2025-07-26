@@ -43,6 +43,7 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 		const description = formData.get("description") as string
 		const imagePrompt = formData.get("imagePrompt") as string
 		const model = formData.get("model") as string
+		const imageModel = formData.get("imageModel") as string
 		const gameSystemId =
 			formData.get("gameSystemId") === "none"
 				? undefined
@@ -56,6 +57,7 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 				imagePrompt,
 				gameSystemId,
 				model,
+				imageModel,
 			})
 		} else {
 			const newId = await addCampaign({
@@ -64,6 +66,7 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 				imagePrompt,
 				gameSystemId,
 				model,
+				imageModel,
 			})
 			navigate({
 				to: "/campaigns/$campaignId",
@@ -137,10 +140,10 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 				</div>
 
 				<div className="grid gap-3">
-					<Label htmlFor="model">Model</Label>
+					<Label htmlFor="model">Text Model</Label>
 					<Select name="model" defaultValue={campaign?.model} required>
 						<SelectTrigger>
-							<SelectValue placeholder="Select a model" />
+							<SelectValue placeholder="Select a text model" />
 						</SelectTrigger>
 
 						<SelectContent>
@@ -207,6 +210,24 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 							<SelectItem value="anthropic/claude-sonnet-4">
 								Claude Sonnet 4
 							</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
+
+				<div className="grid gap-3">
+					<Label htmlFor="imageModel">Image Model</Label>
+					<Select
+						name="imageModel"
+						defaultValue={campaign?.imageModel || "dall-e-3"}
+						required
+					>
+						<SelectTrigger>
+							<SelectValue placeholder="Select an image model" />
+						</SelectTrigger>
+
+						<SelectContent>
+							<SelectItem value="dall-e-3">DALL-E 3</SelectItem>
+							<SelectItem value="dall-e-2">DALL-E 2</SelectItem>
 						</SelectContent>
 					</Select>
 				</div>
