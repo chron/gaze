@@ -127,15 +127,23 @@ export const MessageList: React.FC<Props> = ({
 					overflowAnchor: "auto",
 				}}
 			>
-				{reversedMessages?.map((message) => (
-					<Message
-						key={message._id}
-						message={message}
-						isLastMessage={message._id === lastMessage?._id}
-						isStreaming={message.streamId === streamId}
-						setStreamId={setStreamId}
-					/>
-				))}
+				{reversedMessages?.map((message, index) => {
+					// If the next message is a tool result, send that too for context
+					const nextMessage = reversedMessages[index + 1]
+
+					return (
+						<Message
+							key={message._id}
+							message={message}
+							isLastMessage={message._id === lastMessage?._id}
+							isStreaming={message.streamId === streamId}
+							setStreamId={setStreamId}
+							followupToolResult={
+								nextMessage?.role === "tool" ? nextMessage : null
+							}
+						/>
+					)
+				})}
 
 				{/* Invisible element to anchor scrolling */}
 				<div ref={messagesEndRef} style={{ overflowAnchor: "auto" }} />

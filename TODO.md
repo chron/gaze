@@ -7,7 +7,6 @@ NEXT
 
 TIDY UP AFTER STREAMING REFACTOR
 
-- disable dice roll buttons after usage
 - maybe don't send old reasoning to LLM on every message?
 - fix the autoscroll behaviour (add back a check for manual scroll thing?)
 - re-add the summary thing
@@ -61,3 +60,4 @@ DONE
 - Sometimes it asks you to describe your action and then roll, but the UI kinda makes you roll first
 - Do something different with the scene background colours (and scenes in general)
 - If the LLM produces multiple dice-roll tool calls at once we need to wait until they're ALL rolled before reporting back (and then report them all at once)
+- disable dice roll buttons after usage

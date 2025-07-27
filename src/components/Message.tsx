@@ -25,6 +25,7 @@ type Props = {
 	isLastMessage: boolean
 	setStreamId: (streamId: StreamId) => void
 	isStreaming: boolean
+	followupToolResult: Doc<"messages"> | null
 }
 
 export const Message: React.FC<Props> = ({
@@ -32,6 +33,7 @@ export const Message: React.FC<Props> = ({
 	isLastMessage,
 	setStreamId,
 	isStreaming,
+	followupToolResult,
 }) => {
 	const { steps, reasoning } = useStructuredStream(
 		isStreaming,
@@ -159,6 +161,7 @@ export const Message: React.FC<Props> = ({
 													bonus: number
 												}
 											}
+											followupToolResult={followupToolResult}
 											setStreamId={setStreamId}
 										/>
 									)
