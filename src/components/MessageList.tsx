@@ -1,5 +1,5 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
-import { usePaginatedQuery, useQuery } from "convex/react"
+import { usePaginatedQuery } from "convex/react"
 import { useCallback, useEffect, useRef } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
@@ -21,6 +21,7 @@ export const MessageList: React.FC<Props> = ({
 }) => {
 	const resizeObserverRef = useRef<ResizeObserver | null>(null)
 	const messagesEndRef = useRef<HTMLDivElement>(null)
+	const isInitialLoadRef = useRef(true)
 
 	// const totalTokens = useQuery(api.campaigns.sumTokens, { campaignId })
 	const {
@@ -36,15 +37,23 @@ export const MessageList: React.FC<Props> = ({
 		{ initialNumItems: 10 },
 	)
 
-	// Smooth scroll to bottom
-	const scrollToBottom = useCallback(() => {
-		if (messagePanelRef.current) {
-			messagePanelRef.current.scrollTo({
-				top: messagePanelRef.current.scrollHeight,
-				behavior: "smooth",
-			})
-		}
-	}, [messagePanelRef])
+	const lastMessage = messages?.[0]
+	const usage = lastMessage?.usage
+	const reversedMessages = [...(messages ?? [])]
+	reversedMessages.reverse()
+
+	// Scroll to bottom with optional smooth behavior
+	const scrollToBottom = useCallback(
+		(smooth = true) => {
+			if (messagePanelRef.current) {
+				messagePanelRef.current.scrollTo({
+					top: messagePanelRef.current.scrollHeight,
+					behavior: smooth ? "smooth" : "instant",
+				})
+			}
+		},
+		[messagePanelRef],
+	)
 
 	// Check if user is near the bottom of the scroll area
 	const isNearBottom = useCallback(() => {
@@ -78,17 +87,19 @@ export const MessageList: React.FC<Props> = ({
 		}
 	}, [isNearBottom, scrollToBottom])
 
-	// Scroll to bottom once a new message finishes coming in
+	// Scroll to bottom once messages load - instant on initial load, smooth on updates
 	useEffect(() => {
-		if (messages?.length) {
-			scrollToBottom()
+		if (lastMessage?._id) {
+			if (isInitialLoadRef.current) {
+				// First time loading messages - scroll instantly to bottom
+				scrollToBottom(false)
+				isInitialLoadRef.current = false
+			} else {
+				// Subsequent updates - use smooth scrolling
+				scrollToBottom()
+			}
 		}
-	}, [messages?.length, scrollToBottom])
-
-	const lastMessage = messages?.[0]
-	const usage = lastMessage?.usage
-	const reversedMessages = [...(messages ?? [])]
-	reversedMessages.reverse()
+	}, [lastMessage?._id, scrollToBottom])
 
 	if (isLoadingMessages) {
 		return (
