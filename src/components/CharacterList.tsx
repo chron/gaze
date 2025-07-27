@@ -20,9 +20,13 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 		return null
 	}
 
+	// Backwards compat, show all characters if no active characters are set
+	const activeCharacters =
+		campaign.activeCharacters ?? characters.map((c) => c.name)
+
 	return (
 		<div className="flex flex-wrap absolute top-[-64px] right-0 ">
-			{campaign.activeCharacters?.map((charName) => {
+			{activeCharacters.map((charName) => {
 				const character = characters.find((c) => c.name === charName)
 				if (!character)
 					return (

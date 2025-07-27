@@ -26,6 +26,7 @@ type Props = {
 	setStreamId: (streamId: StreamId) => void
 	isStreaming: boolean
 	followupToolResult: Doc<"messages"> | null
+	scrollToBottom: () => void
 }
 
 export const Message: React.FC<Props> = ({
@@ -34,6 +35,7 @@ export const Message: React.FC<Props> = ({
 	setStreamId,
 	isStreaming,
 	followupToolResult,
+	scrollToBottom,
 }) => {
 	const { steps, reasoning } = useStructuredStream(
 		isStreaming,
@@ -73,6 +75,12 @@ export const Message: React.FC<Props> = ({
 			setShowReasoning(false)
 		}
 	}, [noDatabaseContent])
+
+	useEffect(() => {
+		if (isLastMessage && steps.length > 0) {
+			scrollToBottom()
+		}
+	}, [isLastMessage, scrollToBottom, steps.length])
 
 	if (message.role === "tool") {
 		if (

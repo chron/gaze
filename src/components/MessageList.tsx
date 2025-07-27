@@ -20,7 +20,7 @@ export const MessageList: React.FC<Props> = ({
 	setStreamId,
 }) => {
 	const resizeObserverRef = useRef<ResizeObserver | null>(null)
-	const messagesEndRef = useRef<HTMLDivElement>(null)
+	// const messagesEndRef = useRef<HTMLDivElement>(null)
 	const isInitialLoadRef = useRef(true)
 
 	// const totalTokens = useQuery(api.campaigns.sumTokens, { campaignId })
@@ -112,10 +112,10 @@ export const MessageList: React.FC<Props> = ({
 	return (
 		<div
 			className="flex-1 flex flex-col justify-end gap-4 min-h-0 py-4 px-4"
-			style={{
-				// CSS scroll anchoring - keeps scroll position at bottom as content grows
-				overflowAnchor: "none",
-			}}
+			// style={{
+			// 	// CSS scroll anchoring - keeps scroll position at bottom as content grows
+			// 	overflowAnchor: "none",
+			// }}
 		>
 			{status === "CanLoadMore" && (
 				<Button
@@ -130,10 +130,10 @@ export const MessageList: React.FC<Props> = ({
 
 			<div
 				className="messages-container flex flex-col gap-4"
-				style={{
-					// Enable scroll anchoring for the messages container
-					overflowAnchor: "auto",
-				}}
+				// style={{
+				// 	// Enable scroll anchoring for the messages container
+				// 	overflowAnchor: "auto",
+				// }}
 			>
 				{reversedMessages?.map((message, index) => {
 					// If the next message is a tool result, send that too for context
@@ -149,12 +149,13 @@ export const MessageList: React.FC<Props> = ({
 							followupToolResult={
 								nextMessage?.role === "tool" ? nextMessage : null
 							}
+							scrollToBottom={scrollToBottom}
 						/>
 					)
 				})}
 
 				{/* Invisible element to anchor scrolling */}
-				<div ref={messagesEndRef} style={{ overflowAnchor: "auto" }} />
+				{/* <div ref={messagesEndRef} style={{ overflowAnchor: "auto" }} /> */}
 			</div>
 
 			{usage && (
