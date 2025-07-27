@@ -28,8 +28,6 @@ OTHER STUFF
 - Scrape the content at https://charsmith.com/wildsea-compendium to make a Wildsea doc?
 - Add options, including whether reasoning shows collapsed by default (or hidden completely)
 - Also maybe turning reasoning on and off per model or setting limits
-- Look into the DB bandwidth. Not sure if it's just HMR that's refreshing stuff too much?
-  - maybe when streaming we need to not get the whole paginated list endpoint?
 - Try out other image gen (Higgsfield? Midjourney? Gemini?), and add images for scenes maybe?
 - Different dice display stuff: diff shapes for number of sides (SVG?), maybe cool rolling animations
   - Also: for dice pool thresholds show number of successes instead of total somehow?
@@ -41,7 +39,7 @@ PROMPT THINGS
 - Sometimes a tool call (like updating character sheet) comes at the natural end of a message, and then the new message after kind of doubles things up
 - model specific tweaks maybe
   - Claude uses A/B/C lists instead of markdown lists which don't render properly
-- Claude uses A/B/C lists instead of markdown lists which don't render properly
+
 DONE
 
 - store tool calls along with other messages (string -> string[]? or more structured?)
@@ -61,3 +59,5 @@ DONE
 - maybe don't send old reasoning to LLM on every message?
 - re-add the summary thing
 - Try out having the LLM plan a few steps ahead and store it secretly
+- Look into the DB bandwidth. Not sure if it's just HMR that's refreshing stuff too much?
+  - maybe when streaming we need to not get the whole paginated list endpoint?
