@@ -28,10 +28,15 @@ OTHER STUFF
 - Scrape the content at https://charsmith.com/wildsea-compendium to make a Wildsea doc?
 - Add options, including whether reasoning shows collapsed by default (or hidden completely)
 - Also maybe turning reasoning on and off per model or setting limits
-- Try out other image gen (Higgsfield? Midjourney? Gemini?), and add images for scenes maybe?
+- Try out other image gen (Higgsfield? Midjourney? Gemini?)
 - Different dice display stuff: diff shapes for number of sides (SVG?), maybe cool rolling animations
   - Also: for dice pool thresholds show number of successes instead of total somehow?
 - <Wiggly /> animation resets as new text streams in
+- Character sheet JSON doesn't maintain the original order
+- Order campaigns in sidebar by recently updated, show a subset (5?) with a link to view more
+- Editing previous messages (UI is done, but need to actually save the changes)
+- "End of session" tool that adds a summary to the UI somewhere?
+- Have a concept of "active" vs "inactive" characters, maybe scene_change updates the list?
 
 PROMPT THINGS
 
@@ -61,3 +66,4 @@ DONE
 - Try out having the LLM plan a few steps ahead and store it secretly
 - Look into the DB bandwidth. Not sure if it's just HMR that's refreshing stuff too much?
   - maybe when streaming we need to not get the whole paginated list endpoint?
+- and add images for scenes maybe?

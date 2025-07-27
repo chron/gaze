@@ -27,6 +27,8 @@ function ChatPage() {
 
 	if (!campaign) return null
 
+	console.log(campaign)
+
 	return (
 		<>
 			<div className="flex h-full w-full flex-col gap-6 bg-blue-500 relative">
@@ -73,6 +75,7 @@ function ChatPage() {
 				</Tabs>
 			</div>
 
+			{/* TODO: ideally don't show this button if the gameSystem has no reference data */}
 			{campaign.gameSystemId && (
 				<SidebarProvider defaultOpen={false}>
 					<SidebarTrigger className="absolute top-3 right-2 text-white" />

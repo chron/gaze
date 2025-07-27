@@ -40,6 +40,7 @@ export const Message: React.FC<Props> = ({
 		message.streamId as StreamId,
 	)
 
+	const [isEditing, setIsEditing] = useState(false)
 	const [showReasoning, setShowReasoning] = useState(true)
 	const regenerateLastMessageMutation = useMutation(
 		api.messages.regenerateLastMessage,
@@ -103,11 +104,40 @@ export const Message: React.FC<Props> = ({
 				message.role === "user"
 					? "self-end bg-blue-100 text-blue-800"
 					: "self-start bg-gray-100 text-gray-800",
+				isEditing && "outline outline-2 outline-black",
 			)}
+			contentEditable={isEditing}
+			onDoubleClick={() => setIsEditing(true)}
+			onKeyDown={(e) => {
+				if (e.key === "Escape") {
+					e.preventDefault()
+					setIsEditing(false)
+				}
+
+				if (e.key === "Enter" && !e.shiftKey) {
+					e.preventDefault()
+					// TODO: save the message
+					setIsEditing(false)
+				}
+			}}
 		>
 			{noContent ? (
-				<div className="flex flex-col gap-2 font-serif">
+				<div className="flex flex-col gap-2 font-serif relative group">
 					<p className="animate-pulse text-xl">...</p>
+
+					{isLastMessage && (
+						<Button
+							className="hidden group-hover:block absolute bottom-0 right-0"
+							onClick={async () => {
+								const { streamId } = await regenerateLastMessageMutation({
+									messageId: message._id,
+								})
+								setStreamId(streamId)
+							}}
+						>
+							<RefreshCcwIcon />
+						</Button>
+					)}
 				</div>
 			) : (
 				<div className="flex flex-col font-serif relative group gap-2">
@@ -144,6 +174,7 @@ export const Message: React.FC<Props> = ({
 											key={`scene-${block.toolCallId}`}
 											messageId={message._id}
 											scene={message.scene}
+											description={block.args.description}
 										/>
 									)
 								}
@@ -221,6 +252,7 @@ export const Message: React.FC<Props> = ({
 														key={`${message._id}-step-${stepIndex}-scene-${index}`}
 														messageId={message._id}
 														scene={message.scene}
+														description={toolCall.args.description}
 													/>
 												)
 											}

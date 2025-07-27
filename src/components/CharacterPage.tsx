@@ -1,7 +1,9 @@
 import type { Id } from "@convex-dev/web"
-import { useQuery } from "convex/react"
+import { useAction, useQuery } from "convex/react"
+import { RefreshCcwIcon } from "lucide-react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
+import { Button } from "./ui/button"
 
 type Props = {
 	campaignId: Id<"campaigns">
@@ -31,8 +33,10 @@ type CharacterCardProps = {
 }
 
 const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
+	const regenerateImage = useAction(api.characters.generateImageForCharacter)
+
 	return (
-		<div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow border border-gray-200">
+		<div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow border border-gray-200 relative group">
 			{character.imageUrl && (
 				<img
 					src={character.imageUrl}
@@ -44,6 +48,13 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
 				<h2 className="text-lg font-bold">{character.name}</h2>
 				<p className="text-sm text-gray-500">{character.description}</p>
 			</div>
+
+			<Button
+				className="hidden group-hover:block absolute bottom-2 left-2"
+				onClick={() => regenerateImage({ characterId: character._id })}
+			>
+				<RefreshCcwIcon />
+			</Button>
 		</div>
 	)
 }

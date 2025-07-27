@@ -197,7 +197,7 @@ const RecursiveStatBlock: React.FC<{ name: string; value: JSONValue }> = ({
 		<>
 			<StatLabel name={name} />
 
-			<div>{JSON.stringify(value, null, 2)}</div>
+			<PrimitiveValue value={value} />
 		</>
 	)
 }
@@ -232,6 +232,10 @@ const StatLabel: React.FC<{ name: string }> = ({ name }) => {
 const PrimitiveValue: React.FC<{ value: JSONValue }> = ({ value }) => {
 	if (typeof value === "string") {
 		return <div className="whitespace-pre-wrap">{value}</div>
+	}
+
+	if (value === null) {
+		return <div className="text-gray-400">–</div>
 	}
 
 	return <div>{JSON.stringify(value, null, 2)}</div>

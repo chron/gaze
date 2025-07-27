@@ -7,8 +7,10 @@ import { Button } from "./ui/button"
 export const SceneChange = ({
 	messageId,
 	scene,
+	description,
 }: {
 	messageId: Id<"messages">
+	description: string
 	scene?: {
 		description: string
 		prompt?: string
@@ -35,7 +37,9 @@ export const SceneChange = ({
 			)}
 
 			<div className="absolute bottom-0 right-0 m-4 bg-black/50 rounded-md p-2 hidden group-hover:block">
-				<p className="text-white text-sm">{scene?.description}</p>
+				<p className="text-white text-sm">
+					{description ? description : scene?.description}
+				</p>
 			</div>
 
 			<Button

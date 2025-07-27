@@ -685,7 +685,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		},
 	})
 
-	console.log("formattedMessages", formattedMessages)
+	// console.log("formattedMessages", formattedMessages)
 
 	const { fullStream } = streamText({
 		system: prompt,
@@ -726,7 +726,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						message._id,
 						characterSheet,
 					),
-					change_scene: changeScene(ctx, message._id),
+					change_scene: changeScene(ctx, campaign._id, message._id),
 					introduce_character: introduceCharacter(
 						ctx,
 						message._id,
@@ -737,13 +737,12 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 				}
 			: undefined,
 		onError: async (error) => {
-			await ctx.runMutation(api.messages.appendTextBlock, {
-				messageId: message._id,
-				text: `\n\n\`\`\`\error n${JSON.stringify(error.error, null, 2)}\n\`\`\``,
-			})
+			console.log("onError", error)
+
+			// TODO: show the error in the UI somehow - the old appendblock doesn't work well with streaming
 		},
 		onFinish: async ({ response }) => {
-			console.log("onFinish", response.messages)
+			console.log("onFinish", response)
 
 			// Process all messages from all steps and combine their content
 			const allContent: Extract<
@@ -926,6 +925,7 @@ export const storeSceneImage = mutation({
 		messageId: v.id("messages"),
 		description: v.string(),
 		prompt: v.string(),
+		activeCharacters: v.array(v.string()),
 		storageId: v.id("_storage"),
 	},
 	handler: async (ctx, args) => {
@@ -934,6 +934,7 @@ export const storeSceneImage = mutation({
 				description: args.description,
 				prompt: args.prompt,
 				image: args.storageId,
+				activeCharacters: args.activeCharacters,
 			},
 		})
 	},
@@ -944,6 +945,7 @@ export const generateSceneImage = action({
 		messageId: v.id("messages"),
 		description: v.string(),
 		prompt: v.string(),
+		activeCharacters: v.array(v.string()),
 	},
 	handler: async (ctx, args) => {
 		const message = await ctx.runQuery(api.messages.get, {
@@ -956,6 +958,13 @@ export const generateSceneImage = action({
 			id: message.campaignId,
 		})
 
+		const characters = await ctx.runQuery(api.characters.list, {
+			campaignId: message.campaignId,
+		})
+		const activeCharacters = characters.filter((c) =>
+			args.activeCharacters.includes(c.name),
+		)
+
 		if (!campaign) throw new Error("Campaign not found")
 
 		const prompt = `
@@ -963,6 +972,10 @@ export const generateSceneImage = action({
 
       This should be a landscape or environment scene, not a character portrait.
       The image should be wide format. Don't include any text.
+
+			Here are descriptions of the characters that are active in the scene:
+
+			${activeCharacters.map((c) => `- ${c.name}: ${c.description}`).join("\n")}
 
       The style of the image should be ${campaign.imagePrompt}.
     `
@@ -982,6 +995,7 @@ export const generateSceneImage = action({
 					messageId: args.messageId,
 					description: args.description,
 					prompt: args.prompt,
+					activeCharacters: args.activeCharacters,
 					storageId,
 				})
 			}
@@ -1007,6 +1021,7 @@ export const regenerateSceneImage = action({
 			description: message.scene.description,
 			// Old scenes don't have prompt, so this is just a fallback - won't happen going forward
 			prompt: message.scene.prompt ?? message.scene.description,
+			activeCharacters: message.scene.activeCharacters ?? [],
 		})
 	},
 })

@@ -22,7 +22,7 @@ export const MessageList: React.FC<Props> = ({
 	const resizeObserverRef = useRef<ResizeObserver | null>(null)
 	const messagesEndRef = useRef<HTMLDivElement>(null)
 
-	const totalTokens = useQuery(api.campaigns.sumTokens, { campaignId })
+	// const totalTokens = useQuery(api.campaigns.sumTokens, { campaignId })
 	const {
 		results: messages,
 		isLoading: isLoadingMessages,
@@ -149,8 +149,8 @@ export const MessageList: React.FC<Props> = ({
 			{usage && (
 				<div className="text-sm text-gray-200">
 					{usage.promptTokens} input tokens, {usage.completionTokens} output
-					tokens (total: {totalTokens?.promptTokens} input +{" "}
-					{totalTokens?.completionTokens} output)
+					tokens
+					{/* (total: {totalTokens?.promptTokens} input +{" "} {totalTokens?.completionTokens} output) */}
 				</div>
 			)}
 		</div>

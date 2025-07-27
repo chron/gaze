@@ -24,6 +24,7 @@ export default defineSchema(
 			imageModel: v.string(),
 			plan: v.optional(v.string()),
 			archived: v.optional(v.boolean()),
+			activeCharacters: v.optional(v.array(v.string())),
 		}).index("by_archived", ["archived"]),
 		characterSheets: defineTable({
 			campaignId: v.id("campaigns"),
@@ -81,6 +82,7 @@ export default defineSchema(
 					backgroundColor: v.optional(v.string()),
 					image: v.optional(v.id("_storage")),
 					prompt: v.optional(v.string()),
+					activeCharacters: v.optional(v.array(v.string())),
 				}),
 			),
 			usage: v.optional(
