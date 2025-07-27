@@ -1,6 +1,6 @@
 import { useParams } from "@tanstack/react-router"
-import { useAction } from "convex/react"
-import { BookText, Command } from "lucide-react"
+import { useAction, useQuery } from "convex/react"
+import { BookText, Brain, Command } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
@@ -19,6 +19,10 @@ export const ChatExtraActions: React.FC = () => {
 	const [summary, setSummary] = useState<string | null>(null)
 	const [isLoading, setIsLoading] = useState(false)
 	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
+
+	const campaign = useQuery(api.campaigns.get, {
+		id: campaignId as Id<"campaigns">,
+	})
 
 	return (
 		<>
@@ -53,6 +57,17 @@ export const ChatExtraActions: React.FC = () => {
 						<BookText />
 						Summarise
 					</DropdownMenuItem>
+
+					{campaign?.plan && (
+						<DropdownMenuItem
+							onClick={async () => {
+								setSummary(campaign.plan ?? null)
+							}}
+						>
+							<Brain />
+							View plan
+						</DropdownMenuItem>
+					)}
 				</DropdownMenuContent>
 			</DropdownMenu>
 		</>
