@@ -863,50 +863,63 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 	return response
 })
 
-// export const summarizeChatHistory = action({
-// 	args: {
-// 		campaignId: v.id("campaigns"),
-// 	},
-// 	handler: async (ctx, args): Promise<string> => {
-// 		// TODO: Don't summarise ALL messages, wait until a threshold and leave x tokens of recent messages.
-// 		// Then mark all the summarised messages as summarised and store the summary somewhere (new table?)
-// 		const messages = await ctx.runQuery(api.messages.list, {
-// 			campaignId: args.campaignId,
-// 		})
+export const summarizeChatHistory = action({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args): Promise<string> => {
+		// TODO: Don't summarise ALL messages, wait until a threshold and leave x tokens of recent messages.
+		// Then mark all the summarised messages as summarised and store the summary somewhere (new table?)
+		const messages = await ctx.runQuery(api.messages.list, {
+			campaignId: args.campaignId,
+		})
 
-// 		const prompt =
-// 			"You are an expert game master, compiling notes from a RPG session. Summarize the following transcript:"
+		const prompt =
+			"You are an expert game master, compiling notes from a RPG session. Summarize the following transcript:"
 
-// 		const { text } = await generateText({
-// 			system: prompt,
-// 			model: openai("gpt-4o-mini"),
-// 			messages: [
-// 				...messages.map((msg) => ({
-// 					role: msg.role,
-// 					content: msg.content
-// 						.map((block) => {
-// 							if (block.type === "text") {
-// 								return block.text
-// 							}
+		const formattedMessages: CoreMessage[] = messages
+			.map((msg) => {
+				if (msg.role === "user") {
+					return {
+						role: "user",
+						content: msg.content.filter((block) => block.type === "text"),
+					} satisfies CoreUserMessage
+				}
 
-// 							return `[${block.toolName}: ${JSON.stringify(block.parameters)} -> ${JSON.stringify(block.result)}]`
-// 						})
-// 						.join(""),
-// 				})),
-// 				{
-// 					role: "user",
-// 					content: "Summarize the storyline so far.",
-// 				},
-// 			],
-// 		})
+				if (msg.role === "tool") {
+					// Don't include tool results in the summary
+					return null
+				}
 
-// 		await ctx.scheduler.runAfter(0, internal.memories.scanForNewMemories, {
-// 			messageIds: messages.map((msg) => msg._id),
-// 		})
+				return {
+					role: "assistant",
+					content: msg.content.filter(
+						// Remove tool calls and reasoning
+						(block) => block.type === "text",
+					),
+				} satisfies CoreAssistantMessage
+			})
+			.filter((m) => m !== null)
 
-// 		return text
-// 	},
-// })
+		const { text } = await generateText({
+			system: prompt,
+			model: openai("gpt-4o-mini"),
+			messages: [
+				...formattedMessages,
+				{
+					role: "user",
+					content: "Summarize the storyline so far.",
+				},
+			],
+		})
+
+		await ctx.scheduler.runAfter(0, internal.memories.scanForNewMemories, {
+			messageIds: messages.map((msg) => msg._id),
+		})
+
+		return text
+	},
+})
 
 export const storeSceneImage = mutation({
 	args: {

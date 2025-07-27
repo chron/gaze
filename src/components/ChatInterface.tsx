@@ -4,6 +4,7 @@ import { useRef, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { CharacterList } from "./CharacterList"
+import { ChatExtraActions } from "./ChatExtraActions"
 import { MessageList } from "./MessageList"
 import { Button } from "./ui/button"
 import { Textarea } from "./ui/textarea"
@@ -36,7 +37,7 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 				/>
 			</div>
 
-			<div className="flex items-end gap-4 p-4 relative">
+			<div className="flex items-end gap-2 p-4 relative">
 				<CharacterList campaignId={campaign._id} />
 				<ChatInput campaignId={campaign._id} setStreamId={setStreamId} />
 			</div>
@@ -87,6 +88,8 @@ const ChatInput: React.FC<{
 					}
 				}}
 			/>
+
+			<ChatExtraActions />
 
 			<Button
 				variant="outline"

@@ -1,6 +1,6 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
-import { usePaginatedQuery, useQuery } from "convex/react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useAction, usePaginatedQuery, useQuery } from "convex/react"
+import { useCallback, useEffect, useRef } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { Message } from "./Message"
@@ -19,12 +19,9 @@ export const MessageList: React.FC<Props> = ({
 	streamId,
 	setStreamId,
 }) => {
-	const [summary, setSummary] = useState<string | null>(null)
-	const [isLoading, setIsLoading] = useState(false)
 	const resizeObserverRef = useRef<ResizeObserver | null>(null)
 	const messagesEndRef = useRef<HTMLDivElement>(null)
 
-	// const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
 	const totalTokens = useQuery(api.campaigns.sumTokens, { campaignId })
 	const {
 		results: messages,
@@ -156,31 +153,6 @@ export const MessageList: React.FC<Props> = ({
 					{totalTokens?.completionTokens} output)
 				</div>
 			)}
-
-			{summary ? (
-				<div className="text-sm text-gray-500 p-4 bg-muted rounded-md">
-					{summary}
-				</div>
-			) : messages?.length ? (
-				<div className="flex">
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={async () => {
-							setIsLoading(true)
-							try {
-								const summary = "TODO" //await summarizeChatHistory({ campaignId })
-								setSummary(summary)
-							} finally {
-								setIsLoading(false)
-							}
-						}}
-						isLoading={isLoading}
-					>
-						Summarise
-					</Button>
-				</div>
-			) : null}
 		</div>
 	)
 }

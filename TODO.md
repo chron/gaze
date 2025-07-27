@@ -2,14 +2,11 @@ NEXT
 
 - Fix up data (or reset DB?) so we can turn `schemaValidation: true` back on
 - Automate an initial welcome message once you create a campaign
-- Try out having the LLM plan a few steps ahead and store it secretly
 - New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
 
 TIDY UP AFTER STREAMING REFACTOR
 
-- maybe don't send old reasoning to LLM on every message?
 - fix the autoscroll behaviour (add back a check for manual scroll thing?)
-- re-add the summary thing
 
 OTHER STUFF
 
@@ -61,3 +58,6 @@ DONE
 - Do something different with the scene background colours (and scenes in general)
 - If the LLM produces multiple dice-roll tool calls at once we need to wait until they're ALL rolled before reporting back (and then report them all at once)
 - disable dice roll buttons after usage
+- maybe don't send old reasoning to LLM on every message?
+- re-add the summary thing
+- Try out having the LLM plan a few steps ahead and store it secretly
