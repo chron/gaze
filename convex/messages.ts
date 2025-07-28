@@ -89,19 +89,18 @@ export const list = query({
 			.withIndex("by_campaign", (q) => q.eq("campaignId", args.campaignId))
 			.collect()
 
-		// Add scene image URLs
 		return await Promise.all(
 			messages.map(async (message) => {
-				if (message.scene?.image) {
-					return {
-						...message,
-						scene: {
-							...message.scene,
-							imageUrl: await ctx.storage.getUrl(message.scene.image),
-						},
-					}
+				return {
+					...message,
+					scene: message.scene?.image
+						? {
+								...message.scene,
+								imageUrl: await ctx.storage.getUrl(message.scene.image),
+							}
+						: message.scene,
+					audio: message.audio?.map((audio) => ctx.storage.getUrl(audio)),
 				}
-				return message
 			}),
 		)
 	},
@@ -122,16 +121,18 @@ export const paginatedList = query({
 		// Add scene image URLs
 		const page = await Promise.all(
 			result.page.map(async (message) => {
-				if (message.scene?.image) {
-					return {
-						...message,
-						scene: {
-							...message.scene,
-							imageUrl: await ctx.storage.getUrl(message.scene.image),
-						},
-					}
+				return {
+					...message,
+					scene: message.scene?.image
+						? {
+								...message.scene,
+								imageUrl: await ctx.storage.getUrl(message.scene.image),
+							}
+						: message.scene,
+					audio: await Promise.all(
+						message.audio?.map((audio) => ctx.storage.getUrl(audio)) ?? [],
+					),
 				}
-				return message
 			}),
 		)
 

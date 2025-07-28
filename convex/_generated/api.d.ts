@@ -18,6 +18,7 @@ import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
 import type * as prompts_extractMemories from "../prompts/extractMemories.js";
 import type * as prompts_system from "../prompts/system.js";
+import type * as speech from "../speech.js";
 import type * as tools_changeScene from "../tools/changeScene.js";
 import type * as tools_introduceCharacter from "../tools/introduceCharacter.js";
 import type * as tools_requestDiceRoll from "../tools/requestDiceRoll.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   migrations: typeof migrations;
   "prompts/extractMemories": typeof prompts_extractMemories;
   "prompts/system": typeof prompts_system;
+  speech: typeof speech;
   "tools/changeScene": typeof tools_changeScene;
   "tools/introduceCharacter": typeof tools_introduceCharacter;
   "tools/requestDiceRoll": typeof tools_requestDiceRoll;

@@ -1,9 +1,9 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
-import { useMutation } from "convex/react"
-import { Brain, RefreshCcwIcon } from "lucide-react"
-import React, { useEffect, useState } from "react"
+import { useAction, useMutation } from "convex/react"
+import { Brain, RefreshCcwIcon, Speech } from "lucide-react"
+import React, { useEffect, useRef, useState } from "react"
 import { api } from "../../convex/_generated/api"
-import type { Doc, Id } from "../../convex/_generated/dataModel"
+import type { Doc } from "../../convex/_generated/dataModel"
 import { useStructuredStream } from "../hooks/useStructuredStream"
 import { cn } from "../lib/utils"
 import { CharacterIntroduction } from "./CharacterIntroduction"
@@ -13,6 +13,7 @@ import { DiceRollResult } from "./DiceRollResult"
 import { MessageMarkdown } from "./MessageMarkdown"
 import { PlanUpdate } from "./PlanUpdate"
 import { SceneChange } from "./SceneChange"
+import { SequentialAudioPlayer } from "./SequentialAudioPlayer"
 import { Button } from "./ui/button"
 import {
 	Collapsible,
@@ -44,9 +45,6 @@ export const Message: React.FC<Props> = ({
 
 	const [isEditing, setIsEditing] = useState(false)
 	const [showReasoning, setShowReasoning] = useState(true)
-	const regenerateLastMessageMutation = useMutation(
-		api.messages.regenerateLastMessage,
-	)
 
 	const noDatabaseContent =
 		message.content.length === 0 ||
@@ -133,19 +131,11 @@ export const Message: React.FC<Props> = ({
 				<div className="flex flex-col gap-2 font-serif relative group">
 					<p className="animate-pulse text-xl">...</p>
 
-					{isLastMessage && (
-						<Button
-							className="hidden group-hover:block absolute bottom-0 right-0"
-							onClick={async () => {
-								const { streamId } = await regenerateLastMessageMutation({
-									messageId: message._id,
-								})
-								setStreamId(streamId)
-							}}
-						>
-							<RefreshCcwIcon />
-						</Button>
-					)}
+					<MessageActions
+						message={message}
+						isLastMessage={isLastMessage}
+						setStreamId={setStreamId}
+					/>
 				</div>
 			) : (
 				<div className="flex flex-col font-serif relative group gap-2">
@@ -333,20 +323,55 @@ export const Message: React.FC<Props> = ({
 							})}
 						</>
 					)}
-					{isLastMessage && (
-						<Button
-							className="hidden group-hover:block absolute bottom-0 right-0"
-							onClick={async () => {
-								const { streamId } = await regenerateLastMessageMutation({
-									messageId: message._id,
-								})
-								setStreamId(streamId)
-							}}
-						>
-							<RefreshCcwIcon />
-						</Button>
+
+					<MessageActions
+						message={message}
+						isLastMessage={isLastMessage}
+						setStreamId={setStreamId}
+					/>
+
+					{message?.audio && (
+						<SequentialAudioPlayer audioUrls={message.audio} />
 					)}
 				</div>
+			)}
+		</div>
+	)
+}
+
+type MessageActionsProps = {
+	message: Doc<"messages">
+	isLastMessage: boolean
+	setStreamId: (streamId: StreamId) => void
+}
+
+const MessageActions: React.FC<MessageActionsProps> = ({
+	message,
+	isLastMessage,
+	setStreamId,
+}) => {
+	const generateAudio = useAction(api.speech.generateAudioForMessage)
+	const regenerateLastMessageMutation = useMutation(
+		api.messages.regenerateLastMessage,
+	)
+
+	return (
+		<div className="gap-2 hidden group-hover:flex absolute bottom-0 right-0">
+			<Button onClick={() => generateAudio({ messageId: message._id })}>
+				<Speech />
+			</Button>
+
+			{isLastMessage && (
+				<Button
+					onClick={async () => {
+						const { streamId } = await regenerateLastMessageMutation({
+							messageId: message._id,
+						})
+						setStreamId(streamId)
+					}}
+				>
+					<RefreshCcwIcon />
+				</Button>
 			)}
 		</div>
 	)

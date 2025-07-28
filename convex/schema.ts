@@ -85,6 +85,7 @@ export default defineSchema(
 					activeCharacters: v.optional(v.array(v.string())),
 				}),
 			),
+			audio: v.optional(v.array(v.id("_storage"))),
 			usage: v.optional(
 				v.object({
 					promptTokens: v.number(),
@@ -111,6 +112,7 @@ export default defineSchema(
 			name: v.string(),
 			description: v.string(),
 			image: v.optional(v.id("_storage")),
+			humeVoiceId: v.optional(v.string()),
 		}),
 	},
 	// For doing migrations and whatnot

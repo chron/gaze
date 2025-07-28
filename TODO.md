@@ -3,7 +3,11 @@ NEXT
 - New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
 - Track tool-results for all the tool executions, not just dice rolls
 - Auth
-- Hume or some other TTS provider
+
+SPEECH
+- Different prompt for user messages that gets char info from the character sheet
+- Look into whether we can do all the utterances in one call if we don't use the AI SDK
+- Progress indicator on the FE?
 
 OTHER STUFF
 
@@ -68,3 +72,4 @@ DONE
   - maybe when streaming we need to not get the whole paginated list endpoint?
 - and add images for scenes maybe?
 - fix the autoscroll behaviour (add back a check for manual scroll thing?)
+- Hume or some other TTS provider
