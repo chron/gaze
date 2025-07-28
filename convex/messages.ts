@@ -741,8 +741,8 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 			// TODO: show the error in the UI somehow - the old appendblock doesn't work well with streaming
 		},
-		onFinish: async ({ response }) => {
-			console.log("onFinish", response)
+		onFinish: async ({ finishReason, response }) => {
+			console.log("onFinish", finishReason, response)
 
 			// Process all messages from all steps and combine their content
 			const allContent: Extract<

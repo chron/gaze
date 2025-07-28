@@ -1,7 +1,6 @@
-import type { Id } from "@convex-dev/web"
 import { useQuery } from "convex/react"
 import { api } from "../../convex/_generated/api"
-import type { Doc } from "../../convex/_generated/dataModel"
+import type { Doc, Id } from "../../convex/_generated/dataModel"
 
 type Props = {
 	campaignId: Id<"campaigns">

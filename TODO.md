@@ -1,18 +1,18 @@
 NEXT
 
-- Fix up data (or reset DB?) so we can turn `schemaValidation: true` back on
-- Automate an initial welcome message once you create a campaign
 - New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
-
-TIDY UP AFTER STREAMING REFACTOR
-
-- fix the autoscroll behaviour (add back a check for manual scroll thing?)
+- Track tool-results for all the tool executions, not just dice rolls
+- Auth
+- Hume or some other TTS provider
 
 OTHER STUFF
 
+- Automate an initial welcome message once you create a campaign
+- Fix up data (or reset DB?) so we can turn `schemaValidation: true` back on
 - Claude + tool use is broken, it wants result messages for ALL tool calls
 - Disable text input when there's an active roll to do (maybe?)
 - Look into Gemini implicit caching — not sure it's being applied
+  - possibly the system prompt is too dynamic, move that to a user message or something?
 - BUG: When you use newlines in your message the ReactMarkdown component doesn't render them
 - If we're going to take JSON directly in the modal, need some friendly errors
 - Also the modal is too long with long JSON and files
@@ -67,3 +67,4 @@ DONE
 - Look into the DB bandwidth. Not sure if it's just HMR that's refreshing stuff too much?
   - maybe when streaming we need to not get the whole paginated list endpoint?
 - and add images for scenes maybe?
+- fix the autoscroll behaviour (add back a check for manual scroll thing?)
