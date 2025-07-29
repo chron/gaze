@@ -150,7 +150,7 @@ const RecursiveStatBlock: React.FC<{ name: string; value: JSONValue }> = ({
 						<ul className="list-disc list-inside">
 							{value.map((item, index) => (
 								<li className="text-sm" key={`${item}-${index}`}>
-									<PrimitiveValue value={item} />
+									<PrimitiveValue value={item} inline />
 								</li>
 							))}
 						</ul>
@@ -229,14 +229,19 @@ const StatLabel: React.FC<{ name: string }> = ({ name }) => {
 	return <div className="font-semibold">{friendlyName}</div>
 }
 
-const PrimitiveValue: React.FC<{ value: JSONValue }> = ({ value }) => {
+const PrimitiveValue: React.FC<{ value: JSONValue; inline?: boolean }> = ({
+	value,
+	inline = false,
+}) => {
+	const Element = inline ? "span" : "div"
+
 	if (typeof value === "string") {
-		return <div className="whitespace-pre-wrap">{value}</div>
+		return <Element className="whitespace-pre-wrap">{value}</Element>
 	}
 
 	if (value === null) {
-		return <div className="text-gray-400">–</div>
+		return <Element className="text-gray-400">–</Element>
 	}
 
-	return <div>{JSON.stringify(value, null, 2)}</div>
+	return <Element>{JSON.stringify(value, null, 2)}</Element>
 }

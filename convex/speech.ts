@@ -87,6 +87,8 @@ export const generateAudioForMessage = action({
 
 		const utterances = toolCalls[0].args.utterances
 
+		console.log(utterances)
+
 		const storageIds = []
 
 		console.log("Generating speech for", utterances.length, "utterances")
@@ -100,25 +102,29 @@ export const generateAudioForMessage = action({
 				humeVoiceId = character.humeVoiceId
 			}
 
-			const result = await experimental_generateSpeech({
-				model: hume.speech(),
-				text: utterance.text,
-				voice: humeVoiceId,
-				instructions: utterance.instructions,
-			})
+			try {
+				const result = await experimental_generateSpeech({
+					model: hume.speech(),
+					text: utterance.text,
+					voice: humeVoiceId,
+					instructions: utterance.instructions,
+				})
 
-			const { uint8Array, mimeType } = result.audio
-			const blob = new Blob([uint8Array], { type: mimeType })
-			const storageId = await ctx.storage.store(blob)
+				const { uint8Array, mimeType } = result.audio
+				const blob = new Blob([uint8Array], { type: mimeType })
+				const storageId = await ctx.storage.store(blob)
 
-			console.log(
-				"Generated speech for",
-				utterance.text,
-				"with voice",
-				humeVoiceId,
-			)
+				console.log(
+					"Generated speech for",
+					utterance.text,
+					"with voice",
+					humeVoiceId,
+				)
 
-			storageIds.push(storageId)
+				storageIds.push(storageId)
+			} catch (error) {
+				console.error("Error generating speech for", utterance.text, error)
+			}
 		}
 
 		await ctx.runMutation(internal.speech.storeSpeech, {

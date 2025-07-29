@@ -89,20 +89,7 @@ export const list = query({
 			.withIndex("by_campaign", (q) => q.eq("campaignId", args.campaignId))
 			.collect()
 
-		return await Promise.all(
-			messages.map(async (message) => {
-				return {
-					...message,
-					scene: message.scene?.image
-						? {
-								...message.scene,
-								imageUrl: await ctx.storage.getUrl(message.scene.image),
-							}
-						: message.scene,
-					audio: message.audio?.map((audio) => ctx.storage.getUrl(audio)),
-				}
-			}),
-		)
+		return messages
 	},
 })
 
@@ -695,6 +682,26 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 					safetySettings: [
 						{
 							category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+							threshold: "BLOCK_NONE",
+						},
+						{
+							category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+							threshold: "BLOCK_NONE",
+						},
+						{
+							category: "HARM_CATEGORY_HARASSMENT",
+							threshold: "BLOCK_NONE",
+						},
+						{
+							category: "HARM_CATEGORY_HATE_SPEECH",
+							threshold: "BLOCK_NONE",
+						},
+						// {
+						// 	category: "HARM_CATEGORY_UNSPECIFIED",
+						// 	threshold: "BLOCK_NONE",
+						// },
+						{
+							category: "HARM_CATEGORY_CIVIC_INTEGRITY",
 							threshold: "BLOCK_NONE",
 						},
 					],

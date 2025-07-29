@@ -1,5 +1,6 @@
 NEXT
 
+- Chunk summaries, store in table, show in the UI
 - New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
 - Track tool-results for all the tool executions, not just dice rolls
 - Auth
