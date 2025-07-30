@@ -27,8 +27,6 @@ function ChatPage() {
 
 	if (!campaign) return null
 
-	console.log(campaign)
-
 	return (
 		<>
 			<div className="flex h-full w-full flex-col gap-6 bg-blue-500 relative">

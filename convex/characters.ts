@@ -16,7 +16,7 @@ export function getImageModel(modelString: string): {
 		return {
 			model: openai.image(modelString),
 			providerOptions: {
-				openai: { quality: "low" },
+				openai: { quality: "high" },
 			},
 		}
 	}

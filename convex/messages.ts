@@ -86,6 +86,22 @@ export const list = query({
 	handler: async (ctx, args) => {
 		const messages = await ctx.db
 			.query("messages")
+			.withIndex("by_campaignId_and_summaryId", (q) =>
+				q.eq("campaignId", args.campaignId).eq("summaryId", undefined),
+			)
+			.collect()
+
+		return messages
+	},
+})
+
+export const listAll = internalQuery({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		const messages = await ctx.db
+			.query("messages")
 			.withIndex("by_campaign", (q) => q.eq("campaignId", args.campaignId))
 			.collect()
 
@@ -173,6 +189,18 @@ export const update = mutation({
 	handler: async (ctx, args) => {
 		await ctx.db.patch(args.messageId, {
 			content: args.content,
+		})
+	},
+})
+
+export const setSummaryId = mutation({
+	args: {
+		messageId: v.id("messages"),
+		summaryId: v.id("summaries"),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.messageId, {
+			summaryId: args.summaryId,
 		})
 	},
 })
@@ -402,6 +430,10 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 	}
 
 	// Fetch previous messages for the campaign
+	const allSummaries = await ctx.runQuery(internal.summaries.list, {
+		campaignId: campaign._id,
+	})
+
 	const allMessages = await ctx.runQuery(api.messages.list, {
 		campaignId: campaign._id,
 	})
@@ -409,34 +441,45 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 	// Don't include the current message when sending message history to the LLM!
 	const messages = allMessages.slice(0, -1)
 
-	let formattedMessages: CoreMessage[] = messages.map((msg) => {
-		if (msg.role === "user") {
-			return {
-				role: "user",
-				content: msg.content.filter((block) => block.type === "text"),
-			} satisfies CoreUserMessage
-		}
+	// Start with the summaries of older content
+	let formattedMessages: CoreMessage[] = [
+		{
+			role: "user",
+			content: `Here is the summary of the previous session:\n\n${allSummaries.map((summary) => summary.summary).join("\n")}`,
+		},
+	]
 
-		if (msg.role === "tool") {
-			return {
-				role: "tool",
-				// Should be the case anyway, but we have to convince TS
-				content: msg.content.filter((block) => block.type === "tool-result"),
-			} satisfies CoreToolMessage
-		}
+	// Then include any more recent messages that haven't yet been summarised
+	formattedMessages = formattedMessages.concat(
+		messages.map((msg) => {
+			if (msg.role === "user") {
+				return {
+					role: "user",
+					content: msg.content.filter((block) => block.type === "text"),
+				} satisfies CoreUserMessage
+			}
 
-		return {
-			role: "assistant",
-			content: msg.content.filter(
-				(block) =>
-					block.type === "text" ||
-					// For now let's not send reasoning data back. If we do send it later,
-					// Claude needs the signature as well as the text itself.
-					// block.type === "reasoning" ||
-					block.type === "tool-call",
-			),
-		} satisfies CoreAssistantMessage
-	})
+			if (msg.role === "tool") {
+				return {
+					role: "tool",
+					// Should be the case anyway, but we have to convince TS
+					content: msg.content.filter((block) => block.type === "tool-result"),
+				} satisfies CoreToolMessage
+			}
+
+			return {
+				role: "assistant",
+				content: msg.content.filter(
+					(block) =>
+						block.type === "text" ||
+						// For now let's not send reasoning data back. If we do send it later,
+						// Claude needs the signature as well as the text itself.
+						// block.type === "reasoning" ||
+						block.type === "tool-call",
+				),
+			} satisfies CoreAssistantMessage
+		}),
+	)
 
 	// Intro message for a new campaign
 	if (formattedMessages.length === 0) {
@@ -673,7 +716,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		},
 	})
 
-	// console.log("formattedMessages", formattedMessages)
+	console.log("formattedMessages", formattedMessages)
 
 	const { fullStream } = streamText({
 		system: prompt,
@@ -875,9 +918,9 @@ export const summarizeChatHistory = action({
 		campaignId: v.id("campaigns"),
 	},
 	handler: async (ctx, args): Promise<string> => {
-		// TODO: Don't summarise ALL messages, wait until a threshold and leave x tokens of recent messages.
-		// Then mark all the summarised messages as summarised and store the summary somewhere (new table?)
-		const messages = await ctx.runQuery(api.messages.list, {
+		// For now we're ignoring summaries and summarising the entire history
+		// Could get way too large at some point, so will have to revisit this
+		const messages = await ctx.runQuery(internal.messages.listAll, {
 			campaignId: args.campaignId,
 		})
 
@@ -918,10 +961,6 @@ export const summarizeChatHistory = action({
 					content: "Summarize the storyline so far.",
 				},
 			],
-		})
-
-		await ctx.scheduler.runAfter(0, internal.memories.scanForNewMemories, {
-			messageIds: messages.map((msg) => msg._id),
 		})
 
 		return text

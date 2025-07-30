@@ -70,7 +70,6 @@ export const MessageList: React.FC<Props> = ({
 		if (!panel) return
 
 		resizeObserverRef.current = new ResizeObserver(() => {
-			console.log("resizeObserverRef.current", isNearBottom())
 			if (isNearBottom()) {
 				scrollToBottom()
 			}

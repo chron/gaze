@@ -4,6 +4,7 @@ NEXT
 - New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
 - Track tool-results for all the tool executions, not just dice rolls
 - Auth
+- Store which memories were recalled against the message, show in UI
 
 SPEECH
 - Different prompt for user messages that gets char info from the character sheet

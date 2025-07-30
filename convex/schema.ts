@@ -86,6 +86,7 @@ export default defineSchema(
 				}),
 			),
 			audio: v.optional(v.array(v.id("_storage"))),
+			summaryId: v.optional(v.id("summaries")),
 			usage: v.optional(
 				v.object({
 					promptTokens: v.number(),
@@ -94,6 +95,7 @@ export default defineSchema(
 			),
 		})
 			.index("by_campaign", ["campaignId"])
+			.index("by_campaignId_and_summaryId", ["campaignId", "summaryId"])
 			.index("by_streamId", ["streamId"]),
 		memories: defineTable({
 			campaignId: v.id("campaigns"),
@@ -102,11 +104,17 @@ export default defineSchema(
 			context: v.string(),
 			tags: v.array(v.string()),
 			embedding: v.array(v.float64()),
+			summaryId: v.optional(v.id("summaries")),
 		}).vectorIndex("by_embedding", {
 			vectorField: "embedding",
 			dimensions: 3072,
 			filterFields: ["campaignId"],
 		}),
+		summaries: defineTable({
+			campaignId: v.id("campaigns"),
+			summary: v.string(),
+			characterIds: v.array(v.id("characters")),
+		}).index("by_campaign", ["campaignId"]),
 		characters: defineTable({
 			campaignId: v.id("campaigns"),
 			name: v.string(),

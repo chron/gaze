@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "convex/react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
+import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { Textarea } from "./ui/textarea"
 
@@ -62,7 +63,7 @@ export const CharacterSheet: React.FC<Props> = ({ campaignId }) => {
 	}
 
 	return (
-		<div className="flex flex-col gap-2 px-4 h-full">
+		<div className="flex flex-col gap-2 px-4 h-full max-h-[calc(100dvh-52px)] overflow-y-auto pb-4">
 			<div className="flex justify-between items-center">
 				<h1 className="text-2xl font-title text-white">Character Sheet</h1>
 				{!isEditing ? (
@@ -119,10 +120,11 @@ export const CharacterSheet: React.FC<Props> = ({ campaignId }) => {
 	)
 }
 
-const RecursiveStatBlock: React.FC<{ name: string; value: JSONValue }> = ({
-	name,
-	value,
-}) => {
+const RecursiveStatBlock: React.FC<{
+	name: string
+	value: JSONValue
+	showName?: boolean
+}> = ({ name, value, showName = true }) => {
 	if (typeof value === "object" && value !== null) {
 		// Special case for stat bars, objects of the form { current: number, max: number }
 		if (
@@ -134,7 +136,7 @@ const RecursiveStatBlock: React.FC<{ name: string; value: JSONValue }> = ({
 		) {
 			return (
 				<>
-					<StatLabel name={name} />
+					{showName && <StatLabel name={name} />}
 
 					<StatBar current={value.current} max={value.max} />
 				</>
@@ -144,16 +146,29 @@ const RecursiveStatBlock: React.FC<{ name: string; value: JSONValue }> = ({
 		if (Array.isArray(value)) {
 			return (
 				<>
-					<StatLabel name={name} />
+					{showName && <StatLabel name={name} />}
 
 					{value.length > 0 ? (
-						<ul className="list-disc list-inside">
-							{value.map((item, index) => (
-								<li className="text-sm" key={`${item}-${index}`}>
-									<PrimitiveValue value={item} inline />
-								</li>
-							))}
-						</ul>
+						typeof value[0] === "string" ? (
+							<ul className="list-disc list-inside">
+								{value.map((item, index) => (
+									<li className="text-sm" key={`${item}-${index}`}>
+										<PrimitiveValue value={item} />
+									</li>
+								))}
+							</ul>
+						) : (
+							<div className="flex flex-col gap-2">
+								{value.map((item, index) => (
+									<RecursiveStatBlock
+										showName={false}
+										key={`${name}-${index}`}
+										name={name}
+										value={item}
+									/>
+								))}
+							</div>
+						)
 					) : (
 						<div>–</div>
 					)}
@@ -163,7 +178,7 @@ const RecursiveStatBlock: React.FC<{ name: string; value: JSONValue }> = ({
 
 		return (
 			<>
-				<StatLabel name={name} />
+				{showName && <StatLabel name={name} />}
 
 				<table className="table-auto border-collapse border border-gray-300 text-left text-sm">
 					<tbody>
@@ -173,7 +188,7 @@ const RecursiveStatBlock: React.FC<{ name: string; value: JSONValue }> = ({
 									<StatLabel name={key} />
 								</td>
 								<td className="px-2 py-1 align-top">
-									<PrimitiveValue value={val} />
+									<PrimitiveValue value={val} parentValue={key} />
 								</td>
 							</tr>
 						))}
@@ -186,7 +201,7 @@ const RecursiveStatBlock: React.FC<{ name: string; value: JSONValue }> = ({
 	if (typeof value === "string") {
 		return (
 			<>
-				<StatLabel name={name} />
+				{showName && <StatLabel name={name} />}
 				<PrimitiveValue value={value} />
 			</>
 		)
@@ -195,7 +210,7 @@ const RecursiveStatBlock: React.FC<{ name: string; value: JSONValue }> = ({
 	// Backup plan if we can't figure out what it is
 	return (
 		<>
-			<StatLabel name={name} />
+			{showName && <StatLabel name={name} />}
 
 			<PrimitiveValue value={value} />
 		</>
@@ -229,11 +244,22 @@ const StatLabel: React.FC<{ name: string }> = ({ name }) => {
 	return <div className="font-semibold">{friendlyName}</div>
 }
 
-const PrimitiveValue: React.FC<{ value: JSONValue; inline?: boolean }> = ({
-	value,
-	inline = false,
-}) => {
+const PrimitiveValue: React.FC<{
+	value: JSONValue
+	inline?: boolean
+	parentValue?: string
+}> = ({ value, parentValue, inline = false }) => {
 	const Element = inline ? "span" : "div"
+
+	if (parentValue?.toLowerCase().includes("tags") && Array.isArray(value)) {
+		return (
+			<div className="flex flex-wrap gap-2">
+				{value.map((item, index) => (
+					<Badge key={`${item}-${index}`}>{item}</Badge>
+				))}
+			</div>
+		)
+	}
 
 	if (typeof value === "string") {
 		return <Element className="whitespace-pre-wrap">{value}</Element>

@@ -1,6 +1,6 @@
 import { useParams } from "@tanstack/react-router"
 import { useAction, useQuery } from "convex/react"
-import { BookText, Brain, Command } from "lucide-react"
+import { BetweenHorizontalStart, BookText, Brain, Command } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
@@ -18,6 +18,7 @@ export const ChatExtraActions: React.FC = () => {
 	const { campaignId } = useParams({ from: "/campaigns/$campaignId" })
 	const [summary, setSummary] = useState<string | null>(null)
 	const [isLoading, setIsLoading] = useState(false)
+	const collapseHistory = useAction(api.summaries.collapseHistory)
 	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
 
 	const campaign = useQuery(api.campaigns.get, {
@@ -28,7 +29,7 @@ export const ChatExtraActions: React.FC = () => {
 		<>
 			{summary ? (
 				<Dialog open={!!summary} onOpenChange={(v) => !v && setSummary(null)}>
-					<DialogContent className="sm:max-w-2xl">
+					<DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
 						<MessageMarkdown>{summary}</MessageMarkdown>
 					</DialogContent>
 				</Dialog>
@@ -41,6 +42,17 @@ export const ChatExtraActions: React.FC = () => {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
+					<DropdownMenuItem
+						onClick={async () => {
+							await collapseHistory({
+								campaignId: campaignId as Id<"campaigns">,
+							})
+						}}
+					>
+						<BetweenHorizontalStart />
+						Collapse history
+					</DropdownMenuItem>
+
 					<DropdownMenuItem
 						onClick={async () => {
 							setIsLoading(true)
