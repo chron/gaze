@@ -1,7 +1,7 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { useAction, useMutation } from "convex/react"
 import { Brain, RefreshCcwIcon, Speech } from "lucide-react"
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
 import { useStructuredStream } from "../hooks/useStructuredStream"
@@ -78,7 +78,7 @@ export const Message: React.FC<Props> = ({
 		if (isLastMessage && steps.length > 0) {
 			scrollToBottom()
 		}
-	}, [isLastMessage, scrollToBottom, steps.length])
+	}, [isLastMessage, scrollToBottom, steps])
 
 	if (message.role === "tool") {
 		if (
