@@ -72,6 +72,7 @@ export const create = mutation({
 	args: {
 		name: v.string(),
 		description: v.string(),
+		imagePrompt: v.string(),
 		campaignId: v.id("campaigns"),
 	},
 	handler: async (ctx, args) => {
@@ -79,6 +80,7 @@ export const create = mutation({
 			name: args.name,
 			description: args.description,
 			campaignId: args.campaignId,
+			imagePrompt: args.imagePrompt,
 		})
 	},
 })
@@ -113,7 +115,7 @@ export const generateImageForCharacter = action({
 		if (!campaign) throw new Error("Campaign not found")
 
 		const prompt = `
-      Generate an image. It should be a portrait of ${character.name}. ${character.description}.
+      Generate an image. It should be a portrait of ${character.name}. ${character.description}. ${character.imagePrompt}.
 
       The portrait should be from the waist up. It should be a square. Don't include any text.
 

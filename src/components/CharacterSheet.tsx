@@ -153,7 +153,7 @@ const RecursiveStatBlock: React.FC<{
 							<ul className="list-disc list-inside">
 								{value.map((item, index) => (
 									<li className="text-sm" key={`${item}-${index}`}>
-										<PrimitiveValue value={item} />
+										{item as string}
 									</li>
 								))}
 							</ul>

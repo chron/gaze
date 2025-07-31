@@ -1,6 +1,6 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { useAction, useMutation } from "convex/react"
-import { Brain, RefreshCcwIcon, Speech } from "lucide-react"
+import { Brain, Loader2, RefreshCcwIcon, Speech } from "lucide-react"
 import React, { useEffect, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
@@ -42,6 +42,8 @@ export const Message: React.FC<Props> = ({
 		isStreaming,
 		message.streamId as StreamId,
 	)
+
+	const updateMessageMutation = useMutation(api.messages.update)
 
 	const [isEditing, setIsEditing] = useState(false)
 	const [showReasoning, setShowReasoning] = useState(true)
@@ -122,7 +124,22 @@ export const Message: React.FC<Props> = ({
 
 				if (e.key === "Enter" && !e.shiftKey) {
 					e.preventDefault()
-					// TODO: save the message
+					if (
+						message.content.length === 1 &&
+						message.content[0].type === "text"
+					) {
+						updateMessageMutation({
+							messageId: message._id,
+							content: [
+								{
+									type: "text",
+									text: e.currentTarget.innerText,
+								},
+							],
+						})
+					} else {
+						console.error("Message content is not a text block")
+					}
 					setIsEditing(false)
 				}
 			}}
@@ -350,6 +367,7 @@ const MessageActions: React.FC<MessageActionsProps> = ({
 	isLastMessage,
 	setStreamId,
 }) => {
+	const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
 	const generateAudio = useAction(api.speech.generateAudioForMessage)
 	const regenerateLastMessageMutation = useMutation(
 		api.messages.regenerateLastMessage,
@@ -357,8 +375,15 @@ const MessageActions: React.FC<MessageActionsProps> = ({
 
 	return (
 		<div className="gap-2 hidden group-hover:flex absolute bottom-0 right-0">
-			<Button onClick={() => generateAudio({ messageId: message._id })}>
-				<Speech />
+			<Button
+				disabled={isGeneratingAudio}
+				onClick={async () => {
+					setIsGeneratingAudio(true)
+					await generateAudio({ messageId: message._id })
+					setIsGeneratingAudio(false)
+				}}
+			>
+				{isGeneratingAudio ? <Loader2 className="animate-spin" /> : <Speech />}
 			</Button>
 
 			{isLastMessage && (

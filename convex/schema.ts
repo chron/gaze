@@ -119,6 +119,7 @@ export default defineSchema(
 			campaignId: v.id("campaigns"),
 			name: v.string(),
 			description: v.string(),
+			imagePrompt: v.string(),
 			image: v.optional(v.id("_storage")),
 			humeVoiceId: v.optional(v.string()),
 		}),

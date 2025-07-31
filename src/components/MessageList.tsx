@@ -19,8 +19,6 @@ export const MessageList: React.FC<Props> = ({
 	streamId,
 	setStreamId,
 }) => {
-	const resizeObserverRef = useRef<ResizeObserver | null>(null)
-	// const messagesEndRef = useRef<HTMLDivElement>(null)
 	const isInitialLoadRef = useRef(true)
 
 	// const totalTokens = useQuery(api.campaigns.sumTokens, { campaignId })
@@ -55,47 +53,13 @@ export const MessageList: React.FC<Props> = ({
 		[messagePanelRef],
 	)
 
-	// Check if user is near the bottom of the scroll area
-	const isNearBottom = useCallback(() => {
-		if (!messagePanelRef.current) return true
-		const { scrollTop, scrollHeight, clientHeight } = messagePanelRef.current
-
-		return scrollHeight - scrollTop - clientHeight < 200 // Within 200px of bottom
-	}, [messagePanelRef])
-
-	// Set up ResizeObserver to handle content changes during streaming
-	// biome-ignore lint/correctness/useExhaustiveDependencies: messagePanelRef.current would cause infinite re-renders
-	useEffect(() => {
-		const panel = messagePanelRef.current
-		if (!panel) return
-
-		resizeObserverRef.current = new ResizeObserver(() => {
-			if (isNearBottom()) {
-				scrollToBottom()
-			}
-		})
-
-		// Observe the entire messages container for size changes
-		const messagesContainer = panel.querySelector(".messages-container")
-		if (messagesContainer) {
-			resizeObserverRef.current.observe(messagesContainer)
-		}
-
-		return () => {
-			resizeObserverRef.current?.disconnect()
-		}
-	}, [isNearBottom, scrollToBottom])
-
-	// Scroll to bottom once messages load - instant on initial load, smooth on updates
+	// Scroll to bottom once messages load - instant on initial load
 	useEffect(() => {
 		if (lastMessage?._id) {
 			if (isInitialLoadRef.current) {
 				// First time loading messages - scroll instantly to bottom
 				scrollToBottom(false)
 				isInitialLoadRef.current = false
-			} else {
-				// Subsequent updates - use smooth scrolling
-				scrollToBottom()
 			}
 		}
 	}, [lastMessage?._id, scrollToBottom])

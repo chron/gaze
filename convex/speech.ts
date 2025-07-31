@@ -1,13 +1,14 @@
 import { google } from "@ai-sdk/google"
-import { createHume } from "@ai-sdk/hume"
-import { experimental_generateSpeech, generateText, tool } from "ai"
+import { generateText, tool } from "ai"
 import { v } from "convex/values"
+import { HumeClient } from "hume"
 import { z } from "zod"
 import { api, internal } from "./_generated/api"
 import { action, internalMutation } from "./_generated/server"
 
-export const hume = createHume({
-	apiKey: process.env.HUME_API_KEY ?? "",
+const hume = new HumeClient({
+	// biome-ignore lint/style/noNonNullAssertion: <explanation>
+	apiKey: process.env.HUME_API_KEY!,
 })
 
 export const generateAudioForMessage = action({
@@ -28,16 +29,20 @@ export const generateAudioForMessage = action({
 				campaignId: message.campaignId,
 			})) ?? []
 
+		const characterSheet = await ctx.runQuery(api.characterSheets.get, {
+			campaignId: message.campaignId,
+		})
+
 		const prompt = `
     You will be given a message that is part of a transcript of a role-playing game session.
-    You need to break it up into utterances so it can be sent to a text-to-speech service.
+    You need to break it up into chunks divided by who is speaking so it can be sent to a text-to-speech service.
 
-    Make sure all text is included in the utterances.
+    Make sure all text is included in the chunks, even narration between speech.
 
-    Some utterances belong to individual characters. If an utterance does not go with any specific
+    Some chunks belong to individual characters. If a chunk does not go with any specific
     character, use "Narrator" for the character.
 
-    You will also provide instructions on delivery for the voice actor in the 'instructions' field.
+    You will also provide instructions on delivery for the voice actor in the 'instructions' field. These instructions will be used to generate the audio.
     Include a short sentence which can cover things like:
 
     - Emotional tone: happiness, sadness, excitement, nervousness, etc.
@@ -45,6 +50,8 @@ export const generateAudioForMessage = action({
     - Performance context: speaking to a crowd, intimate conversation, etc.
 
     The characters available are: ${characters.map((c) => c.name).join(", ")}
+
+		${characterSheet ? `The protagonist of the game is: ${characterSheet.name}` : ""}
 
     The message to be split up is:
     `
@@ -87,45 +94,44 @@ export const generateAudioForMessage = action({
 
 		const utterances = toolCalls[0].args.utterances
 
-		console.log(utterances)
-
 		const storageIds = []
 
 		console.log("Generating speech for", utterances.length, "utterances")
 
-		for (const utterance of utterances) {
-			let humeVoiceId = "b89de4b1-3df6-4e4f-a054-9aed4351092d" // Default narrator
-
+		const formattedUtterances = utterances.map((utterance) => {
 			const character = characters.find((c) => c.name === utterance.character)
-
-			if (character?.humeVoiceId) {
-				humeVoiceId = character.humeVoiceId
+			const humeVoiceId = character?.humeVoiceId
+				? character.humeVoiceId
+				: "b89de4b1-3df6-4e4f-a054-9aed4351092d"
+			return {
+				text: utterance.text,
+				voice: {
+					id: humeVoiceId,
+					provider: "HUME_AI" as const,
+				},
+				description: utterance.instructions,
+				// Later: speed and trailing silence are options here. Also [pause] in the text itself.
 			}
+		})
 
-			try {
-				const result = await experimental_generateSpeech({
-					model: hume.speech(),
-					text: utterance.text,
-					voice: humeVoiceId,
-					instructions: utterance.instructions,
-				})
+		console.log(formattedUtterances)
 
-				const { uint8Array, mimeType } = result.audio
-				const blob = new Blob([uint8Array], { type: mimeType })
-				const storageId = await ctx.storage.store(blob)
-
-				console.log(
-					"Generated speech for",
-					utterance.text,
-					"with voice",
-					humeVoiceId,
-				)
-
-				storageIds.push(storageId)
-			} catch (error) {
-				console.error("Error generating speech for", utterance.text, error)
-			}
+		const result = await hume.tts.synthesizeJson({
+			body: {
+				utterances: formattedUtterances,
+			},
+		})
+		const audio = result.generations[0].audio
+		// Can't use Buffer in the Convex runtime
+		const binaryString = atob(audio)
+		const audioBuffer = new Uint8Array(binaryString.length)
+		for (let i = 0; i < binaryString.length; i++) {
+			audioBuffer[i] = binaryString.charCodeAt(i)
 		}
+		const blob = new Blob([audioBuffer], { type: "audio/wav" })
+		const storageId = await ctx.storage.store(blob)
+
+		storageIds.push(storageId)
 
 		await ctx.runMutation(internal.speech.storeSpeech, {
 			messageId: args.messageId,

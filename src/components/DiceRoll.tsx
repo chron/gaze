@@ -86,7 +86,7 @@ export const DiceRoll: React.FC<DiceRollProps> = ({
 			<Button
 				onClick={handleRoll}
 				disabled={isRolling}
-				className="bg-blue-800 hover:bg-blue-700 text-white"
+				className="bg-blue-800 hover:bg-blue-700 text-white font-sans"
 			>
 				{isRolling ? "Rolling..." : "Roll the Dice!"}
 			</Button>
