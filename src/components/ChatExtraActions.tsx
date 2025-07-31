@@ -16,10 +16,11 @@ import {
 
 export const ChatExtraActions: React.FC = () => {
 	const { campaignId } = useParams({ from: "/campaigns/$campaignId" })
-	const [summary, setSummary] = useState<string | null>(null)
+	const [result, setResult] = useState<string | null>(null)
 	const [isLoading, setIsLoading] = useState(false)
 	const collapseHistory = useAction(api.summaries.collapseHistory)
 	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
+	const chatWithHistory = useAction(api.messages.chatWithHistory)
 
 	const campaign = useQuery(api.campaigns.get, {
 		id: campaignId as Id<"campaigns">,
@@ -27,10 +28,10 @@ export const ChatExtraActions: React.FC = () => {
 
 	return (
 		<>
-			{summary ? (
-				<Dialog open={!!summary} onOpenChange={(v) => !v && setSummary(null)}>
+			{result ? (
+				<Dialog open={!!result} onOpenChange={(v) => !v && setResult(null)}>
 					<DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
-						<MessageMarkdown>{summary}</MessageMarkdown>
+						<MessageMarkdown>{result}</MessageMarkdown>
 					</DialogContent>
 				</Dialog>
 			) : null}
@@ -42,6 +43,29 @@ export const ChatExtraActions: React.FC = () => {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
+					<DropdownMenuItem
+						onClick={async () => {
+							// TODO: real modal
+							const question = prompt("Ask a question about the campaign")
+							if (question) {
+								setIsLoading(true)
+								try {
+									const result = await chatWithHistory({
+										campaignId: campaignId as Id<"campaigns">,
+										question,
+									})
+
+									setResult(result)
+								} finally {
+									setIsLoading(false)
+								}
+							}
+						}}
+					>
+						<Brain />
+						Ask a question
+					</DropdownMenuItem>
+
 					<DropdownMenuItem
 						onClick={async () => {
 							await collapseHistory({
@@ -60,7 +84,7 @@ export const ChatExtraActions: React.FC = () => {
 								const summary = await summarizeChatHistory({
 									campaignId: campaignId as Id<"campaigns">,
 								})
-								setSummary(summary)
+								setResult(summary)
 							} finally {
 								setIsLoading(false)
 							}
@@ -73,7 +97,7 @@ export const ChatExtraActions: React.FC = () => {
 					{campaign?.plan && (
 						<DropdownMenuItem
 							onClick={async () => {
-								setSummary(campaign.plan ?? null)
+								setResult(campaign.plan ?? null)
 							}}
 						>
 							<Brain />

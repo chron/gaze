@@ -967,6 +967,63 @@ export const summarizeChatHistory = action({
 	},
 })
 
+// Note that this doesn't have character sheets etc, only the transcript.
+// Might want to centralize the prompt generation for this and the summary as well as sendToLLM?
+export const chatWithHistory = action({
+	args: {
+		campaignId: v.id("campaigns"),
+		question: v.string(),
+	},
+	handler: async (ctx, args): Promise<string> => {
+		// For now we're ignoring summaries and summarising the entire history
+		// Could get way too large at some point, so will have to revisit this
+		const messages = await ctx.runQuery(internal.messages.listAll, {
+			campaignId: args.campaignId,
+		})
+
+		const prompt =
+			"You are an expert game master, answering questions about a transcript of an RPG session."
+
+		const formattedMessages: CoreMessage[] = messages
+			.map((msg) => {
+				if (msg.role === "user") {
+					return {
+						role: "user",
+						content: msg.content.filter((block) => block.type === "text"),
+					} satisfies CoreUserMessage
+				}
+
+				if (msg.role === "tool") {
+					// Don't include tool results in the summary
+					return null
+				}
+
+				return {
+					role: "assistant",
+					content: msg.content.filter(
+						// Remove tool calls and reasoning
+						(block) => block.type === "text",
+					),
+				} satisfies CoreAssistantMessage
+			})
+			.filter((m) => m !== null)
+
+		const { text } = await generateText({
+			system: prompt,
+			model: openai("gpt-4o-mini"),
+			messages: [
+				...formattedMessages,
+				{
+					role: "user",
+					content: `The user's question is: ${args.question}`,
+				},
+			],
+		})
+
+		return text
+	},
+})
+
 export const storeSceneImage = mutation({
 	args: {
 		messageId: v.id("messages"),

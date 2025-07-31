@@ -1,5 +1,6 @@
 import { useAction } from "convex/react"
-import { RefreshCcwIcon } from "lucide-react"
+import { Loader2Icon, RefreshCcwIcon } from "lucide-react"
+import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { Button } from "./ui/button"
@@ -19,9 +20,12 @@ export const SceneChange = ({
 	}
 }) => {
 	const regenerateImage = useAction(api.messages.regenerateSceneImage)
+	const [regenerating, setRegenerating] = useState(false)
 
-	const handleRegenerate = () => {
-		regenerateImage({ messageId })
+	const handleRegenerate = async () => {
+		setRegenerating(true)
+		await regenerateImage({ messageId })
+		setRegenerating(false)
 	}
 
 	return (
@@ -47,8 +51,13 @@ export const SceneChange = ({
 				className="absolute top-2 right-2 hidden group-hover:block"
 				aria-label="Click to regenerate scene image"
 				title="Click to regenerate scene image"
+				disabled={regenerating}
 			>
-				<RefreshCcwIcon />
+				{regenerating ? (
+					<Loader2Icon className="animate-spin" />
+				) : (
+					<RefreshCcwIcon />
+				)}
 			</Button>
 		</div>
 	)

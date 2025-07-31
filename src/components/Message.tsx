@@ -46,6 +46,7 @@ export const Message: React.FC<Props> = ({
 	const updateMessageMutation = useMutation(api.messages.update)
 
 	const [isEditing, setIsEditing] = useState(false)
+	const [isSaving, setIsSaving] = useState(false)
 	const [showReasoning, setShowReasoning] = useState(true)
 
 	const noDatabaseContent =
@@ -109,6 +110,7 @@ export const Message: React.FC<Props> = ({
 		<div
 			className={cn(
 				"flex flex-col gap-2 p-2 rounded-md max-w-[80%]",
+				isSaving && "animate-pulse",
 				message.role === "user"
 					? "self-end bg-blue-100 text-blue-800"
 					: "self-start bg-gray-100 text-gray-800",
@@ -116,7 +118,7 @@ export const Message: React.FC<Props> = ({
 			)}
 			contentEditable={isEditing}
 			onDoubleClick={() => setIsEditing(true)}
-			onKeyDown={(e) => {
+			onKeyDown={async (e) => {
 				if (e.key === "Escape") {
 					e.preventDefault()
 					setIsEditing(false)
@@ -128,7 +130,8 @@ export const Message: React.FC<Props> = ({
 						message.content.length === 1 &&
 						message.content[0].type === "text"
 					) {
-						updateMessageMutation({
+						setIsSaving(true)
+						await updateMessageMutation({
 							messageId: message._id,
 							content: [
 								{
@@ -140,6 +143,7 @@ export const Message: React.FC<Props> = ({
 					} else {
 						console.error("Message content is not a text block")
 					}
+					setIsSaving(false)
 					setIsEditing(false)
 				}
 			}}
