@@ -16,9 +16,6 @@ import {
 	type CoreToolMessage,
 	type CoreUserMessage,
 	type FilePart,
-	type TextPart,
-	type ToolCallPart,
-	type ToolContent,
 	embed,
 	experimental_generateImage as generateImage,
 	generateText,
@@ -720,6 +717,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 	const { fullStream } = streamText({
 		system: prompt,
+		temperature: 0.7,
 		model: campaign.model.startsWith("google")
 			? google(campaign.model.split("/")[1], {
 					safetySettings: [
@@ -739,10 +737,6 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 							category: "HARM_CATEGORY_HATE_SPEECH",
 							threshold: "BLOCK_NONE",
 						},
-						// {
-						// 	category: "HARM_CATEGORY_UNSPECIFIED",
-						// 	threshold: "BLOCK_NONE",
-						// },
 						{
 							category: "HARM_CATEGORY_CIVIC_INTEGRITY",
 							threshold: "BLOCK_NONE",

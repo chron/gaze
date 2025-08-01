@@ -43,6 +43,8 @@ OTHER STUFF
 - Editing previous messages (UI is done, but need to actually save the changes)
 - "End of session" tool that adds a summary to the UI somewhere?
 - Have a concept of "active" vs "inactive" characters, maybe scene_change updates the list?
+- z.describe("...") for tool params
+- Add characters to activeCharacters when introducing them
 
 PROMPT THINGS
 
