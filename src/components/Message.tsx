@@ -83,6 +83,20 @@ export const Message: React.FC<Props> = ({
 		}
 	}, [isLastMessage, scrollToBottom, steps])
 
+	if (message.error) {
+		return (
+			<pre className="text-sm bg-red-200 p-4 overflow-x-auto relative group">
+				{message.error}
+
+				<MessageActions
+					message={message}
+					isLastMessage={isLastMessage}
+					setStreamId={setStreamId}
+				/>
+			</pre>
+		)
+	}
+
 	if (message.role === "tool") {
 		if (
 			message.content.length === 1 &&
@@ -97,13 +111,10 @@ export const Message: React.FC<Props> = ({
 					/>
 				)
 			}
-
-			return (
-				<div className="text-sm text-gray-500 bg-white p-4">
-					Unknown tool result
-				</div>
-			)
 		}
+
+		// We track tool results for all calls but there's usually nothing to show
+		return null
 	}
 
 	return (

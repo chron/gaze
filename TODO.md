@@ -45,6 +45,7 @@ OTHER STUFF
 - Have a concept of "active" vs "inactive" characters, maybe scene_change updates the list?
 - z.describe("...") for tool params
 - Add characters to activeCharacters when introducing them
+- edit character descriptions (and prompt? maybe an expandable section for it?)
 
 PROMPT THINGS
 

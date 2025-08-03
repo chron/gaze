@@ -88,7 +88,7 @@ export const create = mutation({
 export const storeImageForCharacter = mutation({
 	args: {
 		characterId: v.id("characters"),
-		storageId: v.id("_storage"),
+		storageId: v.optional(v.id("_storage")),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.db.patch(args.characterId, {
@@ -107,6 +107,15 @@ export const generateImageForCharacter = action({
 		})
 
 		if (!character) throw new Error("Character not found")
+
+		if (character.image) {
+			// Delete old image from storage first!
+			await ctx.storage.delete(character.image)
+			await ctx.runMutation(api.characters.storeImageForCharacter, {
+				characterId: args.characterId,
+				storageId: undefined,
+			})
+		}
 
 		const campaign = await ctx.runQuery(api.campaigns.get, {
 			id: character.campaignId,
@@ -138,5 +147,11 @@ export const generateImageForCharacter = action({
 				})
 			}
 		}
+
+		// Add character to active characters after generation
+		await ctx.runMutation(api.campaigns.updateActiveCharacters, {
+			campaignId: character.campaignId,
+			activeCharacters: [...(campaign.activeCharacters ?? []), character.name],
+		})
 	},
 })

@@ -65,16 +65,9 @@ export default defineSchema(
 						result: v.any(),
 						isError: v.optional(v.boolean()),
 					}),
-					// Legacy tool call
-					// v.object({
-					// 	type: v.literal("tool_call"),
-					// 	toolName: v.string(),
-					// 	parameters: v.any(),
-					// 	result: v.optional(v.any()),
-					// 	toolCallId: v.optional(v.string()),
-					// }),
 				),
 			),
+			error: v.optional(v.string()),
 			reasoning: v.optional(v.string()),
 			scene: v.optional(
 				v.object({

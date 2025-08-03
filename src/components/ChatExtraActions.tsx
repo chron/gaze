@@ -6,7 +6,12 @@ import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { MessageMarkdown } from "./MessageMarkdown"
 import { Button } from "./ui/button"
-import { Dialog, DialogContent } from "./ui/dialog"
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogTitle,
+} from "./ui/dialog"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -31,13 +36,15 @@ export const ChatExtraActions: React.FC = () => {
 			{result ? (
 				<Dialog open={!!result} onOpenChange={(v) => !v && setResult(null)}>
 					<DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+						<DialogTitle>Result</DialogTitle>
+						<DialogDescription>The result of the action</DialogDescription>
 						<MessageMarkdown>{result}</MessageMarkdown>
 					</DialogContent>
 				</Dialog>
 			) : null}
 
 			<DropdownMenu>
-				<DropdownMenuTrigger disabled={isLoading}>
+				<DropdownMenuTrigger disabled={isLoading} asChild>
 					<Button variant="outline" isLoading={isLoading}>
 						<Command />
 					</Button>

@@ -195,6 +195,10 @@ export const CampaignDetailsModal: React.FC<Props> = ({
 
 							<SelectItem value="openai/gpt-4.1">GPT-4.1</SelectItem>
 
+							<SelectItem value="openrouter/horizon-beta">
+								Horizon Beta
+							</SelectItem>
+
 							<SelectItem value="meta-llama/llama-4-maverick">
 								Llama 4 Maverick
 							</SelectItem>

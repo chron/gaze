@@ -71,6 +71,7 @@ export const addCampaign = mutation({
 			gameSystemId: args.gameSystemId,
 			model: args.model,
 			imageModel: args.imageModel,
+			archived: false,
 		}
 
 		const campaignId = await ctx.db.insert("campaigns", campaign)

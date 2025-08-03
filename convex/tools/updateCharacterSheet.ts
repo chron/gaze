@@ -29,6 +29,6 @@ export const updateCharacterSheet = (
 				data,
 			})
 
-			return `Character sheet updated: ${name}, ${JSON.stringify(data)}`
+			return "Character sheet updated"
 		},
 	})

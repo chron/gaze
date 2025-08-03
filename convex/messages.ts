@@ -202,6 +202,45 @@ export const setSummaryId = mutation({
 	},
 })
 
+export const addError = mutation({
+	args: {
+		messageId: v.id("messages"),
+		error: v.string(),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.messageId, {
+			error: args.error,
+		})
+	},
+})
+
+export const addToolResultsMessage = mutation({
+	args: {
+		messageId: v.id("messages"),
+		toolResults: v.array(
+			v.object({
+				type: v.literal("tool-result"),
+				toolCallId: v.string(),
+				toolName: v.string(),
+				result: v.any(),
+			}),
+		),
+	},
+	handler: async (ctx, args) => {
+		const message = await ctx.db.get(args.messageId)
+
+		if (!message) {
+			throw new Error("Message not found")
+		}
+
+		await ctx.db.insert("messages", {
+			campaignId: message.campaignId,
+			role: "tool",
+			content: args.toolResults,
+		})
+	},
+})
+
 export const addUserMessage = mutation({
 	args: {
 		campaignId: v.id("campaigns"),
@@ -439,12 +478,15 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 	const messages = allMessages.slice(0, -1)
 
 	// Start with the summaries of older content
-	let formattedMessages: CoreMessage[] = [
-		{
-			role: "user",
-			content: `Here is the summary of the previous session:\n\n${allSummaries.map((summary) => summary.summary).join("\n")}`,
-		},
-	]
+	let formattedMessages: CoreMessage[] =
+		allSummaries.length > 0
+			? [
+					{
+						role: "user",
+						content: `Here is the summary of the previous sessions:\n\n${allSummaries.map((summary) => summary.summary).join("\n")}`,
+					},
+				]
+			: []
 
 	// Then include any more recent messages that haven't yet been summarised
 	formattedMessages = formattedMessages.concat(
@@ -703,7 +745,9 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		campaign.model.startsWith("google") ||
 		campaign.model === "x-ai/grok-4" ||
 		campaign.model.startsWith("anthropic") ||
-		campaign.model.startsWith("moonshotai")
+		campaign.model.startsWith("moonshotai") ||
+		campaign.model === "openrouter/horizon-beta" ||
+		campaign.model === "openai/gpt-4.1"
 
 	const openrouter = createOpenRouter({
 		apiKey: process.env.OPENROUTER_API_KEY,
@@ -712,8 +756,6 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 			"X-Title": "Gaze Dev",
 		},
 	})
-
-	console.log("formattedMessages", formattedMessages)
 
 	const { fullStream } = streamText({
 		system: prompt,
@@ -744,7 +786,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 					],
 				})
 			: campaign.model.startsWith("anthropic")
-				? anthropic("claude-4-sonnet-20250514") // Temporarily hardcoded for testing
+				? anthropic("claude-sonnet-4-20250514") // Temporarily hardcoded for testing
 				: campaign.model.startsWith("moonshotai")
 					? groq(campaign.model)
 					: openrouter(campaign.model, {}),
@@ -784,10 +826,13 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		onError: async (error) => {
 			console.log("onError", error)
 
-			// TODO: show the error in the UI somehow - the old appendblock doesn't work well with streaming
+			await ctx.runMutation(api.messages.addError, {
+				messageId: message._id,
+				error: JSON.stringify(error, null, 2),
+			})
 		},
 		onFinish: async ({ finishReason, response }) => {
-			console.log("onFinish", finishReason, response)
+			console.log("onFinish", finishReason)
 
 			// Process all messages from all steps and combine their content
 			const allContent: Extract<
@@ -834,12 +879,15 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		request,
 		args.streamId as StreamId,
 		async (ctx, _request, _streamId, chunkAppender) => {
-			let reasoning = ""
-			let text = ""
+			const toolResults: {
+				type: "tool-result"
+				toolCallId: string
+				toolName: string
+				result: unknown
+			}[] = []
 
 			for await (const chunk of fullStream) {
 				if (chunk.type === "reasoning") {
-					reasoning += chunk.textDelta
 					chunkAppender(
 						`${JSON.stringify({
 							type: "reasoning",
@@ -847,7 +895,6 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						})}\n`,
 					)
 				} else if (chunk.type === "text-delta") {
-					text += chunk.textDelta
 					chunkAppender(
 						`${JSON.stringify({
 							type: "text",
@@ -864,6 +911,12 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						})}\n`,
 					)
 				} else if (chunk.type === "tool-result") {
+					toolResults.push({
+						type: "tool-result",
+						toolCallId: chunk.toolCallId,
+						toolName: chunk.toolName,
+						result: chunk.result,
+					})
 					chunkAppender(
 						`${JSON.stringify({
 							type: "tool-result",
@@ -897,6 +950,13 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						},
 					})
 				}
+			}
+
+			if (toolResults.length > 0) {
+				await ctx.runMutation(api.messages.addToolResultsMessage, {
+					messageId: message._id,
+					toolResults,
+				})
 			}
 		},
 	)
