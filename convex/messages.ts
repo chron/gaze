@@ -792,16 +792,16 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 					: openrouter(campaign.model, {}),
 		providerOptions: {
 			google: {
-				thinkingConfig: { thinkingBudget: 1024, includeThoughts: true },
+				// thinkingConfig: { thinkingBudget: 1024, includeThoughts: true },
 				responseModalities: ["TEXT"],
 			} satisfies GoogleGenerativeAIProviderOptions,
 			openrouter: {
-				reasoning: {
-					max_tokens: 1024,
-				},
+				// reasoning: {
+				// 	max_tokens: 1024,
+				// },
 			},
 			anthropic: {
-				thinking: { type: "enabled", budgetTokens: 1024 },
+				// thinking: { type: "enabled", budgetTokens: 1024 },
 			},
 		},
 		messages: formattedMessages,
@@ -1098,6 +1098,28 @@ export const storeSceneImage = mutation({
 	},
 })
 
+export const clearSceneImage = mutation({
+	args: {
+		messageId: v.id("messages"),
+	},
+	handler: async (ctx, args) => {
+		const message = await ctx.runQuery(api.messages.get, {
+			messageId: args.messageId,
+		})
+
+		if (!message) throw new Error("Message not found")
+
+		await ctx.db.patch(args.messageId, {
+			scene: message.scene
+				? {
+						...message.scene,
+						image: undefined,
+					}
+				: undefined,
+		})
+	},
+})
+
 export const generateSceneImage = action({
 	args: {
 		messageId: v.id("messages"),
@@ -1172,6 +1194,14 @@ export const regenerateSceneImage = action({
 
 		if (!message?.scene) {
 			throw new Error("Message or scene not found")
+		}
+
+		// Delete old image before regenerating
+		if (message.scene.image) {
+			await ctx.storage.delete(message.scene.image)
+			await ctx.runMutation(api.messages.clearSceneImage, {
+				messageId: args.messageId,
+			})
 		}
 
 		await ctx.runAction(api.messages.generateSceneImage, {
