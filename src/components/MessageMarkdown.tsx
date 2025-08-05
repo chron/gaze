@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown"
+import remarkBreaks from "remark-breaks"
 import remarkGfm from "remark-gfm"
 import { cn } from "../lib/utils"
 import { Wiggly } from "./Wiggly"
@@ -19,7 +20,7 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 	return (
 		<div className="flex flex-col gap-2">
 			<ReactMarkdown
-				remarkPlugins={[remarkGfm]}
+				remarkPlugins={[remarkGfm, remarkBreaks]}
 				components={{
 					p: ({ children }) => <p className=" last:mb-0">{children}</p>,
 					h1: ({ children }) => (
@@ -41,7 +42,7 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 							<code
 								className={cn(
 									className?.includes("language-error") && "text-red-400",
-									"p-1 rounded-md",
+									"rounded-md bg-gray-800 text-blue-100 px-1.5 py-1",
 								)}
 							>
 								{children}
@@ -66,7 +67,7 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 						<li className="[&>p]:inline [&>p]:m-0">{children}</li>
 					),
 					blockquote: ({ children }) => (
-						<blockquote className="border-gray-300 bg-gray-700 rounded-lg text-gray-200 p-4 pl-4">
+						<blockquote className="border-blue-300 bg-gray-200 border-l-4 pl-4 py-2 my-2 text-gray-700">
 							{children}
 						</blockquote>
 					),

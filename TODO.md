@@ -19,12 +19,10 @@ OTHER STUFF
 - Disable text input when there's an active roll to do (maybe?)
 - Look into Gemini implicit caching — not sure it's being applied
   - possibly the system prompt is too dynamic, move that to a user message or something?
-- BUG: When you use newlines in your message the ReactMarkdown component doesn't render them
 - If we're going to take JSON directly in the modal, need some friendly errors
 - Also the modal is too long with long JSON and files
 - Tidy up old images from convex storage before regenerating
 - Drop chat messages out of the pagination so you don't have to hard refresh to go back to 10.
-- Compress older context using the summarisation action
 - Track age of memories in case that's useful for tapering their importance off over time
 - CMD+K
 - Move LLM models to their own table with a bool for tool use
@@ -42,10 +40,9 @@ OTHER STUFF
 - Order campaigns in sidebar by recently updated, show a subset (5?) with a link to view more
 - Editing previous messages (UI is done, but need to actually save the changes)
 - "End of session" tool that adds a summary to the UI somewhere?
-- Have a concept of "active" vs "inactive" characters, maybe scene_change updates the list?
 - z.describe("...") for tool params
-- Add characters to activeCharacters when introducing them
 - edit character descriptions (and prompt? maybe an expandable section for it?)
+- when tool message is the last message it prevents the usage info from showing
 
 PROMPT THINGS
 
@@ -78,3 +75,7 @@ DONE
 - and add images for scenes maybe?
 - fix the autoscroll behaviour (add back a check for manual scroll thing?)
 - Hume or some other TTS provider
+- Add characters to activeCharacters when introducing them
+- Compress older context using the summarisation action
+- BUG: When you use newlines in your message the ReactMarkdown component doesn't render them
+- Have a concept of "active" vs "inactive" characters, maybe scene_change updates the list?

@@ -64,7 +64,7 @@ export const collapseHistory = action({
 				}
 			})
 			.filter((message) => message !== null)
-			.slice(0, -100) // Keep the last 100 messages so we have full access to the recent content
+			.slice(0, -60) // Keep the last 60 messages so we have full access to the recent content
 			.map((message, index) => {
 				return {
 					...message,
