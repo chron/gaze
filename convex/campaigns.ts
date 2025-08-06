@@ -3,12 +3,28 @@ import { query } from "./_generated/server"
 import { mutation } from "./_generated/server"
 
 export const list = query({
-	args: {},
-	handler: async (ctx) => {
-		return await ctx.db
+	args: {
+		limit: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		const campaigns = await ctx.db
 			.query("campaigns")
 			.withIndex("by_archived", (q) => q.eq("archived", false))
 			.collect()
+
+		// Sort by lastInteractionAt descending (most recent first), then by creation time
+		const sortedCampaigns = campaigns.sort((a, b) => {
+			const aTime = a.lastInteractionAt ?? a._creationTime
+			const bTime = b.lastInteractionAt ?? b._creationTime
+			return bTime - aTime
+		})
+
+		// Apply limit if specified
+		if (args.limit !== undefined) {
+			return sortedCampaigns.slice(0, args.limit)
+		}
+
+		return sortedCampaigns
 	},
 })
 
@@ -126,6 +142,17 @@ export const updatePlan = mutation({
 	handler: async (ctx, args) => {
 		await ctx.db.patch(args.campaignId, {
 			plan: args.plan,
+		})
+	},
+})
+
+export const updateLastInteraction = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.campaignId, {
+			lastInteractionAt: Date.now(),
 		})
 	},
 })

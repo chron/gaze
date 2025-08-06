@@ -25,7 +25,10 @@ export default defineSchema(
 			plan: v.optional(v.string()),
 			archived: v.optional(v.boolean()),
 			activeCharacters: v.optional(v.array(v.string())),
-		}).index("by_archived", ["archived"]),
+			lastInteractionAt: v.optional(v.number()),
+		})
+			.index("by_archived", ["archived"])
+			.index("by_lastInteractionAt", ["lastInteractionAt"]),
 		characterSheets: defineTable({
 			campaignId: v.id("campaigns"),
 			name: v.string(),

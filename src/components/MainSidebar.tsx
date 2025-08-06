@@ -17,7 +17,7 @@ import {
 } from "./ui/sidebar"
 
 export const MainSidebar: React.FC = () => {
-	const campaigns = useQuery(api.campaigns.list)
+	const campaigns = useQuery(api.campaigns.list, { limit: 10 })
 
 	return (
 		<>
@@ -61,6 +61,18 @@ export const MainSidebar: React.FC = () => {
 										</Link>
 									</SidebarMenuItem>
 								))}
+								<SidebarMenuItem>
+									<Link to="/">
+										{({ isActive }) => (
+											<SidebarMenuButton
+												isActive={isActive}
+												className="cursor-pointer text-blue-200"
+											>
+												View All Campaigns...
+											</SidebarMenuButton>
+										)}
+									</Link>
+								</SidebarMenuItem>
 							</SidebarMenu>
 						</SidebarGroupContent>
 					</SidebarGroup>

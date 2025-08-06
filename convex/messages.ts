@@ -262,6 +262,11 @@ export const addUserMessage = mutation({
 			],
 		})
 
+		// Update the campaign's last interaction timestamp
+		await ctx.runMutation(api.campaigns.updateLastInteraction, {
+			campaignId: args.campaignId,
+		})
+
 		const { streamId } = await ctx.runMutation(
 			api.messages.addAssistantMessage,
 			{
