@@ -239,6 +239,7 @@ const StatBar: React.FC<{ current: number; max: number }> = ({
 const StatLabel: React.FC<{ name: string }> = ({ name }) => {
 	const friendlyName = name
 		.replace(/_/g, " ")
+		.replace(/([a-z])([A-Z])/, "$1 $2")
 		.replace(/^\w/, (c) => c.toUpperCase())
 
 	return <div className="font-semibold">{friendlyName}</div>

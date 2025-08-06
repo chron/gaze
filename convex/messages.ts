@@ -23,9 +23,9 @@ import {
 } from "ai"
 import { paginationOptsValidator } from "convex/server"
 import { v } from "convex/values"
+import models from "../src/models.json"
 import { compact } from "../src/utils/compact"
 import { api, components, internal } from "./_generated/api"
-
 import type { Doc, Id } from "./_generated/dataModel"
 import {
 	action,
@@ -704,10 +704,15 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		prompt += `\n\nThe description of the campaign is: ${campaign.description}`
 	}
 
-	prompt += `\n\nHere is the character sheet for the player: ${JSON.stringify(
-		formattedCharacterSheet,
-	)}`
+	let currentContext = ""
 
+	if (formattedCharacterSheet) {
+		currentContext += `\n\nHere is the character sheet for the player: ${JSON.stringify(
+			formattedCharacterSheet,
+		)}`
+	}
+
+	// This really ought to go in currentContext too but that breaks for some reason?
 	if (serializedCharacters.length > 0) {
 		prompt += `\n\nHere are the existing characters: ${JSON.stringify(
 			serializedCharacters,
@@ -715,13 +720,13 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 	}
 
 	if (serializedMemories.length > 0) {
-		prompt += `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
+		currentContext += `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
 			serializedMemories,
 		)}`
 	}
 
 	if (campaign.plan) {
-		prompt += `\n\nYour current internal plan for the session: ${campaign.plan}`
+		currentContext += `\n\nYour current internal plan for the session: ${campaign.plan}`
 	}
 
 	// Remove any that didn't upload successfully
@@ -740,15 +745,16 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		})
 	}
 
-	// TODO: put this somewhere smart
-	const modelCanUseTools =
-		campaign.model.startsWith("google") ||
-		campaign.model === "x-ai/grok-4" ||
-		campaign.model.startsWith("anthropic") ||
-		campaign.model.startsWith("moonshotai") ||
-		campaign.model === "openrouter/horizon-beta" ||
-		campaign.model === "openai/gpt-4.1"
+	// Add current context to the end for caching reasons
+	if (currentContext !== "") {
+		formattedMessages.push({
+			role: "user",
+			content: `Here is the current context of the game: ${currentContext}`,
+		})
+	}
 
+	const modelCanUseTools =
+		models.find((m) => m.code === campaign.model)?.tools ?? false
 	const openrouter = createOpenRouter({
 		apiKey: process.env.OPENROUTER_API_KEY,
 		headers: {

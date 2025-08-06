@@ -15,7 +15,7 @@ export const updateCharacterSheet = (
 		parameters: z.object({
 			name: z.string(),
 			description: z.string(),
-			data: z.record(z.string(), z.any()),
+			data: z.optional(z.record(z.string(), z.any())),
 		}),
 		execute: async ({ name, description, data }, toolCall) => {
 			if (!characterSheet) {
@@ -26,7 +26,7 @@ export const updateCharacterSheet = (
 				characterSheetId: characterSheet._id,
 				name,
 				description,
-				data,
+				data: data ?? {},
 			})
 
 			return "Character sheet updated"
