@@ -134,6 +134,30 @@ export const updateActiveCharacters = mutation({
 	},
 })
 
+export const addActiveCharacter = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		activeCharacter: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const campaign = await ctx.db.get(args.campaignId)
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		if (campaign.activeCharacters?.includes(args.activeCharacter)) {
+			return
+		}
+
+		await ctx.db.patch(args.campaignId, {
+			activeCharacters: [
+				...(campaign.activeCharacters ?? []),
+				args.activeCharacter,
+			],
+		})
+	},
+})
+
 export const updatePlan = mutation({
 	args: {
 		campaignId: v.id("campaigns"),

@@ -37,7 +37,7 @@ export const SceneChange = ({
 					className="h-full w-full object-contain rounded-md"
 				/>
 			) : (
-				<div className="h-full w-full aspect-[16/9] bg-gray-700 rounded-md" />
+				<div className="h-full w-full min-w-[300px] aspect-[16/9] bg-gray-700 rounded-md" />
 			)}
 
 			<div className="absolute bottom-0 right-0 m-4 bg-black/50 rounded-md p-2 hidden group-hover:block">

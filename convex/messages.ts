@@ -415,14 +415,14 @@ export const performUserDiceRoll = mutation({
 		) {
 			throw new Error("Invalid dice roll tool call")
 		}
-		const { number, faces } = toolCall.args
+		const { number, faces, bonus } = toolCall.args
 
 		// Generate the dice roll results
 		const results: number[] = []
 		for (let i = 0; i < number; i++) {
 			results.push(Math.floor(Math.random() * faces) + 1)
 		}
-		const total = results.reduce((acc, curr) => acc + curr, 0)
+		const total = results.reduce((acc, curr) => acc + curr, 0) + bonus
 
 		// Add a tool result message
 		await ctx.db.insert("messages", {
@@ -432,7 +432,7 @@ export const performUserDiceRoll = mutation({
 				{
 					type: "tool-result",
 					toolName: "request_dice_roll",
-					result: { results, total },
+					result: { results, bonus, total },
 					toolCallId: toolCall.toolCallId,
 				},
 			],
@@ -897,14 +897,20 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 				result: unknown
 			}[] = []
 
+			// Dedup consecutive identical deltas (provider can emit duplicates)
+			let lastReasoningDelta: string | null = null
+
 			for await (const chunk of fullStream) {
 				if (chunk.type === "reasoning") {
-					chunkAppender(
-						`${JSON.stringify({
-							type: "reasoning",
-							delta: chunk.textDelta,
-						})}\n`,
-					)
+					if (chunk.textDelta && chunk.textDelta !== lastReasoningDelta) {
+						lastReasoningDelta = chunk.textDelta
+						chunkAppender(
+							`${JSON.stringify({
+								type: "reasoning",
+								delta: chunk.textDelta,
+							})}\n`,
+						)
+					}
 				} else if (chunk.type === "text-delta") {
 					chunkAppender(
 						`${JSON.stringify({
@@ -936,6 +942,8 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						})}\n`,
 					)
 				} else if (chunk.type === "step-start") {
+					// New step -> reset dedupe window
+					lastReasoningDelta = null
 					chunkAppender(
 						`${JSON.stringify({
 							type: "step-start",
@@ -1149,6 +1157,10 @@ export const generateSceneImage = action({
 			id: message.campaignId,
 		})
 
+		const characterSheet = await ctx.runQuery(api.characterSheets.get, {
+			campaignId: message.campaignId,
+		})
+
 		const characters = await ctx.runQuery(api.characters.list, {
 			campaignId: message.campaignId,
 		})
@@ -1167,6 +1179,8 @@ export const generateSceneImage = action({
 			Here are descriptions of the characters that are active in the scene:
 
 			${activeCharacters.map((c) => `- ${c.name}: ${c.description}`).join("\n")}
+
+			${characterSheet ? `The protagonist of the scene is ${characterSheet.name}` : ""}
 
       The style of the image should be ${campaign.imagePrompt}.
     `

@@ -36,7 +36,7 @@ export const MessageList: React.FC<Props> = ({
 	)
 
 	const lastMessage = messages?.[0]
-	const usage = lastMessage?.usage
+	const usage = messages.find((m) => m.role === "assistant")?.usage
 	const reversedMessages = [...(messages ?? [])]
 	reversedMessages.reverse()
 

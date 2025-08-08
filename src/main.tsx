@@ -20,9 +20,9 @@ declare module "@tanstack/react-router" {
 createRoot(document.getElementById("root")!).render(
 	<ConvexProvider client={convex}>
 		<ErrorBoundary>
-			<StrictMode>
-				<RouterProvider router={router} />
-			</StrictMode>
+			{/* <StrictMode> */}
+			<RouterProvider router={router} />
+			{/* </StrictMode> */}
 		</ErrorBoundary>
 	</ConvexProvider>,
 )

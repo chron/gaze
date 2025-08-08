@@ -148,16 +148,9 @@ export const generateImageForCharacter = action({
 			}
 		}
 
-		// Add character to active characters after generation if it isn't already there
-		// This is race condition-y if multiple characters are generated in one message!
-		if (!campaign.activeCharacters?.includes(character.name)) {
-			await ctx.runMutation(api.campaigns.updateActiveCharacters, {
-				campaignId: character.campaignId,
-				activeCharacters: [
-					...(campaign.activeCharacters ?? []),
-					character.name,
-				],
-			})
-		}
+		await ctx.runMutation(api.campaigns.addActiveCharacter, {
+			campaignId: character.campaignId,
+			activeCharacter: character.name,
+		})
 	},
 })

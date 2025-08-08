@@ -17,7 +17,7 @@ export const DiceRollResult: React.FC<Props> = ({ results, bonus, total }) => {
 				</div>
 			))}{" "}
 			{bonus > 0 ? `+ ${bonus}` : bonus < 0 ? bonus : ""}
-			{results.length > 1 ? `for a total of ${total}` : ""}
+			{results.length > 1 ? ` for a total of ${total}` : ""}
 		</div>
 	)
 }
