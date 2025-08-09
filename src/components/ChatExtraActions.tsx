@@ -1,6 +1,12 @@
 import { useParams } from "@tanstack/react-router"
-import { useAction, useQuery } from "convex/react"
-import { BetweenHorizontalStart, BookText, Brain, Command } from "lucide-react"
+import { useAction, useMutation, useQuery } from "convex/react"
+import {
+	BetweenHorizontalStart,
+	BookText,
+	Brain,
+	Command,
+	Trash,
+} from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
@@ -26,6 +32,8 @@ export const ChatExtraActions: React.FC = () => {
 	const collapseHistory = useAction(api.summaries.collapseHistory)
 	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
 	const chatWithHistory = useAction(api.messages.chatWithHistory)
+
+	const updatePlan = useMutation(api.campaigns.updatePlan)
 
 	const campaign = useQuery(api.campaigns.get, {
 		id: campaignId as Id<"campaigns">,
@@ -102,14 +110,27 @@ export const ChatExtraActions: React.FC = () => {
 					</DropdownMenuItem>
 
 					{campaign?.plan && (
-						<DropdownMenuItem
-							onClick={async () => {
-								setResult(campaign.plan ?? null)
-							}}
-						>
-							<Brain />
-							View plan
-						</DropdownMenuItem>
+						<>
+							<DropdownMenuItem
+								onClick={async () => {
+									setResult(campaign.plan ?? null)
+								}}
+							>
+								<Brain />
+								View plan
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={async () => {
+									await updatePlan({
+										campaignId: campaignId as Id<"campaigns">,
+										plan: "",
+									})
+								}}
+							>
+								<Trash />
+								Clear plan
+							</DropdownMenuItem>
+						</>
 					)}
 				</DropdownMenuContent>
 			</DropdownMenu>

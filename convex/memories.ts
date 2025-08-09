@@ -1,6 +1,6 @@
 import { google } from "@ai-sdk/google"
-import { openai } from "@ai-sdk/openai"
-import { type CoreMessage, embed, generateText, tool } from "ai"
+import { openrouter } from "@openrouter/ai-sdk-provider"
+import { embed, generateText, tool } from "ai"
 import { v } from "convex/values"
 import z from "zod"
 import { api, internal } from "./_generated/api"
@@ -125,7 +125,7 @@ export const scanForNewMemories = internalAction({
 					}),
 				}),
 			},
-			model: google("gemini-2.5-flash"),
+			model: openrouter("openai/gpt-5-mini"),
 			toolChoice: {
 				type: "tool",
 				toolName: "memories",

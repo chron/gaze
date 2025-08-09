@@ -15,7 +15,7 @@ export const updateCharacterSheet = (
 		parameters: z.object({
 			name: z.string(),
 			description: z.string(),
-			data: z.record(z.string(), z.any()), // Several models including GPT-5 don't seem to see this!
+			data: z.any(), //z.record(z.string(), z.any()), // Several models including GPT-5 don't seem to see this!
 		}),
 		execute: async ({ name, description, data }, toolCall) => {
 			if (!characterSheet) {

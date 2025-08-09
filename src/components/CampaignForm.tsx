@@ -14,6 +14,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "./ui/select"
+import { Textarea } from "./ui/textarea"
 
 type Props = {
 	campaignId?: Id<"campaigns"> | null
@@ -82,8 +83,7 @@ export const CampaignForm: React.FC<Props> = ({ campaignId = null }) => {
 
 			<div className="grid gap-3">
 				<Label htmlFor="description">Description</Label>
-				<Input
-					type="text"
+				<Textarea
 					id="description"
 					name="description"
 					defaultValue={campaign?.description}

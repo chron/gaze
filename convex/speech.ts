@@ -1,4 +1,4 @@
-import { google } from "@ai-sdk/google"
+import { openrouter } from "@openrouter/ai-sdk-provider"
 import { generateText, tool } from "ai"
 import { v } from "convex/values"
 import { HumeClient } from "hume"
@@ -58,7 +58,7 @@ export const generateAudioForMessage = action({
 
 		const { toolCalls } = await generateText({
 			system: prompt,
-			model: google("gemini-2.5-flash"),
+			model: openrouter("openai/gpt-5-mini"),
 			messages: [
 				{
 					role: "user",

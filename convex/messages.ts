@@ -8,7 +8,7 @@ import {
 	StreamIdValidator,
 } from "@convex-dev/persistent-text-streaming"
 import { GoogleGenAI } from "@google/genai"
-import { createOpenRouter } from "@openrouter/ai-sdk-provider"
+import { createOpenRouter, openrouter } from "@openrouter/ai-sdk-provider"
 import {
 	type AssistantContent,
 	type CoreAssistantMessage,
@@ -765,7 +765,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 	const { fullStream } = streamText({
 		system: prompt,
-		temperature: 0.7,
+		temperature: 1, //0.7,
 		model: campaign.model.startsWith("google")
 			? google(campaign.model.split("/")[1], {
 					safetySettings: [
@@ -795,7 +795,9 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 				? anthropic("claude-sonnet-4-20250514") // Temporarily hardcoded for testing
 				: campaign.model.startsWith("moonshotai")
 					? groq(campaign.model)
-					: openrouter(campaign.model, {}),
+					: campaign.model.startsWith("openai")
+						? openai(campaign.model.split("/")[1])
+						: openrouter(campaign.model, {}),
 		providerOptions: {
 			google: {
 				// thinkingConfig: { thinkingBudget: 1024, includeThoughts: true },
@@ -808,6 +810,9 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 			},
 			anthropic: {
 				// thinking: { type: "enabled", budgetTokens: 1024 },
+			},
+			openai: {
+				reasoningEffort: "minimal",
 			},
 		},
 		messages: formattedMessages,
@@ -1021,7 +1026,7 @@ export const summarizeChatHistory = action({
 
 		const { text } = await generateText({
 			system: prompt,
-			model: openai("gpt-4o-mini"),
+			model: openrouter("openai/gpt-5-mini"),
 			messages: [
 				...formattedMessages,
 				{

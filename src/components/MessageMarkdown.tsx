@@ -58,11 +58,9 @@ export const MessageMarkdown: React.FC<{ children: string }> = ({
 					td: ({ children }) => <TableCell>{children}</TableCell>,
 					caption: ({ children }) => <TableCaption>{children}</TableCaption>,
 					ol: ({ children }) => (
-						<ol className="list-decimal pl-4 list-inside">{children}</ol>
+						<ol className="list-decimal ml-6">{children}</ol>
 					),
-					ul: ({ children }) => (
-						<ul className="list-disc pl-4 list-inside">{children}</ul>
-					),
+					ul: ({ children }) => <ul className="list-disc ml-6">{children}</ul>,
 					li: ({ children }) => (
 						<li className="[&>p]:inline [&>p]:m-0">{children}</li>
 					),
