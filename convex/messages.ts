@@ -726,7 +726,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 	}
 
 	if (campaign.plan) {
-		currentContext += `\n\nYour current internal plan for the session: ${campaign.plan}`
+		currentContext += `\n\nYour current internal plan for the session. Update it with the \`update_plan\ tool when needed:\n\n${campaign.plan}`
 	}
 
 	// Remove any that didn't upload successfully
@@ -842,8 +842,8 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 				error: JSON.stringify(error, null, 2),
 			})
 		},
-		onFinish: async ({ finishReason, response }) => {
-			console.log("onFinish", finishReason)
+		onFinish: async ({ finishReason, response, usage }) => {
+			console.log("onFinish", finishReason, usage, response)
 
 			// Process all messages from all steps and combine their content
 			const allContent: Extract<

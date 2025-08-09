@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router"
 import { useAction, useQuery } from "convex/react"
 import { RefreshCcwIcon } from "lucide-react"
 import { api } from "../../convex/_generated/api"
@@ -20,7 +21,13 @@ export const CharacterPage: React.FC<Props> = ({ campaignId }) => {
 			<h1 className="text-2xl font-title text-white">Characters</h1>
 			<div className="flex flex-col gap-2">
 				{characters?.map((character) => (
-					<CharacterCard key={character._id} character={character} />
+					<Link
+						key={character._id}
+						to="/campaigns/$campaignId/characters/$characterId"
+						params={{ campaignId, characterId: character._id }}
+					>
+						<CharacterCard character={character} />
+					</Link>
 				))}
 			</div>
 		</div>
@@ -50,7 +57,11 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
 
 			<Button
 				className="hidden group-hover:block absolute bottom-2 left-2"
-				onClick={() => regenerateImage({ characterId: character._id })}
+				onClick={(e) => {
+					e.preventDefault()
+					e.stopPropagation()
+					regenerateImage({ characterId: character._id })
+				}}
 			>
 				<RefreshCcwIcon />
 			</Button>

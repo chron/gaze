@@ -389,7 +389,7 @@ const MessageActions: React.FC<MessageActionsProps> = ({
 	)
 
 	return (
-		<div className="gap-2 hidden group-hover:flex absolute bottom-0 left-0">
+		<div className="gap-2 hidden group-hover:flex absolute bottom-0 right-0">
 			<Button
 				disabled={isGeneratingAudio}
 				onClick={async () => {

@@ -44,9 +44,12 @@ export const collapseHistory = action({
 
 		const formattedMessages = messages
 			.map((message) => {
-				// TODO: we need to somehow mark these tool messages otherwise they will keep coming back!
 				if (message.role === "tool") {
-					return null
+					return {
+						id: message._id,
+						role: "user" as const,
+						content: message.content.map(() => "<tool response>").join(""),
+					}
 				}
 
 				return {

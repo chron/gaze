@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CampaignsNewRouteImport } from './routes/campaigns.new'
 import { Route as CampaignsCampaignIdRouteImport } from './routes/campaigns.$campaignId'
 import { Route as CampaignsCampaignIdEditRouteImport } from './routes/campaigns_.$campaignId.edit'
+import { Route as CampaignsCampaignIdCharactersCharacterIdRouteImport } from './routes/campaigns.$campaignId.characters.$characterId'
 
 const SystemsRoute = SystemsRouteImport.update({
   id: '/systems',
@@ -40,28 +41,37 @@ const CampaignsCampaignIdEditRoute = CampaignsCampaignIdEditRouteImport.update({
   path: '/campaigns/$campaignId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CampaignsCampaignIdCharactersCharacterIdRoute =
+  CampaignsCampaignIdCharactersCharacterIdRouteImport.update({
+    id: '/characters/$characterId',
+    path: '/characters/$characterId',
+    getParentRoute: () => CampaignsCampaignIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/systems': typeof SystemsRoute
-  '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
+  '/campaigns/$campaignId': typeof CampaignsCampaignIdRouteWithChildren
   '/campaigns/new': typeof CampaignsNewRoute
   '/campaigns/$campaignId/edit': typeof CampaignsCampaignIdEditRoute
+  '/campaigns/$campaignId/characters/$characterId': typeof CampaignsCampaignIdCharactersCharacterIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/systems': typeof SystemsRoute
-  '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
+  '/campaigns/$campaignId': typeof CampaignsCampaignIdRouteWithChildren
   '/campaigns/new': typeof CampaignsNewRoute
   '/campaigns/$campaignId/edit': typeof CampaignsCampaignIdEditRoute
+  '/campaigns/$campaignId/characters/$characterId': typeof CampaignsCampaignIdCharactersCharacterIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/systems': typeof SystemsRoute
-  '/campaigns/$campaignId': typeof CampaignsCampaignIdRoute
+  '/campaigns/$campaignId': typeof CampaignsCampaignIdRouteWithChildren
   '/campaigns/new': typeof CampaignsNewRoute
   '/campaigns_/$campaignId/edit': typeof CampaignsCampaignIdEditRoute
+  '/campaigns/$campaignId/characters/$characterId': typeof CampaignsCampaignIdCharactersCharacterIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -71,6 +81,7 @@ export interface FileRouteTypes {
     | '/campaigns/$campaignId'
     | '/campaigns/new'
     | '/campaigns/$campaignId/edit'
+    | '/campaigns/$campaignId/characters/$characterId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -78,6 +89,7 @@ export interface FileRouteTypes {
     | '/campaigns/$campaignId'
     | '/campaigns/new'
     | '/campaigns/$campaignId/edit'
+    | '/campaigns/$campaignId/characters/$characterId'
   id:
     | '__root__'
     | '/'
@@ -85,12 +97,13 @@ export interface FileRouteTypes {
     | '/campaigns/$campaignId'
     | '/campaigns/new'
     | '/campaigns_/$campaignId/edit'
+    | '/campaigns/$campaignId/characters/$characterId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SystemsRoute: typeof SystemsRoute
-  CampaignsCampaignIdRoute: typeof CampaignsCampaignIdRoute
+  CampaignsCampaignIdRoute: typeof CampaignsCampaignIdRouteWithChildren
   CampaignsNewRoute: typeof CampaignsNewRoute
   CampaignsCampaignIdEditRoute: typeof CampaignsCampaignIdEditRoute
 }
@@ -132,13 +145,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CampaignsCampaignIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/campaigns/$campaignId/characters/$characterId': {
+      id: '/campaigns/$campaignId/characters/$characterId'
+      path: '/characters/$characterId'
+      fullPath: '/campaigns/$campaignId/characters/$characterId'
+      preLoaderRoute: typeof CampaignsCampaignIdCharactersCharacterIdRouteImport
+      parentRoute: typeof CampaignsCampaignIdRoute
+    }
   }
 }
+
+interface CampaignsCampaignIdRouteChildren {
+  CampaignsCampaignIdCharactersCharacterIdRoute: typeof CampaignsCampaignIdCharactersCharacterIdRoute
+}
+
+const CampaignsCampaignIdRouteChildren: CampaignsCampaignIdRouteChildren = {
+  CampaignsCampaignIdCharactersCharacterIdRoute:
+    CampaignsCampaignIdCharactersCharacterIdRoute,
+}
+
+const CampaignsCampaignIdRouteWithChildren =
+  CampaignsCampaignIdRoute._addFileChildren(CampaignsCampaignIdRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SystemsRoute: SystemsRoute,
-  CampaignsCampaignIdRoute: CampaignsCampaignIdRoute,
+  CampaignsCampaignIdRoute: CampaignsCampaignIdRouteWithChildren,
   CampaignsNewRoute: CampaignsNewRoute,
   CampaignsCampaignIdEditRoute: CampaignsCampaignIdEditRoute,
 }

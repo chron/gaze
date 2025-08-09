@@ -85,6 +85,19 @@ export const create = mutation({
 	},
 })
 
+export const update = mutation({
+	args: {
+		characterId: v.id("characters"),
+		name: v.string(),
+		description: v.string(),
+		imagePrompt: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const { characterId, name, description, imagePrompt } = args
+		await ctx.db.patch(characterId, { name, description, imagePrompt })
+	},
+})
+
 export const storeImageForCharacter = mutation({
 	args: {
 		characterId: v.id("characters"),

@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { Link, Outlet, createFileRoute } from "@tanstack/react-router"
 import { useQuery } from "convex/react"
 import { Pencil } from "lucide-react"
 import { api } from "../../convex/_generated/api"
@@ -71,6 +71,8 @@ function ChatPage() {
 					</TabsContent>
 				</Tabs>
 			</div>
+
+			<Outlet />
 
 			{/* TODO: ideally don't show this button if the gameSystem has no reference data */}
 			{campaign.gameSystemId && (
