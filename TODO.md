@@ -43,6 +43,7 @@ OTHER STUFF
 - z.describe("...") for tool params
 - edit character descriptions (and prompt? maybe an expandable section for it?)
 - when tool message is the last message it prevents the usage info from showing
+- Two scene changes in one message end up with the same image
 
 PROMPT THINGS
 

@@ -702,11 +702,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		: "\n\nThe game will be a free-form narrative RPG without a specific ruleset."
 
 	if (campaign.name !== "") {
-		prompt += `\n\nThe campaign is called ${campaign.name}`
-	}
-
-	if (campaign.description !== "") {
-		prompt += `\n\nThe description of the campaign is: ${campaign.description}`
+		prompt += `\n\nThe campaign is called ${campaign.name}\n\n${campaign.description}`
 	}
 
 	let currentContext = ""
@@ -717,9 +713,8 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		)}`
 	}
 
-	// This really ought to go in currentContext too but that breaks for some reason?
 	if (serializedCharacters.length > 0) {
-		prompt += `\n\nHere are the existing characters: ${JSON.stringify(
+		currentContext += `\n\nHere are the existing characters: ${JSON.stringify(
 			serializedCharacters,
 		)}`
 	}
@@ -1036,7 +1031,7 @@ export const summarizeChatHistory = action({
 			],
 		})
 
-		return text
+		return `${text}\n\nTotal messages: ${messages.length}`
 	},
 })
 

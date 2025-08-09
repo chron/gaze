@@ -123,8 +123,10 @@ export const MessageList: React.FC<Props> = ({
 
 			{usage && (
 				<div className="text-sm text-gray-200">
-					{usage.promptTokens} input tokens, {usage.completionTokens} output
-					tokens
+					{usage.promptTokens} input tokens
+					{Number.isNaN(usage.completionTokens)
+						? ""
+						: `, ${usage.completionTokens} output tokens`}
 					{/* (total: {totalTokens?.promptTokens} input +{" "} {totalTokens?.completionTokens} output) */}
 				</div>
 			)}
