@@ -3,7 +3,6 @@ import { useQuery } from "convex/react"
 import { Plus } from "lucide-react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
-import { CampaignDetailsModal } from "../components/CampaignDetailsModal"
 import { Button } from "../components/ui/button"
 
 export const Route = createFileRoute("/")({
@@ -31,15 +30,12 @@ function HomePage() {
 						Gaze Into The Abyss
 					</h1>
 				</div>
-				<CampaignDetailsModal
-					campaignId={null}
-					trigger={
-						<Button className="gap-2">
-							<Plus size={16} />
-							New Campaign
-						</Button>
-					}
-				/>
+				<Button className="gap-2" asChild>
+					<Link to="/campaigns/new">
+						<Plus size={16} />
+						New Campaign
+					</Link>
+				</Button>
 			</div>
 
 			{campaigns.length === 0 ? (
@@ -47,15 +43,12 @@ function HomePage() {
 					<p className="text-lg text-muted-foreground mb-4">
 						No campaigns yet. Create your first campaign to get started!
 					</p>
-					<CampaignDetailsModal
-						campaignId={null}
-						trigger={
-							<Button className="gap-2">
-								<Plus size={16} />
-								Create Your First Campaign
-							</Button>
-						}
-					/>
+					<Button className="gap-2" asChild>
+						<Link to="/campaigns/new">
+							<Plus size={16} />
+							Create Your First Campaign
+						</Link>
+					</Button>
 				</div>
 			) : (
 				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

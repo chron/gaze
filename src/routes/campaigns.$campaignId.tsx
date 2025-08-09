@@ -1,9 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute } from "@tanstack/react-router"
 import { useQuery } from "convex/react"
 import { Pencil } from "lucide-react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
-import { CampaignDetailsModal } from "../components/CampaignDetailsModal"
 import { CharacterPage } from "../components/CharacterPage"
 import { CharacterSheet } from "../components/CharacterSheet"
 import { ChatInterface } from "../components/ChatInterface"
@@ -39,14 +38,14 @@ function ChatPage() {
 							<Badge>{campaign.model.split("/")[1]}</Badge>
 
 							<div className="group-hover:block hidden">
-								<CampaignDetailsModal
-									campaignId={campaign._id}
-									trigger={
-										<Button variant="ghost">
-											<Pencil />
-										</Button>
-									}
-								/>
+								<Button variant="ghost" asChild>
+									<Link
+										to="/campaigns/$campaignId/edit"
+										params={{ campaignId: campaign._id }}
+									>
+										<Pencil />
+									</Link>
+								</Button>
 							</div>
 						</div>
 

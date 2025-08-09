@@ -2,7 +2,6 @@ import { Link } from "@tanstack/react-router"
 import { useQuery } from "convex/react"
 import { Plus } from "lucide-react"
 import { api } from "../../convex/_generated/api"
-import { CampaignDetailsModal } from "./CampaignDetailsModal"
 import {
 	Sidebar,
 	SidebarContent,
@@ -33,14 +32,11 @@ export const MainSidebar: React.FC = () => {
 					<SidebarGroup>
 						<SidebarGroupLabel>Campaigns</SidebarGroupLabel>
 
-						<CampaignDetailsModal
-							campaignId={null}
-							trigger={
-								<SidebarGroupAction className="cursor-pointer">
-									<Plus /> <span className="sr-only">Add Campaign</span>
-								</SidebarGroupAction>
-							}
-						/>
+						<Link to="/campaigns/new">
+							<SidebarGroupAction className="cursor-pointer">
+								<Plus /> <span className="sr-only">Add Campaign</span>
+							</SidebarGroupAction>
+						</Link>
 
 						<SidebarGroupContent>
 							<SidebarMenu>
