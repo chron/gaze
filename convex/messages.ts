@@ -39,6 +39,7 @@ import { getImageModel } from "./characters"
 import systemPrompt from "./prompts/system"
 import { changeScene } from "./tools/changeScene"
 import { introduceCharacter } from "./tools/introduceCharacter"
+import { chooseName } from "./tools/nameCharacter"
 import { requestDiceRoll } from "./tools/requestDiceRoll"
 import { updateCharacterSheet } from "./tools/updateCharacterSheet"
 import { updatePlan } from "./tools/updatePlan"
@@ -449,6 +450,57 @@ export const performUserDiceRoll = mutation({
 	},
 })
 
+export const performUserChooseName = mutation({
+	args: {
+		messageId: v.id("messages"),
+		toolCallIndex: v.number(),
+		chosenName: v.string(),
+		otherDetails: v.optional(v.string()),
+	},
+	handler: async (
+		ctx,
+		args,
+	): Promise<{ streamId: StreamId; chosenName: string }> => {
+		const message = await ctx.db.get(args.messageId)
+		if (!message) throw new Error("Message not found")
+
+		const toolCall = message.content[args.toolCallIndex]
+		if (
+			!toolCall ||
+			toolCall.type !== "tool-call" ||
+			toolCall.toolName !== "choose_name"
+		) {
+			throw new Error("Invalid choose name tool call")
+		}
+
+		// Add a tool result message
+		await ctx.db.insert("messages", {
+			campaignId: message.campaignId,
+			role: "tool",
+			content: [
+				{
+					type: "tool-result",
+					toolName: "choose_name",
+					result: {
+						name: args.chosenName,
+						otherDetails: args.otherDetails,
+					},
+					toolCallId: toolCall.toolCallId,
+				},
+			],
+		})
+
+		const { streamId } = await ctx.runMutation(
+			api.messages.addAssistantMessage,
+			{
+				campaignId: message.campaignId,
+			},
+		)
+
+		return { streamId, chosenName: args.chosenName }
+	},
+})
+
 export const sendToLLM = httpAction(async (ctx, request) => {
 	const args = (await request.json()) as {
 		streamId: StreamId
@@ -632,54 +684,54 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		campaignId: campaign._id,
 	})
 
-	const anyMemories = await ctx.runQuery(internal.memories.count, {
-		campaignId: campaign._id,
-	})
+	// const anyMemories = await ctx.runQuery(internal.memories.count, {
+	// 	campaignId: campaign._id,
+	// })
 
-	let serializedMemories: {
-		type: string
-		summary: string
-		context: string
-		tags: string[]
-	}[] = []
+	// let serializedMemories: {
+	// 	type: string
+	// 	summary: string
+	// 	context: string
+	// 	tags: string[]
+	// }[] = []
 
-	if (anyMemories > 0) {
-		const lastMessage = formattedMessages[formattedMessages.length - 1]
-		const { embedding } = await embed({
-			model: google.textEmbeddingModel("gemini-embedding-exp-03-07", {
-				taskType: "RETRIEVAL_QUERY",
-			}),
-			value:
-				typeof lastMessage.content === "string"
-					? lastMessage.content
-					: lastMessage.content
-							.map((block) => {
-								if (block.type === "text") {
-									return block.text
-								}
+	// if (anyMemories > 0) {
+	// 	const lastMessage = formattedMessages[formattedMessages.length - 1]
+	// 	const { embedding } = await embed({
+	// 		model: google.textEmbeddingModel("gemini-embedding-exp-03-07", {
+	// 			taskType: "RETRIEVAL_QUERY",
+	// 		}),
+	// 		value:
+	// 			typeof lastMessage.content === "string"
+	// 				? lastMessage.content
+	// 				: lastMessage.content
+	// 						.map((block) => {
+	// 							if (block.type === "text") {
+	// 								return block.text
+	// 							}
 
-								return ""
-							})
-							.join(""),
-		})
+	// 							return ""
+	// 						})
+	// 						.join(""),
+	// 	})
 
-		const memoryRefs = await ctx.vectorSearch("memories", "by_embedding", {
-			vector: embedding,
-			limit: 10,
-			filter: (q) => q.eq("campaignId", campaign._id),
-		})
+	// 	const memoryRefs = await ctx.vectorSearch("memories", "by_embedding", {
+	// 		vector: embedding,
+	// 		limit: 10,
+	// 		filter: (q) => q.eq("campaignId", campaign._id),
+	// 	})
 
-		const memories = await ctx.runQuery(internal.memories.findMany, {
-			ids: memoryRefs.map((ref) => ref._id),
-		})
+	// 	const memories = await ctx.runQuery(internal.memories.findMany, {
+	// 		ids: memoryRefs.map((ref) => ref._id),
+	// 	})
 
-		serializedMemories = memories.map((memory) => ({
-			type: memory.type,
-			summary: memory.summary,
-			context: memory.context,
-			tags: memory.tags,
-		}))
-	}
+	// 	serializedMemories = memories.map((memory) => ({
+	// 		type: memory.type,
+	// 		summary: memory.summary,
+	// 		context: memory.context,
+	// 		tags: memory.tags,
+	// 	}))
+	// }
 
 	const serializedCharacters = characters.map((character) => ({
 		name: character.name,
@@ -719,11 +771,11 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		)}`
 	}
 
-	if (serializedMemories.length > 0) {
-		currentContext += `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
-			serializedMemories,
-		)}`
-	}
+	// if (serializedMemories.length > 0) {
+	// 	currentContext += `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
+	// 		serializedMemories,
+	// 	)}`
+	// }
 
 	if (campaign.plan) {
 		currentContext += `\n\nYour current internal plan for the session. Update it with the \`update_plan\ tool when needed:\n\n${campaign.plan}`
@@ -832,6 +884,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 					),
 					request_dice_roll: requestDiceRoll(ctx, message._id),
 					update_plan: updatePlan(ctx, message._id, campaign._id),
+					choose_name: chooseName(),
 				}
 			: undefined,
 		onError: async (error) => {
@@ -1026,7 +1079,7 @@ export const summarizeChatHistory = action({
 
 		const { text } = await generateText({
 			system: prompt,
-			model: openrouter("openai/gpt-5-mini"),
+			model: google("gemini-2.5-flash"), //openrouter("openai/gpt-5-mini"),
 			messages: [
 				...formattedMessages,
 				{

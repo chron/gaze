@@ -8,6 +8,7 @@ import { useStructuredStream } from "../hooks/useStructuredStream"
 import { cn } from "../lib/utils"
 import { CharacterIntroduction } from "./CharacterIntroduction"
 import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
+import { ChooseName } from "./ChooseName"
 import { DiceRoll } from "./DiceRoll"
 import { DiceRollResult } from "./DiceRollResult"
 import { MessageMarkdown } from "./MessageMarkdown"
@@ -190,8 +191,15 @@ export const Message: React.FC<Props> = ({
 					{!noDatabaseContent ? (
 						message.content.map((block, index) => {
 							if (block.type === "text") {
-								return (
-									<MessageMarkdown key={`text-${block.text}`}>
+								return isEditing ? (
+									<div
+										key={`text-${block.text}-${index}`}
+										className="whitespace-pre-wrap"
+									>
+										{block.text}
+									</div>
+								) : (
+									<MessageMarkdown key={`text-${block.text}-${index}`}>
 										{block.text}
 									</MessageMarkdown>
 								)
@@ -223,6 +231,30 @@ export const Message: React.FC<Props> = ({
 												}
 											}
 											followupToolResult={followupToolResult}
+											setStreamId={setStreamId}
+										/>
+									)
+								}
+
+								if (block.toolName === "choose_name") {
+									return (
+										<ChooseName
+											key={`choose-name-${block.toolCallId}`}
+											messageId={message._id}
+											toolCallIndex={index}
+											parameters={
+												block.args as {
+													description: string
+													suggestedNames: string[]
+												}
+											}
+											followupToolResult={
+												followupToolResult?.content[0].type === "tool-result" &&
+												block.toolName ===
+													followupToolResult?.content[0].toolName
+													? followupToolResult
+													: null
+											}
 											setStreamId={setStreamId}
 										/>
 									)

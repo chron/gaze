@@ -44,6 +44,7 @@ OTHER STUFF
 - edit character descriptions (and prompt? maybe an expandable section for it?)
 - when tool message is the last message it prevents the usage info from showing
 - Two scene changes in one message end up with the same image
+- followupToolBlock doesn't work well with multi tool calls, e.g. a name request + char sheet update
 
 PROMPT THINGS
 

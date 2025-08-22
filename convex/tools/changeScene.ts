@@ -11,7 +11,7 @@ export const changeScene = (
 ) =>
 	tool({
 		description:
-			"Whenever the scene changes, use this tool to describe the new scene. The description will be shown to the player, and the prompt will be given to an AI to generate an image. You must also provide a list of which of the known characters are active in the scene.",
+			"Whenever the scene changes, use this tool to describe the new scene. The description will be shown to the player, and the prompt will be given to an AI to generate an image. You must also provide a list of which of the known characters are active in the scene. If you have follow-up narration or prompts, there will be a chance to add that after the tool call.",
 		parameters: z.object({
 			description: z
 				.string()
@@ -27,12 +27,12 @@ export const changeScene = (
 				activeCharacters: activeCharacters ?? [],
 			})
 
-			await ctx.scheduler.runAfter(0, api.messages.generateSceneImage, {
-				messageId: assistantMessageId,
-				description,
-				prompt,
-				activeCharacters: activeCharacters ?? [],
-			})
+			// await ctx.scheduler.runAfter(0, api.messages.generateSceneImage, {
+			// 	messageId: assistantMessageId,
+			// 	description,
+			// 	prompt,
+			// 	activeCharacters: activeCharacters ?? [],
+			// })
 
 			return { description, prompt }
 		},

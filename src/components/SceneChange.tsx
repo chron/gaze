@@ -3,6 +3,7 @@ import { Loader2Icon, RefreshCcwIcon } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
+import { MessageMarkdown } from "./MessageMarkdown"
 import { Button } from "./ui/button"
 
 export const SceneChange = ({
@@ -41,9 +42,11 @@ export const SceneChange = ({
 			)}
 
 			<div className="absolute bottom-0 right-0 m-4 bg-black/50 rounded-md p-2 hidden group-hover:block">
-				<p className="text-white text-sm">
-					{description ? description : scene?.description}
-				</p>
+				<div className="text-white text-sm">
+					<MessageMarkdown>
+						{description ? description : (scene?.description ?? "")}
+					</MessageMarkdown>
+				</div>
 			</div>
 
 			<Button

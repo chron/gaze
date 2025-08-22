@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMutation, useQuery } from "convex/react"
 import { useEffect, useState } from "react"
 import { api } from "../../convex/_generated/api"
@@ -15,6 +15,7 @@ export const Route = createFileRoute(
 })
 
 function CharacterDetailsPage() {
+	const navigate = useNavigate()
 	const { campaignId, characterId } = Route.useParams()
 	const character = useQuery(api.characters.get, {
 		characterId: characterId as Id<"characters">,
@@ -45,6 +46,7 @@ function CharacterDetailsPage() {
 				description,
 				imagePrompt,
 			})
+			navigate({ to: "/campaigns/$campaignId" })
 		} finally {
 			setIsSaving(false)
 		}
