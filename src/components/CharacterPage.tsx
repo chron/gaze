@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router"
 import { useAction, useQuery } from "convex/react"
-import { RefreshCcwIcon } from "lucide-react"
+import { Loader2, RefreshCcwIcon } from "lucide-react"
+import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"
 import { Button } from "./ui/button"
@@ -39,6 +40,7 @@ type CharacterCardProps = {
 }
 
 const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
+	const [isLoading, setIsLoading] = useState(false)
 	const regenerateImage = useAction(api.characters.generateImageForCharacter)
 
 	return (
@@ -57,13 +59,19 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
 
 			<Button
 				className="hidden group-hover:block absolute bottom-2 left-2"
-				onClick={(e) => {
+				onClick={async (e) => {
+					setIsLoading(true)
 					e.preventDefault()
 					e.stopPropagation()
-					regenerateImage({ characterId: character._id })
+					await regenerateImage({ characterId: character._id })
+					setIsLoading(false)
 				}}
 			>
-				<RefreshCcwIcon />
+				{isLoading ? (
+					<Loader2 className="w-4 h-4 animate-spin" />
+				) : (
+					<RefreshCcwIcon className="w-4 h-4" />
+				)}
 			</Button>
 		</div>
 	)

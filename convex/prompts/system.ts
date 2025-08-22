@@ -58,4 +58,6 @@ If you want to present a list of options to the user, use a numbered markdown li
 
 1. Option 1
 2. Option 2
-3. Option 3`
+3. Option 3
+
+Always finish your explanation completely before making any tool calls.`

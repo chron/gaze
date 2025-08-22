@@ -16,7 +16,7 @@ export function getImageModel(modelString: string): {
 		return {
 			model: openai.image(modelString),
 			providerOptions: {
-				openai: { quality: "high" },
+				openai: { quality: "medium" },
 			},
 		}
 	}
@@ -149,6 +149,8 @@ export const generateImageForCharacter = action({
 			aspectRatio: "1:1",
 			prompt,
 		})
+
+		// console.log(result)
 
 		for (const file of result.images) {
 			if (file.mimeType.startsWith("image/")) {

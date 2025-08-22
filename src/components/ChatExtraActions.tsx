@@ -11,6 +11,7 @@ import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { MessageMarkdown } from "./MessageMarkdown"
+import { PlanModal } from "./PlanModal"
 import { Button } from "./ui/button"
 import {
 	Dialog,
@@ -29,6 +30,7 @@ export const ChatExtraActions: React.FC = () => {
 	const { campaignId } = useParams({ from: "/campaigns/$campaignId" })
 	const [result, setResult] = useState<string | null>(null)
 	const [isLoading, setIsLoading] = useState(false)
+	const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
 	const collapseHistory = useAction(api.summaries.collapseHistory)
 	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
 	const chatWithHistory = useAction(api.messages.chatWithHistory)
@@ -111,11 +113,7 @@ export const ChatExtraActions: React.FC = () => {
 
 					{campaign?.plan && (
 						<>
-							<DropdownMenuItem
-								onClick={async () => {
-									setResult(campaign.plan ?? null)
-								}}
-							>
+							<DropdownMenuItem onClick={() => setIsPlanModalOpen(true)}>
 								<Brain />
 								View plan
 							</DropdownMenuItem>
@@ -134,6 +132,13 @@ export const ChatExtraActions: React.FC = () => {
 					)}
 				</DropdownMenuContent>
 			</DropdownMenu>
+
+			{isPlanModalOpen && (
+				<PlanModal
+					campaignId={campaignId as Id<"campaigns">}
+					onClose={() => setIsPlanModalOpen(false)}
+				/>
+			)}
 		</>
 	)
 }
