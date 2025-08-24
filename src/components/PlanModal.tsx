@@ -22,13 +22,7 @@ export const PlanModal: React.FC<Props> = ({ campaignId, onClose }) => {
 	})
 
 	return (
-		<Dialog
-			open={true}
-			onOpenChange={(v) => {
-				console.log(v)
-				!v && onClose()
-			}}
-		>
+		<Dialog open={true} onOpenChange={(v) => !v && onClose()}>
 			<DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
 				<DialogTitle>Plan</DialogTitle>
 				<div
@@ -56,7 +50,11 @@ export const PlanModal: React.FC<Props> = ({ campaignId, onClose }) => {
 						}
 					}}
 				>
-					<MessageMarkdown>{campaign?.plan ?? ""}</MessageMarkdown>
+					{isEditing ? (
+						<div className="whitespace-pre-wrap">{campaign?.plan ?? ""}</div>
+					) : (
+						<MessageMarkdown>{campaign?.plan ?? ""}</MessageMarkdown>
+					)}
 				</div>
 			</DialogContent>
 		</Dialog>

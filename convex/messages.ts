@@ -759,10 +759,8 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 	let currentContext = ""
 
-	if (formattedCharacterSheet) {
-		currentContext += `\n\nHere is the character sheet for the player: ${JSON.stringify(
-			formattedCharacterSheet,
-		)}`
+	if (campaign.plan) {
+		currentContext += `\n\nYour current internal plan for the session. Update it with the \`update_plan\ tool when needed:\n\n${campaign.plan}`
 	}
 
 	if (serializedCharacters.length > 0) {
@@ -771,15 +769,17 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		)}`
 	}
 
+	if (formattedCharacterSheet) {
+		currentContext += `\n\nHere is the character sheet for the player: ${JSON.stringify(
+			formattedCharacterSheet,
+		)}`
+	}
+
 	// if (serializedMemories.length > 0) {
 	// 	currentContext += `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
 	// 		serializedMemories,
 	// 	)}`
 	// }
-
-	if (campaign.plan) {
-		currentContext += `\n\nYour current internal plan for the session. Update it with the \`update_plan\ tool when needed:\n\n${campaign.plan}`
-	}
 
 	// Remove any that didn't upload successfully
 	const compactedFiles = compact(uploadedFiles)
@@ -1231,7 +1231,7 @@ export const generateSceneImage = action({
 
 			Here are descriptions of the characters that are active in the scene:
 
-			${activeCharacters.map((c) => `- ${c.name}: ${c.description}`).join("\n")}
+			${activeCharacters.map((c) => `- ${c.name}: ${c.description} (${c.imagePrompt})`).join("\n")}
 
 			${characterSheet ? `The protagonist of the scene is ${characterSheet.name}` : ""}
 
