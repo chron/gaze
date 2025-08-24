@@ -44,9 +44,9 @@ export const Message: React.FC<Props> = ({
 		message.streamId as StreamId,
 	)
 
-	const updateMessageMutation = useMutation(api.messages.update)
+	const updateTextBlockMutation = useMutation(api.messages.updateTextBlock)
 
-	const [isEditing, setIsEditing] = useState(false)
+	const [editingIndex, setEditingIndex] = useState<number | null>(null)
 	const [isSaving, setIsSaving] = useState(false)
 	const [showReasoning, setShowReasoning] = useState(true)
 
@@ -126,39 +126,7 @@ export const Message: React.FC<Props> = ({
 				message.role === "user"
 					? "self-end bg-blue-100 text-blue-800"
 					: "self-start bg-gray-100 text-gray-800",
-				isEditing && "outline outline-2 outline-black",
 			)}
-			contentEditable={isEditing}
-			onDoubleClick={() => setIsEditing(true)}
-			onKeyDown={async (e) => {
-				if (e.key === "Escape") {
-					e.preventDefault()
-					setIsEditing(false)
-				}
-
-				if (e.key === "Enter" && !e.shiftKey) {
-					e.preventDefault()
-					if (
-						message.content.length === 1 &&
-						message.content[0].type === "text"
-					) {
-						setIsSaving(true)
-						await updateMessageMutation({
-							messageId: message._id,
-							content: [
-								{
-									type: "text",
-									text: e.currentTarget.innerText,
-								},
-							],
-						})
-					} else {
-						console.error("Message content is not a text block")
-					}
-					setIsSaving(false)
-					setIsEditing(false)
-				}
-			}}
 		>
 			{noContent ? (
 				<div className="flex flex-col gap-2 font-serif relative group">
@@ -191,17 +159,49 @@ export const Message: React.FC<Props> = ({
 					{!noDatabaseContent ? (
 						message.content.map((block, index) => {
 							if (block.type === "text") {
-								return isEditing ? (
+								if (editingIndex === index) {
+									return (
+										<div
+											// biome-ignore lint/suspicious/noArrayIndexKey: Complex editor block without stable id
+											key={`text-edit-${index}`}
+											className="whitespace-pre-wrap outline outline-2 outline-black rounded-md"
+											contentEditable
+											// biome-ignore lint/a11y/noAutofocus: Intentional focus for editing UX
+											autoFocus
+											onKeyDown={async (e) => {
+												if (e.key === "Escape") {
+													e.preventDefault()
+													setEditingIndex(null)
+													return
+												}
+
+												if (e.key === "Enter" && !e.shiftKey) {
+													e.preventDefault()
+													setIsSaving(true)
+													await updateTextBlockMutation({
+														messageId: message._id,
+														index,
+														text: e.currentTarget.innerText,
+													})
+													setIsSaving(false)
+													setEditingIndex(null)
+												}
+											}}
+										>
+											{block.text}
+										</div>
+									)
+								}
+
+								return (
 									<div
 										key={`text-${block.text}-${index}`}
-										className="whitespace-pre-wrap"
+										onDoubleClick={() => {
+											setEditingIndex(index)
+										}}
 									>
-										{block.text}
+										<MessageMarkdown>{block.text}</MessageMarkdown>
 									</div>
-								) : (
-									<MessageMarkdown key={`text-${block.text}-${index}`}>
-										{block.text}
-									</MessageMarkdown>
 								)
 							}
 
@@ -314,7 +314,10 @@ export const Message: React.FC<Props> = ({
 														key={`${message._id}-step-${stepIndex}-scene-${index}`}
 														messageId={message._id}
 														scene={message.scene}
-														description={toolCall.args.description}
+														description={
+															(toolCall.args as { description: string })
+																.description
+														}
 													/>
 												)
 											}
@@ -332,12 +335,8 @@ export const Message: React.FC<Props> = ({
 																bonus: number
 															}
 														}
-														result={
-															toolCall.result as {
-																results: number[]
-																total: number
-															} | null
-														}
+														followupToolResult={followupToolResult}
+														setStreamId={setStreamId}
 													/>
 												)
 											}

@@ -191,6 +191,29 @@ export const update = mutation({
 	},
 })
 
+export const updateTextBlock = mutation({
+	args: {
+		messageId: v.id("messages"),
+		index: v.number(),
+		text: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const message = await ctx.db.get(args.messageId)
+		if (!message) throw new Error("Message not found")
+
+		const block = message.content[args.index]
+		if (!block) throw new Error("Block not found")
+		if (block.type !== "text") throw new Error("Block is not a text block")
+
+		const updatedContent = [...message.content]
+		updatedContent[args.index] = { type: "text", text: args.text }
+
+		await ctx.db.patch(args.messageId, {
+			content: updatedContent,
+		})
+	},
+})
+
 export const setSummaryId = mutation({
 	args: {
 		messageId: v.id("messages"),
