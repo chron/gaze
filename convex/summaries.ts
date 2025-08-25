@@ -1,3 +1,4 @@
+import { google } from "@ai-sdk/google"
 import { openrouter } from "@openrouter/ai-sdk-provider"
 import { generateText, tool } from "ai"
 import { v } from "convex/values"
@@ -67,7 +68,7 @@ export const collapseHistory = action({
 				}
 			})
 			.filter((message) => message !== null)
-			.slice(0, -60) // Keep the last 60 messages so we have full access to the recent content
+			.slice(0, -40) // Keep the last 40 messages so we have full access to the recent content
 			.map((message, index) => {
 				return {
 					...message,
@@ -81,7 +82,7 @@ export const collapseHistory = action({
 
 		const { toolCalls } = await generateText({
 			system: prompt,
-			model: openrouter("openai/gpt-5-mini"),
+			model: google("gemini-2.5-flash"),
 			messages: formattedMessages,
 			toolChoice: {
 				type: "tool",
@@ -108,6 +109,8 @@ export const collapseHistory = action({
 
 		// Ignore the last chapter because it might be in progress
 		for (const chapter of chapters.slice(0, -1)) {
+			console.log(chapter)
+
 			const relevantCharacterIds = characters
 				.filter((c) => chapter.characters.includes(c.name))
 				.map((c) => c._id)

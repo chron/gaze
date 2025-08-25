@@ -1102,7 +1102,7 @@ export const summarizeChatHistory = action({
 
 		const { text } = await generateText({
 			system: prompt,
-			model: google("gemini-2.5-flash"), //openrouter("openai/gpt-5-mini"),
+			model: google("gemini-2.5-flash"),
 			messages: [
 				...formattedMessages,
 				{

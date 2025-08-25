@@ -31,7 +31,7 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 				if (!character)
 					return (
 						<div className="flex justify-center items-center w-[80px] aspect-square text-red-500">
-							!
+							{charName}
 						</div>
 					)
 

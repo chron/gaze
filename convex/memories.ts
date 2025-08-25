@@ -125,7 +125,7 @@ export const scanForNewMemories = internalAction({
 					}),
 				}),
 			},
-			model: openrouter("openai/gpt-5-mini"),
+			model: google("gemini-2.5-flash"),
 			toolChoice: {
 				type: "tool",
 				toolName: "memories",
