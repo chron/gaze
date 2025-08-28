@@ -35,7 +35,7 @@ import {
 	mutation,
 	query,
 } from "./_generated/server"
-import { getImageModel } from "./characters"
+import { generateImageForModel } from "./characters"
 import systemPrompt from "./prompts/system"
 import { changeScene } from "./tools/changeScene"
 import { introduceCharacter } from "./tools/introduceCharacter"
@@ -43,6 +43,7 @@ import { chooseName } from "./tools/nameCharacter"
 import { requestDiceRoll } from "./tools/requestDiceRoll"
 import { updateCharacterSheet } from "./tools/updateCharacterSheet"
 import { updatePlan } from "./tools/updatePlan"
+import { googleSafetySettings } from "./utils"
 
 type ArrayElement<ArrayType extends readonly unknown[]> =
 	ArrayType extends readonly (infer ElementType)[] ? ElementType : never
@@ -784,6 +785,9 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 	if (campaign.plan) {
 		currentContext += `\n\nYour current internal plan for the session. Update it with the \`update_plan\ tool when needed:\n\n${campaign.plan}`
+	} else {
+		currentContext +=
+			"\n\nYou currently have no plan. You can use the `update_plan` tool to create one, including details about the current scene, future story arcs, and any other important details."
 	}
 
 	if (serializedCharacters.length > 0) {
@@ -843,28 +847,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		temperature: 1, //0.7,
 		model: campaign.model.startsWith("google")
 			? google(campaign.model.split("/")[1], {
-					safetySettings: [
-						{
-							category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-							threshold: "BLOCK_NONE",
-						},
-						{
-							category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-							threshold: "BLOCK_NONE",
-						},
-						{
-							category: "HARM_CATEGORY_HARASSMENT",
-							threshold: "BLOCK_NONE",
-						},
-						{
-							category: "HARM_CATEGORY_HATE_SPEECH",
-							threshold: "BLOCK_NONE",
-						},
-						{
-							category: "HARM_CATEGORY_CIVIC_INTEGRITY",
-							threshold: "BLOCK_NONE",
-						},
-					],
+					...googleSafetySettings,
 				})
 			: campaign.model.startsWith("anthropic")
 				? anthropic("claude-sonnet-4-20250514") // Temporarily hardcoded for testing
@@ -1262,13 +1245,11 @@ export const generateSceneImage = action({
     `
 
 		// TODO: error handling? AI_APICallError
-		const result = await generateImage({
-			...getImageModel(campaign.imageModel),
-			aspectRatio: "16:9",
-			prompt,
-		})
 
-		for (const file of result.images) {
+		// TODO: this is no longer setting the 16:9 aspect ratio
+		const images = await generateImageForModel(prompt, campaign.imageModel)
+
+		for (const file of images) {
 			if (file.mimeType.startsWith("image/")) {
 				const blob = new Blob([file.uint8Array], { type: file.mimeType })
 				const storageId = await ctx.storage.store(blob)

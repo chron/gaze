@@ -14,14 +14,34 @@ import {
 	TableRow,
 } from "./ui/table"
 
-export const MessageMarkdown: React.FC<{ children: string }> = ({
+type Props = {
+	children: string
+	linkClickHandler?: (text: string) => void
+}
+
+export const MessageMarkdown: React.FC<Props> = ({
 	children,
+	linkClickHandler,
 }) => {
 	return (
 		<div className="flex flex-col gap-2">
 			<ReactMarkdown
 				remarkPlugins={[remarkGfm, remarkBreaks]}
 				components={{
+					a: ({ children, href }) =>
+						linkClickHandler && typeof children === "string" ? (
+							<button
+								type="button"
+								className="bg-blue-500 text-white hover:text-gray-100 rounded-md px-2 py-1 my-1 cursor-pointer text-left"
+								onClick={() => linkClickHandler?.(children)}
+							>
+								{children}
+							</button>
+						) : (
+							<a href={href} className="text-blue-500 hover:text-blue-600">
+								{children}
+							</a>
+						),
 					p: ({ children }) => <p className=" last:mb-0">{children}</p>,
 					h1: ({ children }) => (
 						<h1 className="text-2xl font-bold mt-2">{children}</h1>

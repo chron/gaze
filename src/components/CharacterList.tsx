@@ -30,7 +30,10 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 				const character = characters.find((c) => c.name === charName)
 				if (!character)
 					return (
-						<div className="flex justify-center items-center w-[80px] aspect-square text-red-500">
+						<div
+							key={charName}
+							className="flex justify-center items-center w-[80px] aspect-square text-red-500"
+						>
 							{charName}
 						</div>
 					)

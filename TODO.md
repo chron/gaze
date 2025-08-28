@@ -2,13 +2,13 @@ NEXT
 
 - Chunk summaries, store in table, show in the UI
 - New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
-- Track tool-results for all the tool executions, not just dice rolls
 - Auth
 - Store which memories were recalled against the message, show in UI
+- Have it present choices/options as clickable links for no-typing response
+- Update character tool and/or outfit system? Use an image edit model maybe?
 
 SPEECH
 - Different prompt for user messages that gets char info from the character sheet
-- Look into whether we can do all the utterances in one call if we don't use the AI SDK
 - Progress indicator on the FE?
 
 OTHER STUFF
@@ -25,7 +25,6 @@ OTHER STUFF
 - Drop chat messages out of the pagination so you don't have to hard refresh to go back to 10.
 - Track age of memories in case that's useful for tapering their importance off over time
 - CMD+K
-- Move LLM models to their own table with a bool for tool use
 - A way to not have to name/describe the campaign upfront (and even AI-name it later once it's locked in?)
 - Some indicator of progress when files are being uploaded
 - validation messages or errors when saving forms (form lib?)
@@ -35,7 +34,7 @@ OTHER STUFF
 - Try out other image gen (Higgsfield? Midjourney? Gemini?)
 - Different dice display stuff: diff shapes for number of sides (SVG?), maybe cool rolling animations
   - Also: for dice pool thresholds show number of successes instead of total somehow?
-- <Wiggly /> animation resets as new text streams in
+- <Wiggly /> animation resets as new text streams in (negative offsets probably?)
 - Character sheet JSON doesn't maintain the original order
 - Order campaigns in sidebar by recently updated, show a subset (5?) with a link to view more
 - Editing previous messages (UI is done, but need to actually save the changes)
@@ -81,3 +80,6 @@ DONE
 - Compress older context using the summarisation action
 - BUG: When you use newlines in your message the ReactMarkdown component doesn't render them
 - Have a concept of "active" vs "inactive" characters, maybe scene_change updates the list?
+- Track tool-results for all the tool executions, not just dice rolls
+- Look into whether we can do all the utterances in one call if we don't use the AI SDK
+- Move LLM models to their own table with a bool for tool use (a json file actually)

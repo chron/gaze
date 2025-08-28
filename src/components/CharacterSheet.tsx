@@ -188,7 +188,7 @@ const RecursiveStatBlock: React.FC<{
 									<StatLabel name={key} />
 								</td>
 								<td className="px-2 py-1 align-top">
-									<PrimitiveValue value={val} parentValue={key} />
+									<RecursiveStatBlock name={key} showName={false} value={val} />
 								</td>
 							</tr>
 						))}

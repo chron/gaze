@@ -1,37 +1,60 @@
+import { google } from "@ai-sdk/google"
 import { openai } from "@ai-sdk/openai"
 import {
-	type ImageModel,
-	type JSONValue,
+	type GeneratedFile,
 	experimental_generateImage as generateImage,
+	generateText,
 } from "ai"
 import { v } from "convex/values"
 import { api } from "./_generated/api"
 import { action, mutation, query } from "./_generated/server"
+import { googleSafetySettings } from "./utils"
 
-export function getImageModel(modelString: string): {
-	model: ImageModel
-	providerOptions: Record<string, Record<string, JSONValue>>
-} {
+export const generateImageForModel = async (
+	prompt: string,
+	modelString: string,
+) => {
 	if (modelString === "gpt-image-1") {
-		return {
+		const result = await generateImage({
 			model: openai.image(modelString),
 			providerOptions: {
 				openai: { quality: "medium" },
 			},
-		}
+			aspectRatio: "1:1",
+			prompt,
+		})
+
+		console.log(result)
+
+		return result.images
 	}
 
-	// if (modelString === "vertex/imagen-3.0-generate-002") {
-	// 	return {
-	// 		model: vertex.image(modelString.split("/")[1]),
-	// 		providerOptions: {
-	// 			vertex: {
-	// 				safetySetting: "block_none",
-	// 				personGeneration: "allow_all",
-	// 			} satisfies GoogleVertexImageProviderOptions,
-	// 		},
-	// 	}
-	// }
+	if (modelString === "gemini-2.5-flash-image") {
+		console.log(prompt)
+
+		const { files, providerMetadata } = await generateText({
+			model: google("gemini-2.5-flash-image-preview"),
+			providerOptions: {
+				google: {
+					...googleSafetySettings,
+					responseModalities: ["TEXT", "IMAGE"],
+				},
+			},
+			prompt,
+		})
+
+		console.log("Generated image!", providerMetadata)
+
+		const filesToReturn: GeneratedFile[] = []
+
+		for (const file of files) {
+			if (file.mimeType.startsWith("image/")) {
+				filesToReturn.push(file)
+			}
+		}
+
+		return files
+	}
 
 	throw new Error(`Unknown image model: ${modelString}`)
 }
@@ -137,22 +160,16 @@ export const generateImageForCharacter = action({
 		if (!campaign) throw new Error("Campaign not found")
 
 		const prompt = `
-      Generate an image. It should be a portrait of ${character.name}. ${character.description}. ${character.imagePrompt}.
+      Generate a portrait of ${character.name}: ${character.imagePrompt}.
 
       The portrait should be from the waist up. It should be a square. Don't include any text.
 
-      The style of the image should be ${campaign.imagePrompt}. Use a transparent background.
+      The style of the image should be ${campaign.imagePrompt}. The background must be transparent.
     `
 
-		const result = await generateImage({
-			...getImageModel(campaign.imageModel),
-			aspectRatio: "1:1",
-			prompt,
-		})
+		const images = await generateImageForModel(prompt, campaign.imageModel)
 
-		// console.log(result)
-
-		for (const file of result.images) {
+		for (const file of images) {
 			if (file.mimeType.startsWith("image/")) {
 				const blob = new Blob([file.uint8Array], { type: file.mimeType })
 				const storageId = await ctx.storage.store(blob)
