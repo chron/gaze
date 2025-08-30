@@ -24,14 +24,10 @@ export const generateImageForModel = async (
 			prompt,
 		})
 
-		console.log(result)
-
 		return result.images
 	}
 
 	if (modelString === "gemini-2.5-flash-image") {
-		console.log(prompt)
-
 		const { files, providerMetadata } = await generateText({
 			model: google("gemini-2.5-flash-image-preview"),
 			providerOptions: {

@@ -200,7 +200,13 @@ export const Message: React.FC<Props> = ({
 											setEditingIndex(index)
 										}}
 									>
-										<MessageMarkdown>{block.text}</MessageMarkdown>
+										<MessageMarkdown
+											linkClickHandler={(text) => {
+												navigator.clipboard.writeText(text)
+											}}
+										>
+											{block.text}
+										</MessageMarkdown>
 									</div>
 								)
 							}

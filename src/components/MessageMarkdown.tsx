@@ -32,7 +32,7 @@ export const MessageMarkdown: React.FC<Props> = ({
 						linkClickHandler && typeof children === "string" ? (
 							<button
 								type="button"
-								className="bg-blue-500 text-white hover:text-gray-100 rounded-md px-2 py-1 my-1 cursor-pointer text-left"
+								className="bg-blue-500 text-white hover:text-gray-100 hover:bg-blue-600 rounded-md px-2 py-1 my-1 cursor-pointer text-left"
 								onClick={() => linkClickHandler?.(children)}
 							>
 								{children}
@@ -42,7 +42,7 @@ export const MessageMarkdown: React.FC<Props> = ({
 								{children}
 							</a>
 						),
-					p: ({ children }) => <p className=" last:mb-0">{children}</p>,
+					p: ({ children }) => <p className="last:mb-0">{children}</p>,
 					h1: ({ children }) => (
 						<h1 className="text-2xl font-bold mt-2">{children}</h1>
 					),

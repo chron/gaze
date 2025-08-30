@@ -5,6 +5,7 @@ import {
 	BookText,
 	Brain,
 	Command,
+	Landmark,
 	Trash,
 } from "lucide-react"
 import { useState } from "react"
@@ -36,7 +37,9 @@ export const ChatExtraActions: React.FC = () => {
 	const chatWithHistory = useAction(api.messages.chatWithHistory)
 
 	const updatePlan = useMutation(api.campaigns.updatePlan)
-
+	const lookForThemesInCampaignSummaries = useAction(
+		api.campaigns.lookForThemesInCampaignSummaries,
+	)
 	const campaign = useQuery(api.campaigns.get, {
 		id: campaignId as Id<"campaigns">,
 	})
@@ -60,6 +63,22 @@ export const ChatExtraActions: React.FC = () => {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
+					<DropdownMenuItem
+						onClick={async () => {
+							setIsLoading(true)
+							try {
+								const result = await lookForThemesInCampaignSummaries({})
+								setResult(result.text)
+								console.log(result.usage)
+							} finally {
+								setIsLoading(false)
+							}
+						}}
+					>
+						<Landmark />
+						Cross-campaign themes
+					</DropdownMenuItem>
+
 					<DropdownMenuItem
 						onClick={async () => {
 							// TODO: real modal

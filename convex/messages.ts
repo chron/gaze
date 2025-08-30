@@ -1095,6 +1095,11 @@ export const summarizeChatHistory = action({
 			],
 		})
 
+		await ctx.runMutation(api.campaigns.updateCampaignSummary, {
+			campaignId: args.campaignId,
+			summary: text,
+		})
+
 		return `${text}\n\nTotal messages: ${messages.length}`
 	},
 })

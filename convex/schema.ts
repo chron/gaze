@@ -26,6 +26,7 @@ export default defineSchema(
 			archived: v.optional(v.boolean()),
 			activeCharacters: v.optional(v.array(v.string())),
 			lastInteractionAt: v.optional(v.number()),
+			lastCampaignSummary: v.optional(v.string()),
 		})
 			.index("by_archived", ["archived"])
 			.index("by_lastInteractionAt", ["lastInteractionAt"]),

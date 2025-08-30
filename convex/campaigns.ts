@@ -1,6 +1,10 @@
+import { google } from "@ai-sdk/google"
+import { type CoreMessage, type LanguageModelUsage, generateText } from "ai"
 import { v } from "convex/values"
-import { query } from "./_generated/server"
+import { api } from "./_generated/api"
+import { action, query } from "./_generated/server"
 import { mutation } from "./_generated/server"
+import { googleSafetySettings } from "./utils"
 
 export const list = query({
 	args: {
@@ -103,10 +107,10 @@ export const addCampaign = mutation({
 export const update = mutation({
 	args: {
 		id: v.id("campaigns"),
-		name: v.string(),
+		name: v.optional(v.string()),
 		description: v.string(),
 		imagePrompt: v.string(),
-		gameSystemId: v.optional(v.id("gameSystems")),
+		gameSystemId: v.id("gameSystems"),
 		model: v.string(),
 		imageModel: v.string(),
 	},
@@ -118,6 +122,18 @@ export const update = mutation({
 			gameSystemId: args.gameSystemId,
 			model: args.model,
 			imageModel: args.imageModel,
+		})
+	},
+})
+
+export const updateCampaignSummary = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		summary: v.string(),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.campaignId, {
+			lastCampaignSummary: args.summary,
 		})
 	},
 })
@@ -178,5 +194,53 @@ export const updateLastInteraction = mutation({
 		await ctx.db.patch(args.campaignId, {
 			lastInteractionAt: Date.now(),
 		})
+	},
+})
+
+export const lookForThemesInCampaignSummaries = action({
+	handler: async (
+		ctx,
+		args,
+	): Promise<{ text: string; usage: LanguageModelUsage }> => {
+		const allCampaigns = await ctx.runQuery(api.campaigns.list, {})
+
+		const prompt = `
+		You are a game master, responsible for several different campaigns with the user. You will be given the name, description, and a full summary of each campaign.
+
+		Your job is to look for themes in the summaries.
+		`
+
+		const formattedMessages = allCampaigns
+			.map((c) => {
+				if (!c.lastCampaignSummary) {
+					return null
+				}
+
+				return {
+					role: "user",
+					content: `## ${c.name}: ${c.description}\n\n### Summary\n\n${c.lastCampaignSummary}`,
+				} satisfies CoreMessage
+			})
+			.filter((m) => m !== null)
+
+		const { text, usage } = await generateText({
+			system: prompt,
+			model: google("gemini-2.5-flash"),
+			providerOptions: {
+				google: {
+					...googleSafetySettings,
+				},
+			},
+			messages: [
+				...formattedMessages,
+				{
+					role: "user",
+					content:
+						"What are the repeated themes across the different campaigns? Anything else interesting to note?",
+				},
+			],
+		})
+
+		return { text, usage }
 	},
 })
