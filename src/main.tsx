@@ -1,8 +1,11 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import "./index.css"
+import { ClerkProvider, useAuth } from "@clerk/clerk-react"
 import { RouterProvider, createRouter } from "@tanstack/react-router"
-import { ConvexProvider, ConvexReactClient } from "convex/react"
+import { ConvexReactClient } from "convex/react"
+import { ConvexProviderWithClerk } from "convex/react-clerk"
+import { env } from "../env"
 import { ErrorBoundary } from "./components/ErrorBoundary"
 import { routeTree } from "./routeTree.gen"
 
@@ -18,11 +21,13 @@ declare module "@tanstack/react-router" {
 
 // biome-ignore lint/style/noNonNullAssertion: if root isn't here we have bigger problems
 createRoot(document.getElementById("root")!).render(
-	<ConvexProvider client={convex}>
-		<ErrorBoundary>
-			{/* <StrictMode> */}
-			<RouterProvider router={router} />
-			{/* </StrictMode> */}
-		</ErrorBoundary>
-	</ConvexProvider>,
+	<ClerkProvider publishableKey={env.VITE_CLERK_PUBLISHABLE_KEY}>
+		<ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+			<ErrorBoundary>
+				{/* <StrictMode> */}
+				<RouterProvider router={router} />
+				{/* </StrictMode> */}
+			</ErrorBoundary>
+		</ConvexProviderWithClerk>
+	</ClerkProvider>,
 )

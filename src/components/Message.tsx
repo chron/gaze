@@ -201,9 +201,13 @@ export const Message: React.FC<Props> = ({
 										}}
 									>
 										<MessageMarkdown
-											linkClickHandler={(text) => {
-												navigator.clipboard.writeText(text)
-											}}
+											linkClickHandler={
+												isLastMessage
+													? (text) => {
+															navigator.clipboard.writeText(text)
+														}
+													: undefined
+											}
 										>
 											{block.text}
 										</MessageMarkdown>
@@ -236,7 +240,13 @@ export const Message: React.FC<Props> = ({
 													bonus: number
 												}
 											}
-											followupToolResult={followupToolResult}
+											followupToolResult={
+												followupToolResult?.content[0].type === "tool-result" &&
+												block.toolName ===
+													followupToolResult?.content[0].toolName
+													? followupToolResult
+													: null
+											}
 											setStreamId={setStreamId}
 										/>
 									)

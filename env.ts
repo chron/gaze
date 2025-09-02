@@ -7,8 +7,7 @@ export const env = createEnv({
 	client: {
 		VITE_CONVEX_URL: z.string().min(1),
 		VITE_CONVEX_HTTP_URL: z.string().min(1),
-		VITE_GOOGLE_GEMINI_API_KEY: z.string().min(1),
-		VITE_ANTHROPIC_API_KEY: z.string().min(1),
+		VITE_CLERK_PUBLISHABLE_KEY: z.string().min(1),
 	},
 	runtimeEnv: import.meta.env,
 	emptyStringAsUndefined: true,

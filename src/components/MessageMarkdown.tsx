@@ -29,7 +29,7 @@ export const MessageMarkdown: React.FC<Props> = ({
 				remarkPlugins={[remarkGfm, remarkBreaks]}
 				components={{
 					a: ({ children, href }) =>
-						linkClickHandler && typeof children === "string" ? (
+						linkClickHandler && typeof children === "string" ? ( // TODO: it's often non-string, e.g. bold tags etc
 							<button
 								type="button"
 								className="bg-blue-500 text-white hover:text-gray-100 hover:bg-blue-600 rounded-md px-2 py-1 my-1 cursor-pointer text-left"
@@ -38,9 +38,10 @@ export const MessageMarkdown: React.FC<Props> = ({
 								{children}
 							</button>
 						) : (
-							<a href={href} className="text-blue-500 hover:text-blue-600">
-								{children}
-							</a>
+							children
+							// <a href={href} className="text-blue-500 hover:text-blue-600">
+							// 	{children}
+							// </a>
 						),
 					p: ({ children }) => <p className="last:mb-0">{children}</p>,
 					h1: ({ children }) => (

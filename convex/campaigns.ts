@@ -11,6 +11,11 @@ export const list = query({
 		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (identity === null) {
+			throw new Error("Not authenticated")
+		}
+
 		const campaigns = await ctx.db
 			.query("campaigns")
 			.withIndex("by_archived", (q) => q.eq("archived", false))

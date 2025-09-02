@@ -102,11 +102,13 @@ export default defineSchema(
 			tags: v.array(v.string()),
 			embedding: v.array(v.float64()),
 			summaryId: v.optional(v.id("summaries")),
-		}).vectorIndex("by_embedding", {
-			vectorField: "embedding",
-			dimensions: 3072,
-			filterFields: ["campaignId"],
-		}),
+		})
+			.vectorIndex("by_embedding", {
+				vectorField: "embedding",
+				dimensions: 3072,
+				filterFields: ["campaignId"],
+			})
+			.index("by_campaignId", ["campaignId"]),
 		summaries: defineTable({
 			campaignId: v.id("campaigns"),
 			summary: v.string(),
