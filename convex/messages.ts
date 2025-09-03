@@ -41,6 +41,7 @@ import { changeScene } from "./tools/changeScene"
 import { introduceCharacter } from "./tools/introduceCharacter"
 import { chooseName } from "./tools/nameCharacter"
 import { requestDiceRoll } from "./tools/requestDiceRoll"
+import { setCampaignInfo } from "./tools/setCampaignInfo"
 import { updateCharacterSheet } from "./tools/updateCharacterSheet"
 import { updatePlan } from "./tools/updatePlan"
 import { googleSafetySettings } from "./utils"
@@ -891,6 +892,11 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 					request_dice_roll: requestDiceRoll(ctx, message._id),
 					update_plan: updatePlan(ctx, message._id, campaign._id),
 					choose_name: chooseName(),
+					...(campaign.name === ""
+						? {
+								set_campaign_info: setCampaignInfo(ctx, campaign._id),
+							}
+						: {}),
 				}
 			: undefined,
 		onError: async (error) => {

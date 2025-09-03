@@ -15,6 +15,8 @@ import { MessageMarkdown } from "./MessageMarkdown"
 import { PlanUpdate } from "./PlanUpdate"
 import { SceneChange } from "./SceneChange"
 import { SequentialAudioPlayer } from "./SequentialAudioPlayer"
+import { SetCampaignInfo } from "./SetCampaignInfo"
+import { UnknownToolCall } from "./UnknownToolCall"
 import { Button } from "./ui/button"
 import {
 	Collapsible,
@@ -310,6 +312,22 @@ export const Message: React.FC<Props> = ({
 										/>
 									)
 								}
+
+								if (block.toolName === "set_campaign_info") {
+									return (
+										<SetCampaignInfo
+											key={`set-campaign-info-${block.toolCallId}`}
+											parameters={block.args}
+										/>
+									)
+								}
+
+								return (
+									<UnknownToolCall
+										parameters={block.args}
+										key={`unknown-tool-call-${block.toolName}`}
+									/>
+								)
 							}
 
 							return null

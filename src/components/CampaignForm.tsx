@@ -77,7 +77,6 @@ export const CampaignForm: React.FC<Props> = ({ campaignId = null }) => {
 					id="name"
 					name="name"
 					defaultValue={campaign?.name}
-					required
 				/>
 			</div>
 

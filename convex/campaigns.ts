@@ -115,7 +115,7 @@ export const update = mutation({
 		name: v.optional(v.string()),
 		description: v.string(),
 		imagePrompt: v.string(),
-		gameSystemId: v.id("gameSystems"),
+		gameSystemId: v.optional(v.id("gameSystems")),
 		model: v.string(),
 		imageModel: v.string(),
 	},
