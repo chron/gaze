@@ -76,11 +76,11 @@ export const collapseHistory = action({
 				}
 			})
 
-		await ctx.scheduler.runAfter(0, internal.memories.scanForNewMemories, {
-			messageIds: formattedMessages.map((msg) => msg.id),
-		})
+		// await ctx.scheduler.runAfter(0, internal.memories.scanForNewMemories, {
+		// 	messageIds: formattedMessages.map((msg) => msg.id),
+		// })
 
-		const { toolCalls } = await generateText({
+		const { response, toolCalls } = await generateText({
 			system: prompt,
 			model: google("gemini-2.5-flash"),
 			messages: formattedMessages,
@@ -104,6 +104,8 @@ export const collapseHistory = action({
 				}),
 			},
 		})
+
+		console.log(response)
 
 		const chapters = toolCalls[0].args.chapters
 

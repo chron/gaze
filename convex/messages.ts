@@ -330,7 +330,10 @@ export const regenerateLastMessage = mutation({
 		const message = await ctx.db.get(args.messageId)
 		if (!message) throw new Error("Message not found")
 
-		await ctx.db.delete(args.messageId)
+		// If it's a user message, regen without deleting!
+		if (message.role === "assistant") {
+			await ctx.db.delete(args.messageId)
+		}
 
 		const { streamId } = await ctx.runMutation(
 			api.messages.addAssistantMessage,
@@ -1026,7 +1029,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						})}\n`,
 					)
 				} else if (chunk.type === "finish") {
-					await ctx.runMutation(api.messages.addUsageToMessage, {
+					await ctx.scheduler.runAfter(1000, api.messages.addUsageToMessage, {
 						messageId: message._id,
 						usage: {
 							promptTokens: chunk.usage.promptTokens,

@@ -211,8 +211,6 @@ export const lookForThemesInCampaignSummaries = action({
 
 		const prompt = `
 		You are a game master, responsible for several different campaigns with the user. You will be given the name, description, and a full summary of each campaign.
-
-		Your job is to look for themes in the summaries.
 		`
 
 		const formattedMessages = allCampaigns
@@ -241,7 +239,8 @@ export const lookForThemesInCampaignSummaries = action({
 				{
 					role: "user",
 					content:
-						"What are the repeated themes across the different campaigns? Anything else interesting to note?",
+						// "What are the repeated themes across the different campaigns? Anything else interesting to note?",
+						"Given the user's preferences based on what you've seen, suggest some possible themes, settings, storylines, or other aspects for future campaigns in a similar vein.",
 				},
 			],
 		})

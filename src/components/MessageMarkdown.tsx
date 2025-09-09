@@ -28,12 +28,12 @@ export const MessageMarkdown: React.FC<Props> = ({
 			<ReactMarkdown
 				remarkPlugins={[remarkGfm, remarkBreaks]}
 				components={{
-					a: ({ children, href }) =>
-						linkClickHandler && typeof children === "string" ? ( // TODO: it's often non-string, e.g. bold tags etc
+					a: ({ children }) =>
+						linkClickHandler ? (
 							<button
 								type="button"
 								className="bg-blue-500 text-white hover:text-gray-100 hover:bg-blue-600 rounded-md px-2 py-1 my-1 cursor-pointer text-left"
-								onClick={() => linkClickHandler?.(children)}
+								onClick={(e) => linkClickHandler?.(e.currentTarget.innerText)}
 							>
 								{children}
 							</button>

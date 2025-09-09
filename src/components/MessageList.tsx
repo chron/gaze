@@ -53,6 +53,25 @@ export const MessageList: React.FC<Props> = ({
 		[messagePanelRef],
 	)
 
+	// Scroll the container so that the given element's top aligns near the top
+	const scrollMessageToTop = useCallback(
+		(el: HTMLElement, offset = 8, smooth = false) => {
+			const container = messagePanelRef.current
+			if (!container) return
+
+			const containerTop = container.getBoundingClientRect().top
+			const elementTop = el.getBoundingClientRect().top
+			const delta = elementTop - containerTop
+			const targetTop = Math.max(container.scrollTop + delta - offset, 0)
+
+			container.scrollTo({
+				top: targetTop,
+				behavior: smooth ? "smooth" : "instant",
+			})
+		},
+		[messagePanelRef],
+	)
+
 	// Scroll to bottom once messages load - instant on initial load
 	useEffect(() => {
 		if (lastMessage?._id) {
@@ -84,7 +103,19 @@ export const MessageList: React.FC<Props> = ({
 				<Button
 					variant="outline"
 					size="sm"
-					onClick={() => loadMore(10)}
+					onClick={async () => {
+						const container = messagePanelRef.current
+						const prevScrollHeight = container?.scrollHeight ?? 0
+						const prevScrollTop = container?.scrollTop ?? 0
+						await loadMore(10)
+						// Preserve viewport position after older messages prepend
+						requestAnimationFrame(() => {
+							if (!container) return
+							const newScrollHeight = container.scrollHeight
+							const heightDiff = newScrollHeight - prevScrollHeight
+							container.scrollTop = prevScrollTop + heightDiff
+						})
+					}}
 					className="mx-auto"
 				>
 					Load more
@@ -113,6 +144,7 @@ export const MessageList: React.FC<Props> = ({
 								nextMessage?.role === "tool" ? nextMessage : null
 							}
 							scrollToBottom={scrollToBottom}
+							scrollToMessageTop={scrollMessageToTop}
 						/>
 					)
 				})}
