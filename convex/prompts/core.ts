@@ -17,21 +17,29 @@ import systemPrompt from "./system"
 export const mainChatPrompt = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
-) => {
-	// Intro message for a new campaign
-	// if (formattedMessages.length === 0) {
-	// 	formattedMessages = [
-	// 		{
-	// 			role: "user",
-	// 			content: "Hello! Let's play an RPG together!",
-	// 		},
-	// 	]
-	// }
-
+): Promise<[string, CoreMessage[]]> => {
 	const prompt = await componseSystemPrompt(ctx, campaign)
+
+	// Intro message for a new campaign
+	if (campaign.name === "") {
+		return [
+			prompt,
+			[
+				{
+					role: "user",
+					content:
+						"Here are the summaries of the other campaigns we have played together:",
+				},
+				...(await otherCampaignSummaries(ctx)),
+				// ...(await uploadedFiles(ctx, campaign)),
+				...(await recentMessages(ctx, campaign)),
+			],
+		]
+	}
+
 	const formattedMessages = await constructMessages(ctx, campaign)
 
-	return [prompt, formattedMessages] as const
+	return [prompt, formattedMessages]
 }
 
 const componseSystemPrompt = async (
@@ -381,4 +389,25 @@ const campaignMemories = async (
 	}
 
 	return []
+}
+
+export const otherCampaignSummaries = async (
+	ctx: ActionCtx,
+): Promise<CoreMessage[]> => {
+	const allCampaigns = await ctx.runQuery(api.campaigns.list, {})
+
+	const formattedMessages = allCampaigns
+		.map((c) => {
+			if (!c.lastCampaignSummary) {
+				return null
+			}
+
+			return {
+				role: "user",
+				content: `## ${c.name}: ${c.description}\n\n### Summary\n\n${c.lastCampaignSummary}`,
+			} satisfies CoreMessage
+		})
+		.filter((m) => m !== null)
+
+	return compact(formattedMessages)
 }

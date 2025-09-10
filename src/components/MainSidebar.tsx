@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router"
-import { useQuery } from "convex/react"
+import { Link, useNavigate } from "@tanstack/react-router"
+import { useMutation, useQuery } from "convex/react"
 import { Plus } from "lucide-react"
 import { api } from "../../convex/_generated/api"
 import {
@@ -17,6 +17,8 @@ import {
 
 export const MainSidebar: React.FC = () => {
 	const campaigns = useQuery(api.campaigns.list, { limit: 10 })
+	const quickAddCampaign = useMutation(api.campaigns.quickAddCampaign)
+	const navigate = useNavigate()
 
 	return (
 		<>
@@ -32,11 +34,20 @@ export const MainSidebar: React.FC = () => {
 					<SidebarGroup>
 						<SidebarGroupLabel>Campaigns</SidebarGroupLabel>
 
-						<Link to="/campaigns/new">
-							<SidebarGroupAction className="cursor-pointer">
-								<Plus /> <span className="sr-only">Add Campaign</span>
-							</SidebarGroupAction>
-						</Link>
+						{/* <Link to="/campaigns/new"> */}
+						<SidebarGroupAction
+							className="cursor-pointer"
+							onClick={async () => {
+								const campaignId = await quickAddCampaign({})
+								navigate({
+									to: "/campaigns/$campaignId",
+									params: { campaignId },
+								})
+							}}
+						>
+							<Plus /> <span className="sr-only">Add Campaign</span>
+						</SidebarGroupAction>
+						{/* </Link> */}
 
 						<SidebarGroupContent>
 							<SidebarMenu>
@@ -51,7 +62,7 @@ export const MainSidebar: React.FC = () => {
 													isActive={isActive}
 													className="cursor-pointer"
 												>
-													{campaign.name}
+													{campaign.name || "New Campaign"}
 												</SidebarMenuButton>
 											)}
 										</Link>

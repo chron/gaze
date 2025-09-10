@@ -23,7 +23,7 @@ export default defineSchema(
 			model: v.string(),
 			imageModel: v.string(),
 			plan: v.optional(v.string()),
-			archived: v.optional(v.boolean()),
+			archived: v.boolean(),
 			activeCharacters: v.optional(v.array(v.string())),
 			lastInteractionAt: v.optional(v.number()),
 			lastCampaignSummary: v.optional(v.string()),

@@ -1,7 +1,7 @@
 import { google } from "@ai-sdk/google"
 import { type CoreMessage, type LanguageModelUsage, generateText } from "ai"
 import { v } from "convex/values"
-import { api } from "./_generated/api"
+import { api, internal } from "./_generated/api"
 import { action, query } from "./_generated/server"
 import { mutation } from "./_generated/server"
 import { googleSafetySettings } from "./utils"
@@ -11,10 +11,13 @@ export const list = query({
 		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
-		const identity = await ctx.auth.getUserIdentity()
-		if (identity === null) {
-			throw new Error("Not authenticated")
-		}
+		// const identity = await ctx.auth.getUserIdentity()
+
+		// console.log("identity", identity)
+
+		// if (identity === null) {
+		// 	throw new Error("Not authenticated")
+		// }
 
 		const campaigns = await ctx.db
 			.query("campaigns")
@@ -104,6 +107,21 @@ export const addCampaign = mutation({
 		// await ctx.scheduler.runAfter(0, internal.messages.sendToLLM, {
 		// 	campaignId,
 		// })
+
+		return campaignId
+	},
+})
+
+export const quickAddCampaign = mutation({
+	handler: async (ctx, args) => {
+		const campaignId = await ctx.db.insert("campaigns", {
+			name: "",
+			description: "",
+			imagePrompt: "",
+			model: "google/gemini-2.5-pro",
+			imageModel: "gpt-image-1",
+			archived: false,
+		})
 
 		return campaignId
 	},

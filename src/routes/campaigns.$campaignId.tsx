@@ -33,7 +33,7 @@ function ChatPage() {
 					<div className="flex justify-between items-center group me-2 mt-2 ms-10 text-white">
 						<div className="flex items-center gap-2">
 							<h1 className="text-3xl font-title uppercase truncate">
-								{campaign.name}
+								{campaign.name || "New Campaign"}
 							</h1>
 							<Badge>{campaign.model.split("/")[1]}</Badge>
 
