@@ -117,6 +117,22 @@ export const update = mutation({
 	},
 })
 
+export const destroy = mutation({
+	args: {
+		characterId: v.id("characters"),
+	},
+	handler: async (ctx, args) => {
+		const character = await ctx.db.get(args.characterId)
+		if (!character) throw new Error("Character not found")
+
+		if (character.image) {
+			await ctx.storage.delete(character.image)
+		}
+
+		await ctx.db.delete(args.characterId)
+	},
+})
+
 export const storeImageForCharacter = mutation({
 	args: {
 		characterId: v.id("characters"),

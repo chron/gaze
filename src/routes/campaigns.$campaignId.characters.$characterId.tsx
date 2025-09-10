@@ -21,7 +21,9 @@ function CharacterDetailsPage() {
 		characterId: characterId as Id<"characters">,
 	})
 	const update = useMutation(api.characters.update)
+	const deleteCharacter = useMutation(api.characters.destroy)
 
+	const [isDeleting, setIsDeleting] = useState(false)
 	const [name, setName] = useState("")
 	const [description, setDescription] = useState("")
 	const [imagePrompt, setImagePrompt] = useState("")
@@ -50,6 +52,12 @@ function CharacterDetailsPage() {
 		} finally {
 			setIsSaving(false)
 		}
+	}
+
+	const handleDelete = async () => {
+		setIsDeleting(true)
+		await deleteCharacter({ characterId: character._id as Id<"characters"> })
+		navigate({ to: "/campaigns/$campaignId", params: { campaignId } })
 	}
 
 	return (
@@ -94,7 +102,15 @@ function CharacterDetailsPage() {
 						/>
 					</div>
 
-					<div className="flex gap-2">
+					<div className="flex gap-2 justify-between">
+						<Button
+							onClick={handleDelete}
+							disabled={isDeleting}
+							className="bg-red-500 text-white me-auto"
+						>
+							Delete
+						</Button>
+
 						<Button onClick={handleSave} disabled={isSaving}>
 							{isSaving ? "Saving..." : "Save"}
 						</Button>

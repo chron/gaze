@@ -228,7 +228,7 @@ export const lookForThemesInCampaignSummaries = action({
 
 		const { text, usage } = await generateText({
 			system: prompt,
-			model: google("gemini-2.5-flash"),
+			model: google("gemini-2.5-pro"),
 			providerOptions: {
 				google: {
 					...googleSafetySettings,

@@ -16,6 +16,7 @@ import type * as http from "../http.js";
 import type * as memories from "../memories.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
+import type * as prompts_core from "../prompts/core.js";
 import type * as prompts_extractMemories from "../prompts/extractMemories.js";
 import type * as prompts_system from "../prompts/system.js";
 import type * as speech from "../speech.js";
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   memories: typeof memories;
   messages: typeof messages;
   migrations: typeof migrations;
+  "prompts/core": typeof prompts_core;
   "prompts/extractMemories": typeof prompts_extractMemories;
   "prompts/system": typeof prompts_system;
   speech: typeof speech;

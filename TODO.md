@@ -1,5 +1,6 @@
 NEXT
 
+- inactive characters
 - Chunk summaries, store in table, show in the UI
 - New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
 - Auth
@@ -83,3 +84,4 @@ DONE
 - Track tool-results for all the tool executions, not just dice rolls
 - Look into whether we can do all the utterances in one call if we don't use the AI SDK
 - Move LLM models to their own table with a bool for tool use (a json file actually)
+- delete characters

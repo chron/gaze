@@ -37,7 +37,7 @@ export default defineSchema(
 			data: v.optional(v.record(v.string(), v.any())),
 			inventory: v.optional(v.array(v.string())), // TODO: remove
 			xp: v.optional(v.number()), // TODO: remove
-		}),
+		}).index("by_campaignId", ["campaignId"]),
 		messages: defineTable({
 			campaignId: v.id("campaigns"),
 			streamId: v.optional(v.string()),

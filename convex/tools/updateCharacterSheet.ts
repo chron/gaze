@@ -6,8 +6,7 @@ import type { DataModel, Doc, Id } from "../_generated/dataModel"
 
 export const updateCharacterSheet = (
 	ctx: GenericActionCtx<DataModel>,
-	assistantMessageId: Id<"messages">,
-	characterSheet: Doc<"characterSheets"> | null,
+	campaignId: Id<"campaigns">,
 ) =>
 	tool({
 		description:
@@ -17,7 +16,11 @@ export const updateCharacterSheet = (
 			description: z.string(),
 			data: z.any(), //z.record(z.string(), z.any()), // Several models including GPT-5 don't seem to see this!
 		}),
-		execute: async ({ name, description, data }, toolCall) => {
+		execute: async ({ name, description, data }, _toolCall) => {
+			const characterSheet = await ctx.runQuery(api.characterSheets.get, {
+				campaignId,
+			})
+
 			if (!characterSheet) {
 				throw new Error("Character sheet not found")
 			}
