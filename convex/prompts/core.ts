@@ -33,6 +33,11 @@ export const mainChatPrompt = async (
 				...(await otherCampaignSummaries(ctx)),
 				// ...(await uploadedFiles(ctx, campaign)),
 				...(await recentMessages(ctx, campaign)),
+				{
+					role: "user",
+					content:
+						"<game_information>We have not yet locked in the campaign details. You can ask the user any questions you need to. Once you have enough information from the user, use the `set_campaign_info` tool to set the name, description, and imagePrompt.</game_information>",
+				},
 			],
 		]
 	}
@@ -276,6 +281,7 @@ const currentGameContext = async (
 	const serializedCharacters = characters.map((character) => ({
 		name: character.name,
 		description: character.description,
+		imagePrompt: character.imagePrompt,
 	}))
 
 	const formattedCharacterSheet = characterSheet

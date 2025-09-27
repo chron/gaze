@@ -60,7 +60,7 @@ export const MainSidebar: React.FC = () => {
 											{({ isActive }) => (
 												<SidebarMenuButton
 													isActive={isActive}
-													className="cursor-pointer"
+													className="cursor-pointer truncate"
 												>
 													{campaign.name || "New Campaign"}
 												</SidebarMenuButton>

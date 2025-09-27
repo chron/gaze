@@ -10,7 +10,7 @@ export const updateCharacterSheet = (
 ) =>
 	tool({
 		description:
-			"Update the player's character sheet with any changes, including changes to their name, stats, conditions, or notes. You must provide the name and description of the character, as well as any character sheet data in a JSON object within the `data` key. The entire contents of the character sheet must be provided each time, as it will be overwritten.",
+			"Update the player's character sheet with any changes, including changes to their name, stats, or notes. You must provide the name and description of the character, as well as any character sheet data in a JSON object within the `data` key. The entire contents of the character sheet must be provided each time, as it will be overwritten.",
 		parameters: z.object({
 			name: z.string(),
 			description: z.string(),
@@ -21,16 +21,19 @@ export const updateCharacterSheet = (
 				campaignId,
 			})
 
-			if (!characterSheet) {
-				throw new Error("Character sheet not found")
+			if (characterSheet) {
+				await ctx.runMutation(api.characterSheets.update, {
+					characterSheetId: characterSheet._id,
+					name,
+					description,
+					data: data ?? {},
+				})
+			} else {
+				await ctx.runMutation(api.characterSheets.create, {
+					campaignId,
+					data: data,
+				})
 			}
-
-			await ctx.runMutation(api.characterSheets.update, {
-				characterSheetId: characterSheet._id,
-				name,
-				description,
-				data,
-			})
 
 			return "Character sheet updated"
 		},

@@ -805,7 +805,7 @@ export const summarizeChatHistory = action({
 			})
 			.filter((m) => m !== null)
 
-		const { text } = await generateText({
+		const { text, response } = await generateText({
 			system: prompt,
 			model: google("gemini-2.5-flash"),
 			messages: [
@@ -816,6 +816,8 @@ export const summarizeChatHistory = action({
 				},
 			],
 		})
+
+		console.log("Summarized chat history", response)
 
 		await ctx.runMutation(api.campaigns.updateCampaignSummary, {
 			campaignId: args.campaignId,

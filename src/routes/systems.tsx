@@ -13,11 +13,13 @@ function RouteComponent() {
 	return (
 		<div className="flex flex-col w-full gap-4 p-4">
 			<div className="flex justify-between items-center">
-				<h1 className="text-2xl font-bold">Game Systems</h1>
+				<h1 className="font-title uppercase text-white text-3xl ms-6">
+					Game Systems
+				</h1>
 				<GameSystemModal gameSystem={null} />
 			</div>
 
-			<div className="flex flex-col gap-4">
+			<div className="flex flex-col gap-4 bg-white p-4 rounded-lg">
 				{systems?.map((system) => (
 					<div key={system._id}>
 						<div className="flex justify-between items-center">
