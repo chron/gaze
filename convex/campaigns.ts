@@ -234,7 +234,7 @@ export const updateQuest = mutation({
 		if (existingQuest) {
 			const newQuestLog = (campaign.questLog ?? []).map((quest) => {
 				if (quest.title === args.title) {
-					return { ...quest, objective: args.objective }
+					return { ...quest, objective: args.objective, status: args.status }
 				}
 				return quest
 			})

@@ -592,7 +592,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 			},
 		},
 		messages: formattedMessages,
-		maxSteps: 10,
+		// maxSteps: 10,
 		tools: modelCanUseTools
 			? {
 					update_character_sheet: updateCharacterSheet(ctx, campaign._id),

@@ -25,13 +25,15 @@ export const QuestLog: React.FC<Props> = ({ questLog }) => {
 								<span
 									className={cn(
 										"text-sm font-bold",
-										quest.status === "completed" && "text-green-600",
-										quest.status === "failed" && "text-red-600",
+										quest.status === "completed" && "text-green-700",
+										quest.status === "failed" && "text-red-700",
 									)}
 								>
 									{quest.title}
 								</span>
-								<span className="text-xs">{quest.objective}</span>
+								{quest.status === "active" && (
+									<span className="text-xs">{quest.objective}</span>
+								)}
 							</div>
 						))}
 					</div>
