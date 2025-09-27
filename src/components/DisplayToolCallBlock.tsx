@@ -29,6 +29,17 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 	toolCallIndex,
 	setStreamId,
 }) => {
+	// Backwards compatibility: if no separate tool message, synthesize from message.toolResults
+	const effectiveFollowupToolResult = (() => {
+		if (followupToolResult) return followupToolResult
+		const tr = message.toolResults?.find(
+			(t) => t.toolCallId === block.toolCallId,
+		)
+		if (!tr) return null
+		// Minimal shape used by children: content[0].type/toolName/result
+		return { content: [tr] } as unknown as Doc<"messages">
+	})()
+
 	if (block.toolName === "change_scene") {
 		return (
 			<SceneChange
@@ -54,9 +65,9 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 					}
 				}
 				followupToolResult={
-					followupToolResult?.content[0].type === "tool-result" &&
-					block.toolName === followupToolResult?.content[0].toolName
-						? followupToolResult
+					effectiveFollowupToolResult?.content?.[0]?.type === "tool-result" &&
+					block.toolName === effectiveFollowupToolResult?.content?.[0]?.toolName
+						? effectiveFollowupToolResult
 						: null
 				}
 				setStreamId={setStreamId}
@@ -77,9 +88,9 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 					}
 				}
 				followupToolResult={
-					followupToolResult?.content[0].type === "tool-result" &&
-					block.toolName === followupToolResult?.content[0].toolName
-						? followupToolResult
+					effectiveFollowupToolResult?.content?.[0]?.type === "tool-result" &&
+					block.toolName === effectiveFollowupToolResult?.content?.[0]?.toolName
+						? effectiveFollowupToolResult
 						: null
 				}
 				setStreamId={setStreamId}

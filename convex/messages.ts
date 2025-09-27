@@ -261,10 +261,8 @@ export const addToolResultsMessage = mutation({
 			throw new Error("Message not found")
 		}
 
-		await ctx.db.insert("messages", {
-			campaignId: message.campaignId,
-			role: "tool",
-			content: args.toolResults,
+		await ctx.db.patch(args.messageId, {
+			toolResults: [...(message.toolResults ?? []), ...args.toolResults],
 		})
 	},
 })
@@ -456,10 +454,9 @@ export const performUserDiceRoll = mutation({
 		const total = results.reduce((acc, curr) => acc + curr, 0) + bonus
 
 		// Add a tool result message
-		await ctx.db.insert("messages", {
-			campaignId: message.campaignId,
-			role: "tool",
-			content: [
+		await ctx.db.patch(args.messageId, {
+			toolResults: [
+				...(message.toolResults ?? []),
 				{
 					type: "tool-result",
 					toolName: "request_dice_roll",
@@ -504,10 +501,9 @@ export const performUserChooseName = mutation({
 		}
 
 		// Add a tool result message
-		await ctx.db.insert("messages", {
-			campaignId: message.campaignId,
-			role: "tool",
-			content: [
+		await ctx.db.patch(args.messageId, {
+			toolResults: [
+				...(message.toolResults ?? []),
 				{
 					type: "tool-result",
 					toolName: "choose_name",

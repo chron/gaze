@@ -108,34 +108,46 @@ const recentMessages = async (
 		campaignId: campaign._id,
 	})
 
-	return allMessages.slice(0, -1).map((msg) => {
+	const formatted: CoreMessage[] = []
+
+	for (const msg of allMessages.slice(0, -1)) {
 		if (msg.role === "user") {
-			return {
+			formatted.push({
 				role: "user",
 				content: msg.content.filter((block) => block.type === "text"),
-			} satisfies CoreUserMessage
+			} satisfies CoreUserMessage)
+			continue
 		}
 
 		if (msg.role === "tool") {
-			return {
+			formatted.push({
 				role: "tool",
-				// Should be the case anyway, but we have to convince TS
 				content: msg.content.filter((block) => block.type === "tool-result"),
-			} satisfies CoreToolMessage
+			} satisfies CoreToolMessage)
+			continue
 		}
 
-		return {
+		// Assistant message
+		formatted.push({
 			role: "assistant",
 			content: msg.content.filter(
 				(block) =>
 					block.type === "text" ||
-					// For now let's not send reasoning data back. If we do send it later,
-					// Claude needs the signature as well as the text itself.
-					// block.type === "reasoning" ||
+					// See note above about reasoning
 					block.type === "tool-call",
 			),
-		} satisfies CoreAssistantMessage
-	})
+		} satisfies CoreAssistantMessage)
+
+		// If this assistant message has toolResults, synthesize a tool message after it
+		if (msg.toolResults && msg.toolResults.length > 0) {
+			formatted.push({
+				role: "tool",
+				content: msg.toolResults,
+			} satisfies CoreToolMessage)
+		}
+	}
+
+	return formatted
 }
 
 const uploadedFiles = async (

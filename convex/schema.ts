@@ -84,6 +84,18 @@ export default defineSchema(
 					}),
 				),
 			),
+			// New place to persist tool results alongside the originating assistant message
+			toolResults: v.optional(
+				v.array(
+					v.object({
+						type: v.literal("tool-result"),
+						toolCallId: v.string(),
+						toolName: v.string(),
+						result: v.any(),
+						isError: v.optional(v.boolean()),
+					}),
+				),
+			),
 			error: v.optional(v.string()),
 			reasoning: v.optional(v.string()),
 			scene: v.optional(

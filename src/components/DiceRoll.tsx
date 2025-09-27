@@ -1,6 +1,6 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { useMutation } from "convex/react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"
 import { Button } from "./ui/button"
@@ -27,7 +27,35 @@ export const DiceRoll: React.FC<DiceRollProps> = ({
 	const [isRolling, setIsRolling] = useState(false)
 	const performUserDiceRoll = useMutation(api.messages.performUserDiceRoll)
 
-	if (followupToolResult) {
+	const result = useMemo(() => {
+		const maybeFromOriginal = (
+			followupToolResult as unknown as Doc<"messages"> | null
+		)?.toolResults?.find((tr) => tr.toolName === "request_dice_roll") as
+			| {
+					type: "tool-result"
+					toolCallId: string
+					toolName: string
+					result: { results: number[]; bonus: number; total: number }
+			  }
+			| undefined
+
+		if (maybeFromOriginal) return maybeFromOriginal.result
+
+		if (
+			followupToolResult?.content?.[0]?.type === "tool-result" &&
+			followupToolResult.content[0].toolName === "request_dice_roll"
+		) {
+			return followupToolResult.content[0].result as {
+				results: number[]
+				bonus: number
+				total: number
+			}
+		}
+
+		return undefined
+	}, [followupToolResult])
+
+	if (result) {
 		return (
 			<div className="rounded-md border border-gray-200 bg-teal-600 text-white p-2">
 				Roll completed
