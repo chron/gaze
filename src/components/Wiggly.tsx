@@ -1,15 +1,17 @@
 import { motion } from "motion/react"
+import { useMemo, useRef } from "react"
 
 type Props = {
 	children: string
 }
 
 export const Wiggly: React.FC<Props> = ({ children }) => {
-	const offset = -Math.random()
+	const offsetRef = useRef(Math.random())
+	const chars = useMemo(() => children.split(""), [children])
 
 	return (
 		<span className="inline-flex gap-[2px]">
-			{children.split("").map((char, index) => (
+			{chars.map((char, index) => (
 				<motion.span
 					key={`${index}-${char}`}
 					animate={{
@@ -18,7 +20,7 @@ export const Wiggly: React.FC<Props> = ({ children }) => {
 					transition={{
 						duration: 1,
 						repeat: Number.POSITIVE_INFINITY,
-						delay: offset + index * 0.1,
+						delay: -offsetRef.current + index * 0.1,
 						ease: "easeInOut",
 					}}
 				>

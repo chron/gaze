@@ -1,12 +1,7 @@
 NEXT
-
-- inactive characters
-- Chunk summaries, store in table, show in the UI
-- New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
-- Auth
-- Store which memories were recalled against the message, show in UI
-- Have it present choices/options as clickable links for no-typing response
-- Update character tool and/or outfit system? Use an image edit model maybe?
+- Merge tool call follow ups into a field on the original message to simplify UI and backend
+- [QUESTS] main vs sidequest?
+- [QUESTS] do something with completed / failed quests in context and UI?
 
 SPEECH
 - Different prompt for user messages that gets char info from the character sheet
@@ -14,15 +9,18 @@ SPEECH
 
 OTHER STUFF
 
+- inactive characters
+- Chunk summaries, store in table, show in the UI
+- New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
+- Auth
+- Update character tool and/or outfit system? Use an image edit model maybe?
 - Automate an initial welcome message once you create a campaign
 - Fix up data (or reset DB?) so we can turn `schemaValidation: true` back on
 - Claude + tool use is broken, it wants result messages for ALL tool calls
 - Disable text input when there's an active roll to do (maybe?)
 - Look into Gemini implicit caching — not sure it's being applied
-  - possibly the system prompt is too dynamic, move that to a user message or something?
 - If we're going to take JSON directly in the modal, need some friendly errors
 - Also the modal is too long with long JSON and files
-- Tidy up old images from convex storage before regenerating
 - Drop chat messages out of the pagination so you don't have to hard refresh to go back to 10.
 - Track age of memories in case that's useful for tapering their importance off over time
 - CMD+K
@@ -85,3 +83,6 @@ DONE
 - Look into whether we can do all the utterances in one call if we don't use the AI SDK
 - Move LLM models to their own table with a bool for tool use (a json file actually)
 - delete characters
+- quest log tool + storage + prompt + UI
+- Have it present choices/options as clickable links for no-typing response
+- Tidy up old images from convex storage before regenerating

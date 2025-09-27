@@ -6,17 +6,10 @@ import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
 import { useStructuredStream } from "../hooks/useStructuredStream"
 import { cn } from "../lib/utils"
-import { CharacterIntroduction } from "./CharacterIntroduction"
-import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
-import { ChooseName } from "./ChooseName"
-import { DiceRoll } from "./DiceRoll"
 import { DiceRollResult } from "./DiceRollResult"
+import { DisplayToolCallBlock } from "./DisplayToolCallBlock"
 import { MessageMarkdown } from "./MessageMarkdown"
-import { PlanUpdate } from "./PlanUpdate"
-import { SceneChange } from "./SceneChange"
 import { SequentialAudioPlayer } from "./SequentialAudioPlayer"
-import { SetCampaignInfo } from "./SetCampaignInfo"
-import { UnknownToolCall } from "./UnknownToolCall"
 import { Button } from "./ui/button"
 import {
 	Collapsible,
@@ -218,119 +211,17 @@ export const Message: React.FC<Props> = ({
 							}
 
 							if (block.type === "tool-call") {
-								if (block.toolName === "change_scene") {
-									return (
-										<SceneChange
-											key={`scene-${block.toolCallId}`}
-											messageId={message._id}
-											scene={message.scene}
-											description={block.args.description}
-										/>
-									)
-								}
-
-								if (block.toolName === "request_dice_roll") {
-									return (
-										<DiceRoll
-											key={`dice-${block.toolCallId}`}
-											messageId={message._id}
-											toolCallIndex={index}
-											parameters={
-												block.args as {
-													number: number
-													faces: number
-													bonus: number
-												}
-											}
-											followupToolResult={
-												followupToolResult?.content[0].type === "tool-result" &&
-												block.toolName ===
-													followupToolResult?.content[0].toolName
-													? followupToolResult
-													: null
-											}
-											setStreamId={setStreamId}
-										/>
-									)
-								}
-
-								if (block.toolName === "choose_name") {
-									return (
-										<ChooseName
-											key={`choose-name-${block.toolCallId}`}
-											messageId={message._id}
-											toolCallIndex={index}
-											parameters={
-												block.args as {
-													description: string
-													suggestedNames: string[]
-												}
-											}
-											followupToolResult={
-												followupToolResult?.content[0].type === "tool-result" &&
-												block.toolName ===
-													followupToolResult?.content[0].toolName
-													? followupToolResult
-													: null
-											}
-											setStreamId={setStreamId}
-										/>
-									)
-								}
-
-								if (block.toolName === "update_character_sheet") {
-									return (
-										<CharacterSheetUpdate
-											key={`character-sheet-${block.toolCallId}`}
-											parameters={
-												block.args as {
-													name: string
-													description: string
-													data: Record<string, unknown>
-												}
-											}
-										/>
-									)
-								}
-
-								if (block.toolName === "introduce_character") {
-									return (
-										<CharacterIntroduction
-											key={`character-introduction-${block.toolCallId}`}
-											parameters={
-												block.args as { name: string; description: string }
-											}
-										/>
-									)
-								}
-
-								if (block.toolName === "update_plan") {
-									return (
-										<PlanUpdate
-											key={`plan-update-${block.toolCallId}`}
-											parameters={block.args as { plan: string }}
-										/>
-									)
-								}
-
-								if (block.toolName === "set_campaign_info") {
-									return (
-										<SetCampaignInfo
-											key={`set-campaign-info-${block.toolCallId}`}
-											parameters={block.args}
-										/>
-									)
-								}
-
 								return (
-									<UnknownToolCall
-										parameters={block.args}
-										key={`unknown-tool-call-${block.toolName}`}
+									<DisplayToolCallBlock
+										key={`${message._id}-step-${index}-tool-call`}
+										block={block}
+										message={message}
+										followupToolResult={followupToolResult}
+										toolCallIndex={index}
+										setStreamId={setStreamId}
 									/>
 								)
 							}
-
-							return null
 						})
 					) : (
 						<>
@@ -341,79 +232,21 @@ export const Message: React.FC<Props> = ({
 											<MessageMarkdown>{step.text}</MessageMarkdown>
 										)}
 
-										{step.toolCalls.map((toolCall, index) => {
-											if (toolCall.toolName === "change_scene") {
-												return (
-													<SceneChange
-														key={`${message._id}-step-${stepIndex}-scene-${index}`}
-														messageId={message._id}
-														scene={message.scene}
-														description={
-															(toolCall.args as { description: string })
-																.description
-														}
-													/>
-												)
-											}
-
-											if (toolCall.toolName === "request_dice_roll") {
-												return (
-													<DiceRoll
-														key={`${message._id}-step-${stepIndex}-dice-${index}`}
-														messageId={message._id}
-														toolCallIndex={index}
-														parameters={
-															toolCall.args as {
-																number: number
-																faces: number
-																bonus: number
-															}
-														}
-														followupToolResult={followupToolResult}
-														setStreamId={setStreamId}
-													/>
-												)
-											}
-
-											if (toolCall.toolName === "update_character_sheet") {
-												return (
-													<CharacterSheetUpdate
-														key={`${message._id}-step-${stepIndex}-character-sheet-${index}`}
-														parameters={
-															toolCall.args as {
-																name: string
-																description: string
-																data: Record<string, unknown>
-															}
-														}
-													/>
-												)
-											}
-
-											if (toolCall.toolName === "introduce_character") {
-												return (
-													<CharacterIntroduction
-														key={`${message._id}-step-${stepIndex}-character-introduction-${index}`}
-														parameters={
-															toolCall.args as {
-																name: string
-																description: string
-															}
-														}
-													/>
-												)
-											}
-
-											if (toolCall.toolName === "update_plan") {
-												return (
-													<PlanUpdate
-														key={`${message._id}-step-${stepIndex}-plan-update-${index}`}
-														parameters={toolCall.args as { plan: string }}
-													/>
-												)
-											}
-
-											return null
+										{step.toolCalls.map((toolCall) => {
+											return (
+												<DisplayToolCallBlock
+													key={`${message._id}-step-${stepIndex}-tool-call`}
+													block={{
+														toolName: toolCall.toolName,
+														toolCallId: toolCall.toolCallId,
+														args: toolCall.args as Record<string, unknown>,
+													}}
+													message={message}
+													followupToolResult={followupToolResult}
+													setStreamId={setStreamId}
+													toolCallIndex={stepIndex}
+												/>
+											)
 										})}
 									</React.Fragment>
 								)

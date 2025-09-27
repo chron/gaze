@@ -45,6 +45,7 @@ import { requestDiceRoll } from "./tools/requestDiceRoll"
 import { setCampaignInfo } from "./tools/setCampaignInfo"
 import { updateCharacterSheet } from "./tools/updateCharacterSheet"
 import { updatePlan } from "./tools/updatePlan"
+import { updateQuestLog } from "./tools/updateQuestLog"
 import { googleSafetySettings } from "./utils"
 
 type ArrayElement<ArrayType extends readonly unknown[]> =
@@ -607,6 +608,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 					),
 					request_dice_roll: requestDiceRoll(ctx, message._id),
 					update_plan: updatePlan(ctx, message._id, campaign._id),
+					update_quest_log: updateQuestLog(ctx, campaign._id),
 					choose_name: chooseName(),
 					...(campaign.name === ""
 						? {

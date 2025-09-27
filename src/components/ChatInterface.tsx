@@ -6,6 +6,7 @@ import type { Id } from "../../convex/_generated/dataModel"
 import { CharacterList } from "./CharacterList"
 import { ChatExtraActions } from "./ChatExtraActions"
 import { MessageList } from "./MessageList"
+import { QuestLog } from "./QuestLog"
 import { Button } from "./ui/button"
 import { Textarea } from "./ui/textarea"
 
@@ -27,7 +28,7 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 	}
 
 	return (
-		<div className="flex flex-col w-full h-screen max-h-[calc(100dvh-52px)]">
+		<div className="flex flex-col w-full h-screen max-h-[calc(100dvh-52px)] relative">
 			<div ref={messagePanelRef} className="flex-1 min-h-0 overflow-y-auto">
 				<MessageList
 					campaignId={campaign._id}
@@ -36,6 +37,8 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 					setStreamId={setStreamId}
 				/>
 			</div>
+
+			{campaign.questLog && <QuestLog questLog={campaign.questLog} />}
 
 			<div className="flex items-end gap-2 p-4 relative">
 				<CharacterList campaignId={campaign._id} />

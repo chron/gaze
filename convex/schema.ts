@@ -23,6 +23,19 @@ export default defineSchema(
 			model: v.string(),
 			imageModel: v.string(),
 			plan: v.optional(v.string()),
+			questLog: v.optional(
+				v.array(
+					v.object({
+						title: v.string(),
+						objective: v.string(),
+						status: v.union(
+							v.literal("active"),
+							v.literal("completed"),
+							v.literal("failed"),
+						),
+					}),
+				),
+			),
 			archived: v.boolean(),
 			activeCharacters: v.optional(v.array(v.string())),
 			lastInteractionAt: v.optional(v.number()),

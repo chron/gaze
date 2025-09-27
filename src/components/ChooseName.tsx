@@ -41,6 +41,8 @@ export const ChooseName: React.FC<ChooseNameProps> = ({
 	const handleChooseName = async (name: string) => {
 		if (isPending) return
 
+		console.log(toolCallIndex)
+
 		setIsPending(true)
 		try {
 			const { streamId } = await performUserChooseName({

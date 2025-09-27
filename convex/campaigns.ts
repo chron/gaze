@@ -209,6 +209,50 @@ export const updatePlan = mutation({
 	},
 })
 
+export const updateQuest = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		title: v.string(),
+		objective: v.string(),
+		status: v.union(
+			v.literal("active"),
+			v.literal("completed"),
+			v.literal("failed"),
+		),
+	},
+	handler: async (ctx, args) => {
+		const campaign = await ctx.db.get(args.campaignId)
+
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		const existingQuest = campaign.questLog?.find(
+			(quest) => quest.title === args.title,
+		)
+
+		if (existingQuest) {
+			const newQuestLog = (campaign.questLog ?? []).map((quest) => {
+				if (quest.title === args.title) {
+					return { ...quest, objective: args.objective }
+				}
+				return quest
+			})
+
+			await ctx.db.patch(args.campaignId, {
+				questLog: newQuestLog,
+			})
+		} else {
+			await ctx.db.patch(args.campaignId, {
+				questLog: [
+					...(campaign.questLog ?? []),
+					{ title: args.title, objective: args.objective, status: "active" },
+				],
+			})
+		}
+	},
+})
+
 export const updateLastInteraction = mutation({
 	args: {
 		campaignId: v.id("campaigns"),

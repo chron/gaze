@@ -28,6 +28,7 @@ import type * as tools_requestDiceRoll from "../tools/requestDiceRoll.js";
 import type * as tools_setCampaignInfo from "../tools/setCampaignInfo.js";
 import type * as tools_updateCharacterSheet from "../tools/updateCharacterSheet.js";
 import type * as tools_updatePlan from "../tools/updatePlan.js";
+import type * as tools_updateQuestLog from "../tools/updateQuestLog.js";
 import type * as utils from "../utils.js";
 
 import type {
@@ -65,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   "tools/setCampaignInfo": typeof tools_setCampaignInfo;
   "tools/updateCharacterSheet": typeof tools_updateCharacterSheet;
   "tools/updatePlan": typeof tools_updatePlan;
+  "tools/updateQuestLog": typeof tools_updateQuestLog;
   utils: typeof utils;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
