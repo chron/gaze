@@ -10,7 +10,7 @@ export const updateQuestLog = (
 ) =>
 	tool({
 		description:
-			"Adds, updates, or completes a quest in the player's journal. Use this to manage the player's objectives.",
+			"Adds, updates, or completes a quest in the player's journal. Use this to manage the player's objectives. Once they are marked as complete or failed, they will be removed from the quest log.",
 		parameters: z.object({
 			action: z
 				.enum(["add", "update_objective", "complete", "fail"])

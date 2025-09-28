@@ -305,6 +305,7 @@ const currentGameContext = async (
 		: null
 
 	const formattedQuestLog = (campaign.questLog ?? [])
+		.filter((quest) => quest.status === "active")
 		.map(
 			(quest) =>
 				`- <quest_title>${quest.title}</quest_title> <quest_status>${quest.status}</quest_status> <objective_description>${quest.objective}</objective_description>`,
@@ -321,10 +322,10 @@ const currentGameContext = async (
 	}
 
 	if (formattedQuestLog) {
-		currentContext += `\n\nHere is the quest log:\n\n${formattedQuestLog}`
+		currentContext += `\n\nHere are the active quests:\n\n${formattedQuestLog}`
 	} else {
 		currentContext +=
-			"\n\nYou currently have no quest log. You can use the `update_quest_log` tool to create a quest for the player to track in their UI."
+			"\n\nYou currently have no quests active. You can use the `update_quest_log` tool to create a quest for the player to track in their UI."
 	}
 
 	if (serializedCharacters.length > 0) {

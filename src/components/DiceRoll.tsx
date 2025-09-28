@@ -14,7 +14,7 @@ type DiceRollProps = {
 		bonus: number
 	}
 	setStreamId: (streamId: StreamId) => void
-	followupToolResult: Doc<"messages"> | null
+	toolResult: NonNullable<Doc<"messages">["toolResults"]>[number] | null
 }
 
 export const DiceRoll: React.FC<DiceRollProps> = ({
@@ -22,40 +22,12 @@ export const DiceRoll: React.FC<DiceRollProps> = ({
 	toolCallIndex,
 	parameters,
 	setStreamId,
-	followupToolResult,
+	toolResult,
 }) => {
 	const [isRolling, setIsRolling] = useState(false)
 	const performUserDiceRoll = useMutation(api.messages.performUserDiceRoll)
 
-	const result = useMemo(() => {
-		const maybeFromOriginal = (
-			followupToolResult as unknown as Doc<"messages"> | null
-		)?.toolResults?.find((tr) => tr.toolName === "request_dice_roll") as
-			| {
-					type: "tool-result"
-					toolCallId: string
-					toolName: string
-					result: { results: number[]; bonus: number; total: number }
-			  }
-			| undefined
-
-		if (maybeFromOriginal) return maybeFromOriginal.result
-
-		if (
-			followupToolResult?.content?.[0]?.type === "tool-result" &&
-			followupToolResult.content[0].toolName === "request_dice_roll"
-		) {
-			return followupToolResult.content[0].result as {
-				results: number[]
-				bonus: number
-				total: number
-			}
-		}
-
-		return undefined
-	}, [followupToolResult])
-
-	if (result) {
+	if (toolResult) {
 		return (
 			<div className="rounded-md border border-gray-200 bg-teal-600 text-white p-2">
 				Roll completed

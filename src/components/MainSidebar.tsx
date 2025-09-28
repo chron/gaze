@@ -16,7 +16,7 @@ import {
 } from "./ui/sidebar"
 
 export const MainSidebar: React.FC = () => {
-	const campaigns = useQuery(api.campaigns.list, { limit: 10 })
+	const campaigns = useQuery(api.campaigns.list, { limit: 15 })
 	const quickAddCampaign = useMutation(api.campaigns.quickAddCampaign)
 	const navigate = useNavigate()
 

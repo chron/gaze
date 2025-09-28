@@ -2,7 +2,7 @@ import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { usePaginatedQuery } from "convex/react"
 import { useCallback, useEffect, useRef } from "react"
 import { api } from "../../convex/_generated/api"
-import type { Doc, Id } from "../../convex/_generated/dataModel"
+import type { Id } from "../../convex/_generated/dataModel"
 import { Message } from "./Message"
 import { Button } from "./ui/button"
 
@@ -129,16 +129,7 @@ export const MessageList: React.FC<Props> = ({
 				// 	overflowAnchor: "auto",
 				// }}
 			>
-				{reversedMessages?.map((message, index) => {
-					// Prefer new schema: pass toolResults on the original message when present
-					const nextMessage = reversedMessages[index + 1]
-					const synthesizedFollowup =
-						message.toolResults && message.toolResults.length > 0
-							? ({ content: message.toolResults } as unknown as Doc<"messages">)
-							: nextMessage?.role === "tool"
-								? nextMessage
-								: null
-
+				{reversedMessages?.map((message) => {
 					return (
 						<Message
 							key={message._id}
@@ -146,7 +137,6 @@ export const MessageList: React.FC<Props> = ({
 							isLastMessage={message._id === lastMessage?._id}
 							isStreaming={message.streamId === streamId}
 							setStreamId={setStreamId}
-							followupToolResult={synthesizedFollowup}
 							scrollToBottom={scrollToBottom}
 							scrollToMessageTop={scrollMessageToTop}
 						/>

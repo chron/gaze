@@ -22,7 +22,6 @@ type Props = {
 	isLastMessage: boolean
 	setStreamId: (streamId: StreamId) => void
 	isStreaming: boolean
-	followupToolResult: Doc<"messages"> | null
 	scrollToBottom: () => void
 }
 
@@ -31,7 +30,6 @@ export const Message: React.FC<Props> = ({
 	isLastMessage,
 	setStreamId,
 	isStreaming,
-	followupToolResult,
 	scrollToBottom,
 }) => {
 	const { steps, reasoning } = useStructuredStream(
@@ -216,7 +214,6 @@ export const Message: React.FC<Props> = ({
 										key={`${message._id}-step-${index}-tool-call`}
 										block={block}
 										message={message}
-										followupToolResult={followupToolResult}
 										toolCallIndex={index}
 										setStreamId={setStreamId}
 									/>
@@ -242,7 +239,6 @@ export const Message: React.FC<Props> = ({
 														args: toolCall.args as Record<string, unknown>,
 													}}
 													message={message}
-													followupToolResult={followupToolResult}
 													setStreamId={setStreamId}
 													toolCallIndex={stepIndex}
 												/>

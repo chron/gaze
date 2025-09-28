@@ -1,6 +1,6 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { useMutation } from "convex/react"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"
 import { Button } from "./ui/button"
@@ -15,7 +15,7 @@ type ChooseNameProps = {
 		suggestedNames: string[]
 	}
 	setStreamId: (streamId: StreamId) => void
-	followupToolResult: Doc<"messages"> | null
+	toolResult: NonNullable<Doc<"messages">["toolResults"]>[number] | null
 }
 
 export const ChooseName: React.FC<ChooseNameProps> = ({
@@ -23,44 +23,17 @@ export const ChooseName: React.FC<ChooseNameProps> = ({
 	toolCallIndex,
 	parameters,
 	setStreamId,
-	followupToolResult,
+	toolResult,
 }) => {
 	const [isPending, setIsPending] = useState(false)
 	const [chosenName, setChosenName] = useState<string>("")
 	const [otherDetails, setOtherDetails] = useState<string>("")
 	const performUserChooseName = useMutation(api.messages.performUserChooseName)
 
-	const result = useMemo(() => {
-		const maybeFromOriginal = (
-			followupToolResult as unknown as Doc<"messages"> | null
-		)?.toolResults?.find((tr) => tr.toolName === "choose_name") as
-			| {
-					type: "tool-result"
-					toolCallId: string
-					toolName: string
-					result: { name: string; otherDetails?: string }
-			  }
-			| undefined
-
-		if (maybeFromOriginal) return maybeFromOriginal.result
-
-		if (
-			followupToolResult?.content?.[0]?.type === "tool-result" &&
-			followupToolResult.content[0].toolName === "choose_name"
-		) {
-			return followupToolResult.content[0].result as {
-				name: string
-				otherDetails?: string
-			}
-		}
-
-		return undefined
-	}, [followupToolResult])
-
-	if (result) {
+	if (toolResult) {
 		return (
 			<div className="rounded-md border border-gray-200 bg-teal-600 text-white p-2">
-				Name chosen: {result.name}
+				Name chosen: {toolResult.result.name}
 			</div>
 		)
 	}

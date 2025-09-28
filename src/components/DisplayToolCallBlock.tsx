@@ -17,7 +17,6 @@ type Props = {
 		toolCallId: string
 		args: Record<string, unknown>
 	}
-	followupToolResult: Doc<"messages"> | null
 	setStreamId: (streamId: StreamId) => void
 	toolCallIndex: number
 }
@@ -25,20 +24,10 @@ type Props = {
 export const DisplayToolCallBlock: React.FC<Props> = ({
 	block,
 	message,
-	followupToolResult,
 	toolCallIndex,
 	setStreamId,
 }) => {
-	// Backwards compatibility: if no separate tool message, synthesize from message.toolResults
-	const effectiveFollowupToolResult = (() => {
-		if (followupToolResult) return followupToolResult
-		const tr = message.toolResults?.find(
-			(t) => t.toolCallId === block.toolCallId,
-		)
-		if (!tr) return null
-		// Minimal shape used by children: content[0].type/toolName/result
-		return { content: [tr] } as unknown as Doc<"messages">
-	})()
+	const toolResult = message.toolResults?.[toolCallIndex]
 
 	if (block.toolName === "change_scene") {
 		return (
@@ -64,12 +53,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 						bonus: number
 					}
 				}
-				followupToolResult={
-					effectiveFollowupToolResult?.content?.[0]?.type === "tool-result" &&
-					block.toolName === effectiveFollowupToolResult?.content?.[0]?.toolName
-						? effectiveFollowupToolResult
-						: null
-				}
+				toolResult={toolResult ?? null}
 				setStreamId={setStreamId}
 			/>
 		)
@@ -87,12 +71,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 						suggestedNames: string[]
 					}
 				}
-				followupToolResult={
-					effectiveFollowupToolResult?.content?.[0]?.type === "tool-result" &&
-					block.toolName === effectiveFollowupToolResult?.content?.[0]?.toolName
-						? effectiveFollowupToolResult
-						: null
-				}
+				toolResult={toolResult ?? null}
 				setStreamId={setStreamId}
 			/>
 		)
@@ -136,7 +115,11 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 			<QuestUpdate
 				key={`quest-update-${block.toolCallId}`}
 				parameters={
-					block.args as { quest_title: string; objective_description: string }
+					block.args as {
+						quest_title: string
+						objective_description: string
+						action: "add" | "update_objective" | "complete" | "fail"
+					}
 				}
 			/>
 		)
