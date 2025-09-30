@@ -56,6 +56,8 @@ Banned names — try to avoid using these names for characters or other things:
 - Kaelen
 - Elara
 - Valerius
+- Julian
+- Thorne
 
 And avoid these business names:
 - The Daily Grind
