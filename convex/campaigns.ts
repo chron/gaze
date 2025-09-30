@@ -201,10 +201,28 @@ export const updatePlan = mutation({
 	args: {
 		campaignId: v.id("campaigns"),
 		plan: v.string(),
+		part: v.optional(v.string()),
 	},
-	handler: async (ctx, args) => {
+	handler: async (ctx, args): Promise<void> => {
+		const campaign = await ctx.db.get(args.campaignId)
+
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+		let newPlan: string | Record<string, string>
+
+		if (args.part) {
+			const oldPlan =
+				typeof campaign.plan === "string"
+					? { overall_story: campaign.plan }
+					: campaign.plan
+			newPlan = { ...oldPlan, [args.part]: args.plan }
+		} else {
+			newPlan = args.plan
+		}
+
 		await ctx.db.patch(args.campaignId, {
-			plan: args.plan,
+			plan: newPlan,
 		})
 	},
 })

@@ -31,6 +31,8 @@ export const updateCharacterSheet = (
 			} else {
 				await ctx.runMutation(api.characterSheets.create, {
 					campaignId,
+					name,
+					description,
 					data: data,
 				})
 			}

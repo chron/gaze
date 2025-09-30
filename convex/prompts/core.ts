@@ -278,6 +278,8 @@ const currentGameContext = async (
 		// TODO: can you do this in one operation?
 		await ctx.runMutation(api.characterSheets.create, {
 			campaignId: campaign._id,
+			name: "New Character",
+			description: "",
 			data: defaultCharacterData,
 		})
 
@@ -315,7 +317,15 @@ const currentGameContext = async (
 	let currentContext = ""
 
 	if (campaign.plan) {
-		currentContext += `\n\nYour current internal plan for the session. Update it with the \`update_plan\ tool when needed:\n\n${campaign.plan}`
+		currentContext +=
+			"\n\nYour current internal plan for the session. The plan is divided into sections. Update it with the `update_plan tool when needed:"
+		if (typeof campaign.plan === "string") {
+			currentContext += `\n\n<overall_story>${campaign.plan}</overall_story>`
+		} else {
+			for (const part of Object.keys(campaign.plan)) {
+				currentContext += `\n\n<${part}>${campaign.plan[part]}</${part}>`
+			}
+		}
 	} else {
 		currentContext +=
 			"\n\nYou currently have no plan. You can use the `update_plan` tool to create one, including details about the current scene, future story arcs, and any other important details."

@@ -21,40 +21,56 @@ export const PlanModal: React.FC<Props> = ({ campaignId, onClose }) => {
 		id: campaignId as Id<"campaigns">,
 	})
 
+	const plans =
+		typeof campaign?.plan === "string"
+			? ["overall_story", campaign?.plan]
+			: Object.entries(campaign?.plan ?? {})
 	return (
 		<Dialog open={true} onOpenChange={(v) => !v && onClose()}>
 			<DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
 				<DialogTitle>Plan</DialogTitle>
-				<div
-					className={cn(
-						isEditing && "outline outline-2 outline-black",
-						isSaving && "animate-pulse",
-					)}
-					contentEditable={isEditing}
-					onDoubleClick={() => setIsEditing(true)}
-					onKeyDown={async (e) => {
-						if (e.key === "Escape") {
-							e.preventDefault()
-							setIsEditing(false)
-						}
 
-						if (e.key === "Enter" && !e.shiftKey) {
-							e.preventDefault()
-							setIsSaving(true)
-							await updatePlan({
-								campaignId,
-								plan: e.currentTarget.innerText,
-							})
-							setIsSaving(false)
-							setIsEditing(false)
-						}
-					}}
-				>
-					{isEditing ? (
-						<div className="whitespace-pre-wrap">{campaign?.plan ?? ""}</div>
-					) : (
-						<MessageMarkdown>{campaign?.plan ?? ""}</MessageMarkdown>
-					)}
+				<div className="flex flex-col gap-2">
+					{plans.map(([part, plan]) => (
+						<div
+							key={part}
+							className="flex flex-col gap-2 bg-gray-50 p-4 rounded-lg"
+						>
+							<h3 className="text-lg font-bold">{part}</h3>
+							<div
+								className={cn(
+									isEditing && "outline outline-2 outline-black",
+									isSaving && "animate-pulse",
+								)}
+								contentEditable={isEditing}
+								onDoubleClick={() => setIsEditing(true)}
+								onKeyDown={async (e) => {
+									if (e.key === "Escape") {
+										e.preventDefault()
+										setIsEditing(false)
+									}
+
+									if (e.key === "Enter" && !e.shiftKey) {
+										e.preventDefault()
+										setIsSaving(true)
+										await updatePlan({
+											campaignId,
+											plan: e.currentTarget.innerText,
+											part,
+										})
+										setIsSaving(false)
+										setIsEditing(false)
+									}
+								}}
+							>
+								{isEditing ? (
+									<div className="whitespace-pre-wrap">{plan}</div>
+								) : (
+									<MessageMarkdown>{plan}</MessageMarkdown>
+								)}
+							</div>
+						</div>
+					))}
 				</div>
 			</DialogContent>
 		</Dialog>

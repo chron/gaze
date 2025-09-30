@@ -550,6 +550,8 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 	const [prompt, formattedMessages] = await mainChatPrompt(ctx, campaign)
 
+	console.log(prompt, formattedMessages)
+
 	const modelCanUseTools =
 		models.find((m) => m.code === campaign.model)?.tools ?? false
 	const openrouter = createOpenRouter({

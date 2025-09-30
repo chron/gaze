@@ -22,7 +22,7 @@ export default defineSchema(
 			gameSystemId: v.optional(v.id("gameSystems")),
 			model: v.string(),
 			imageModel: v.string(),
-			plan: v.optional(v.string()),
+			plan: v.optional(v.union(v.string(), v.record(v.string(), v.string()))),
 			questLog: v.optional(
 				v.array(
 					v.object({
