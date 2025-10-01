@@ -1,6 +1,6 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { useMutation, useQuery } from "convex/react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { CharacterList } from "./CharacterList"
@@ -57,6 +57,29 @@ const ChatInput: React.FC<{
 	const [isLoading, setIsLoading] = useState(false)
 	const [input, setInput] = useState("")
 
+	// Load draft from localStorage on mount
+	useEffect(() => {
+		const storageKey = `chat-draft-${campaignId}`
+		const savedDraft = localStorage.getItem(storageKey)
+		if (savedDraft) {
+			setInput(savedDraft)
+		}
+	}, [campaignId])
+
+	// Save draft to localStorage (debounced)
+	useEffect(() => {
+		const storageKey = `chat-draft-${campaignId}`
+		const timeoutId = setTimeout(() => {
+			if (input) {
+				localStorage.setItem(storageKey, input)
+			} else {
+				localStorage.removeItem(storageKey)
+			}
+		}, 3000) // 2 second debounce
+
+		return () => clearTimeout(timeoutId)
+	}, [input, campaignId])
+
 	const handleSend = async () => {
 		setIsLoading(true)
 		const newMessage = {
@@ -65,6 +88,8 @@ const ChatInput: React.FC<{
 		} as const
 
 		setInput("")
+		// Clear the draft from localStorage when sent
+		localStorage.removeItem(`chat-draft-${campaignId}`)
 		const { streamId } = await addUserMessage(newMessage)
 		setStreamId(streamId)
 		setIsLoading(false)

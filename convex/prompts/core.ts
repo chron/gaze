@@ -14,14 +14,78 @@ import type { Doc, Id } from "../_generated/dataModel"
 import type { ActionCtx } from "../_generated/server"
 import systemPrompt from "./system"
 
+// Helper to count tokens using Google's API
+const countTokens = async (
+	content: string | CoreMessage[],
+	model: string,
+): Promise<number> => {
+	const ai = new GoogleGenAI({
+		apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+	})
+
+	try {
+		// Convert content to string if it's an array of messages
+		const textContent =
+			typeof content === "string" ? content : JSON.stringify(content)
+
+		const result = await ai.models.countTokens({
+			model: model.replace("google/", ""),
+			contents: textContent,
+		})
+
+		return result.totalTokens ?? 0
+	} catch (error) {
+		console.error("Error counting tokens:", error)
+		// Fallback to character-based approximation
+		const textContent =
+			typeof content === "string" ? content : JSON.stringify(content)
+		return Math.ceil(textContent.length / 4)
+	}
+}
+
+export type PromptBreakdown = {
+	systemPrompt: {
+		basePrompt: number
+		gameSystem: number
+		campaignInfo: number
+		total: number
+	}
+	messages: {
+		uploadedFiles: number
+		messageSummaries: number
+		recentMessages: number
+		otherCampaignSummaries: number
+		introInstruction: number
+		currentContext: {
+			plan: number
+			questLog: number
+			characters: number
+			characterSheet: number
+			missingCharacters: number
+			total: number
+		}
+		total: number
+	}
+	grandTotal: number
+}
+
 export const mainChatPrompt = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
 ): Promise<[string, CoreMessage[]]> => {
-	const prompt = await componseSystemPrompt(ctx, campaign)
+	const { prompt } = await componseSystemPrompt(ctx, campaign)
 
 	// Intro message for a new campaign
 	if (campaign.name === "") {
+		const model = campaign.model
+		const otherSummaries = await otherCampaignSummaries(ctx, model, false)
+		const recent = await recentMessages(ctx, campaign, false)
+		const introInstruction = {
+			role: "user",
+			content:
+				"<game_information>We have not yet locked in the campaign details. You can ask the user any questions you need to. Once you have enough information from the user, use the `set_campaign_info` tool to set the name, description, and imagePrompt.</game_information>",
+		} as const
+
 		return [
 			prompt,
 			[
@@ -30,14 +94,10 @@ export const mainChatPrompt = async (
 					content:
 						"Here are the summaries of the other campaigns we have played together:",
 				},
-				...(await otherCampaignSummaries(ctx)),
+				...otherSummaries.messages,
 				// ...(await uploadedFiles(ctx, campaign)),
-				...(await recentMessages(ctx, campaign)),
-				{
-					role: "user",
-					content:
-						"<game_information>We have not yet locked in the campaign details. You can ask the user any questions you need to. Once you have enough information from the user, use the `set_campaign_info` tool to set the name, description, and imagePrompt.</game_information>",
-				},
+				...recent.messages,
+				introInstruction,
 			],
 		]
 	}
@@ -47,11 +107,12 @@ export const mainChatPrompt = async (
 	return [prompt, formattedMessages]
 }
 
-const componseSystemPrompt = async (
+export const componseSystemPrompt = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
-) => {
-	let prompt = systemPrompt
+	countTokensFlag = false,
+): Promise<{ prompt: string; breakdown: PromptBreakdown["systemPrompt"] }> => {
+	const basePrompt = systemPrompt
 
 	const gameSystem = campaign.gameSystemId
 		? await ctx.runQuery(api.gameSystems.get, {
@@ -59,51 +120,100 @@ const componseSystemPrompt = async (
 			})
 		: null
 
-	prompt += gameSystem
+	const gameSystemText = gameSystem
 		? `\n\nYou are hosting a game of ${gameSystem.name}\n\n${gameSystem.prompt}`
 		: "\n\nThe game is a dice-less free-form narrative RPG without a specific ruleset."
 
-	if (campaign.name !== "") {
-		prompt += `\n\nThe campaign is called ${campaign.name}\n\n${campaign.description}`
+	const campaignInfoText =
+		campaign.name !== ""
+			? `\n\nThe campaign is called ${campaign.name}\n\n${campaign.description}`
+			: ""
+
+	const prompt = basePrompt + gameSystemText + campaignInfoText
+
+	// Only count tokens if requested (for analysis)
+	if (!countTokensFlag) {
+		return {
+			prompt,
+			breakdown: {
+				basePrompt: 0,
+				gameSystem: 0,
+				campaignInfo: 0,
+				total: 0,
+			},
+		}
 	}
 
-	return prompt
+	const model = campaign.model
+
+	return {
+		prompt,
+		breakdown: {
+			basePrompt: await countTokens(basePrompt, model),
+			gameSystem: await countTokens(gameSystemText, model),
+			campaignInfo: await countTokens(campaignInfoText, model),
+			total: await countTokens(prompt, model),
+		},
+	}
 }
 
 const constructMessages = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
 ): Promise<CoreMessage[]> => {
+	const uploaded = await uploadedFiles(ctx, campaign)
+	const summaries = await messageSummaries(ctx, campaign)
+	const recent = await recentMessages(ctx, campaign)
+	const context = await currentGameContext(ctx, campaign)
 	return [
-		...(await uploadedFiles(ctx, campaign)),
-		...(await messageSummaries(ctx, campaign)),
-		...(await recentMessages(ctx, campaign)),
-		...(await currentGameContext(ctx, campaign)),
+		...uploaded.messages,
+		...summaries.messages,
+		...recent.messages,
+		...context.messages,
 	]
 }
 
-const messageSummaries = async (
+export const messageSummaries = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
-): Promise<CoreMessage[]> => {
+	countTokensFlag = false,
+): Promise<{ messages: CoreMessage[]; charCount: number }> => {
 	const allSummaries = await ctx.runQuery(internal.summaries.list, {
 		campaignId: campaign._id,
 	})
 
-	return allSummaries.length > 0
-		? [
-				{
-					role: "user",
-					content: `Here is the summary of the previous sessions:\n\n${allSummaries.map((summary) => summary.summary).join("\n")}`,
-				},
-			]
-		: []
+	const content =
+		allSummaries.length > 0
+			? `Here is the summary of the previous sessions:\n\n${allSummaries.map((summary) => summary.summary).join("\n")}`
+			: ""
+
+	const messages: CoreMessage[] =
+		allSummaries.length > 0
+			? [
+					{
+						role: "user",
+						content,
+					},
+				]
+			: []
+
+	if (!countTokensFlag) {
+		return { messages, charCount: 0 }
+	}
+
+	const model = campaign.model
+
+	return {
+		messages,
+		charCount: content ? await countTokens(content, model) : 0,
+	}
 }
 
-const recentMessages = async (
+export const recentMessages = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
-): Promise<CoreMessage[]> => {
+	countTokensFlag = false,
+): Promise<{ messages: CoreMessage[]; charCount: number }> => {
 	const allMessages = await ctx.runQuery(api.messages.list, {
 		campaignId: campaign._id,
 	})
@@ -147,13 +257,25 @@ const recentMessages = async (
 		}
 	}
 
-	return formatted
+	if (!countTokensFlag) {
+		return { messages: formatted, charCount: 0 }
+	}
+
+	const model = campaign.model
+	const charCount =
+		formatted.length > 0 ? await countTokens(formatted, model) : 0
+
+	return {
+		messages: formatted,
+		charCount,
+	}
 }
 
-const uploadedFiles = async (
+export const uploadedFiles = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
-): Promise<CoreMessage[]> => {
+	countTokensFlag = false,
+) => {
 	let uploadedFiles: (FilePart | null)[] = []
 
 	let gameSystem: // TODO: there MUST be a way to get this type properly
@@ -175,7 +297,7 @@ const uploadedFiles = async (
 		// to the uploade PDFs for now.
 		if (gameSystem && campaign.model.startsWith("google")) {
 			if (gameSystem.files.length === 0) {
-				return []
+				return { messages: [], charCount: 0 }
 			}
 
 			const ai = new GoogleGenAI({
@@ -237,7 +359,7 @@ const uploadedFiles = async (
 			const compactedFiles = compact(uploadedFiles)
 
 			if (compactedFiles.length > 0) {
-				return [
+				const messages: CoreMessage[] = [
 					{
 						role: "user",
 						content: [
@@ -248,18 +370,28 @@ const uploadedFiles = async (
 							...compactedFiles,
 						],
 					},
-				] as const
+				]
+
+				if (!countTokensFlag) {
+					return { messages, charCount: 0 }
+				}
+
+				const model = campaign.model
+				const charCount = await countTokens(messages, model)
+
+				return { messages, charCount }
 			}
 		}
 	}
 
-	return []
+	return { messages: [], charCount: 0 }
 }
 
-const currentGameContext = async (
+export const currentGameContext = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
-): Promise<CoreMessage[]> => {
+	countTokensFlag = false,
+) => {
 	let characterSheet = await ctx.runQuery(api.characterSheets.get, {
 		campaignId: campaign._id,
 	})
@@ -292,11 +424,10 @@ const currentGameContext = async (
 		campaignId: campaign._id,
 	})
 
-	const serializedCharacters = characters.map((character) => ({
-		name: character.name,
-		description: character.description,
-		imagePrompt: character.imagePrompt,
-	}))
+	const serializedCharacters = characters.map(
+		(character) =>
+			`<character_name>${character.name}</character_name>\n<character_description>${character.description}</character_description>\n<character_image_prompt>${character.imagePrompt}</character_image_prompt>`,
+	)
 
 	const formattedCharacterSheet = characterSheet
 		? {
@@ -314,38 +445,39 @@ const currentGameContext = async (
 		)
 		.join("\n")
 
-	let currentContext = ""
-
+	// Build individual parts with character counts
+	let planText = ""
 	if (campaign.plan) {
-		currentContext +=
+		planText =
 			"\n\nYour current internal plan for the session. The plan is divided into sections. Update it with the `update_plan tool when needed:"
 		if (typeof campaign.plan === "string") {
-			currentContext += `\n\n<overall_story>${campaign.plan}</overall_story>`
+			planText += `\n\n<overall_story>${campaign.plan}</overall_story>`
 		} else {
 			for (const part of Object.keys(campaign.plan)) {
-				currentContext += `\n\n<${part}>${campaign.plan[part]}</${part}>`
+				planText += `\n\n<${part}>${campaign.plan[part]}</${part}>`
 			}
 		}
 	} else {
-		currentContext +=
+		planText =
 			"\n\nYou currently have no plan. You can use the `update_plan` tool to create one, including details about the current scene, future story arcs, and any other important details."
 	}
 
+	let questLogText = ""
 	if (formattedQuestLog) {
-		currentContext += `\n\nHere are the active quests:\n\n${formattedQuestLog}`
+		questLogText = `\n\nHere are the active quests:\n\n${formattedQuestLog}`
 	} else {
-		currentContext +=
+		questLogText =
 			"\n\nYou currently have no quests active. You can use the `update_quest_log` tool to create a quest for the player to track in their UI."
 	}
 
+	let charactersText = ""
 	if (serializedCharacters.length > 0) {
-		currentContext += `\n\nHere are the existing characters: ${JSON.stringify(
-			serializedCharacters,
-		)}`
+		charactersText = `\n\nHere are the existing characters: ${serializedCharacters.join("\n")}`
 	}
 
+	let characterSheetText = ""
 	if (formattedCharacterSheet) {
-		currentContext += `\n\nHere is the character sheet for the player: ${JSON.stringify(
+		characterSheetText = `\n\nHere is the character sheet for the player: ${JSON.stringify(
 			formattedCharacterSheet,
 		)}`
 	}
@@ -354,16 +486,55 @@ const currentGameContext = async (
 		(activeCharacterName) =>
 			!characters.find((c) => c.name === activeCharacterName),
 	)
+	let missingCharactersText = ""
 	if (missingCharacters && missingCharacters.length > 0) {
-		currentContext += `\n\nIMPORTANT: There are active characters in the scene that haven't been introduced yet. Use the \`introduce_character\` tool to introduce them: ${missingCharacters.join(", ")}`
+		missingCharactersText = `\n\nIMPORTANT: There are active characters in the scene that haven't been introduced yet. Use the \`introduce_character\` tool to introduce them: ${missingCharacters.join(", ")}`
 	}
 
-	return [
-		{
-			role: "user",
-			content: `Here is the current context of the game: ${currentContext}`,
+	const currentContext =
+		planText +
+		questLogText +
+		charactersText +
+		characterSheetText +
+		missingCharactersText
+
+	if (!countTokensFlag) {
+		return {
+			messages: [
+				{
+					role: "user",
+					content: `Here is the current context of the game: ${currentContext}`,
+				},
+			] as const,
+			breakdown: {
+				plan: 0,
+				questLog: 0,
+				characters: 0,
+				characterSheet: 0,
+				missingCharacters: 0,
+				total: 0,
+			},
+		}
+	}
+
+	const model = campaign.model
+
+	return {
+		messages: [
+			{
+				role: "user",
+				content: `Here is the current context of the game: ${currentContext}`,
+			},
+		] as const,
+		breakdown: {
+			plan: await countTokens(planText, model),
+			questLog: await countTokens(questLogText, model),
+			characters: await countTokens(charactersText, model),
+			characterSheet: await countTokens(characterSheetText, model),
+			missingCharacters: await countTokens(missingCharactersText, model),
+			total: await countTokens(currentContext, model),
 		},
-	] as const
+	}
 }
 
 const campaignMemories = async (
@@ -436,7 +607,9 @@ const campaignMemories = async (
 
 export const otherCampaignSummaries = async (
 	ctx: ActionCtx,
-): Promise<CoreMessage[]> => {
+	model: string,
+	countTokensFlag = false,
+): Promise<{ messages: CoreMessage[]; charCount: number }> => {
 	const allCampaigns = await ctx.runQuery(api.campaigns.list, {})
 
 	const formattedMessages = allCampaigns
@@ -453,5 +626,13 @@ export const otherCampaignSummaries = async (
 		.filter((m) => m !== null)
 		.slice(-20) // Max last 20 campaigns to keep token count down
 
-	return compact(formattedMessages)
+	const messages = compact(formattedMessages)
+
+	if (!countTokensFlag) {
+		return { messages, charCount: 0 }
+	}
+
+	const charCount = messages.length > 0 ? await countTokens(messages, model) : 0
+
+	return { messages, charCount }
 }

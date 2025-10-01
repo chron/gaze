@@ -1,5 +1,4 @@
 import { google } from "@ai-sdk/google"
-import { openrouter } from "@openrouter/ai-sdk-provider"
 import { generateText, tool } from "ai"
 import { v } from "convex/values"
 import z from "zod"

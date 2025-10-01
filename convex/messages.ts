@@ -564,7 +564,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 	const { fullStream } = streamText({
 		system: prompt,
-		temperature: 1, //0.7,
+		temperature: 1.1, //0.7,
 		model: campaign.model.startsWith("google")
 			? google(campaign.model.split("/")[1], {
 					...googleSafetySettings,
@@ -1022,5 +1022,102 @@ export const regenerateSceneImage = action({
 			prompt: message.scene.prompt ?? message.scene.description,
 			activeCharacters: message.scene.activeCharacters ?? [],
 		})
+	},
+})
+
+export const analyzePrompt = action({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		const campaign = await ctx.runQuery(api.campaigns.get, {
+			id: args.campaignId,
+		})
+
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		// Import the breakdown functions from core
+		const {
+			componseSystemPrompt,
+			uploadedFiles,
+			messageSummaries,
+			recentMessages,
+			currentGameContext,
+			otherCampaignSummaries,
+		} = await import("./prompts/core")
+
+		// Get system prompt breakdown
+		const systemPromptData = await componseSystemPrompt(ctx, campaign, true)
+
+		// For new campaigns
+		if (campaign.name === "") {
+			const model = campaign.model
+			const otherSummaries = await otherCampaignSummaries(ctx, model, true)
+			const recent = await recentMessages(ctx, campaign, true)
+			const introInstruction =
+				"<game_information>We have not yet locked in the campaign details. You can ask the user any questions you need to. Once you have enough information from the user, use the `set_campaign_info` tool to set the name, description, and imagePrompt.</game_information>"
+
+			// Use a simple helper to count tokens for this string
+			const googleAI = new (await import("@google/genai")).GoogleGenAI({
+				apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+			})
+			const introResult = await googleAI.models.countTokens({
+				model,
+				contents: introInstruction,
+			})
+			const introTokens = introResult.totalTokens ?? 0
+
+			const messagesTotal =
+				otherSummaries.charCount + recent.charCount + introTokens
+
+			return {
+				systemPrompt: systemPromptData.breakdown,
+				messages: {
+					uploadedFiles: 0,
+					messageSummaries: 0,
+					recentMessages: recent.charCount,
+					otherCampaignSummaries: otherSummaries.charCount,
+					introInstruction: introTokens,
+					currentContext: {
+						plan: 0,
+						questLog: 0,
+						characters: 0,
+						characterSheet: 0,
+						missingCharacters: 0,
+						total: 0,
+					},
+					total: messagesTotal,
+				},
+				grandTotal: systemPromptData.breakdown.total + messagesTotal,
+			}
+		}
+
+		// For active campaigns
+		const uploaded = await uploadedFiles(ctx, campaign, true)
+		const summaries = await messageSummaries(ctx, campaign, true)
+		const recent = await recentMessages(ctx, campaign, true)
+		const context = await currentGameContext(ctx, campaign, true)
+
+		const messagesTotal =
+			uploaded.charCount +
+			summaries.charCount +
+			recent.charCount +
+			context.breakdown.total
+
+		return {
+			systemPrompt: systemPromptData.breakdown,
+			messages: {
+				uploadedFiles: uploaded.charCount,
+				messageSummaries: summaries.charCount,
+				recentMessages: recent.charCount,
+				otherCampaignSummaries: 0,
+				introInstruction: 0,
+				currentContext: context.breakdown,
+				total: messagesTotal,
+			},
+			grandTotal: systemPromptData.breakdown.total + messagesTotal,
+		}
 	},
 })

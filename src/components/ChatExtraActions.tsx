@@ -1,6 +1,7 @@
 import { useParams } from "@tanstack/react-router"
 import { useAction, useMutation, useQuery } from "convex/react"
 import {
+	BarChart3,
 	BetweenHorizontalStart,
 	BookText,
 	Brain,
@@ -13,6 +14,7 @@ import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { MessageMarkdown } from "./MessageMarkdown"
 import { PlanModal } from "./PlanModal"
+import { PromptAnalysisModal } from "./PromptAnalysisModal"
 import { Button } from "./ui/button"
 import {
 	Dialog,
@@ -32,6 +34,7 @@ export const ChatExtraActions: React.FC = () => {
 	const [result, setResult] = useState<string | null>(null)
 	const [isLoading, setIsLoading] = useState(false)
 	const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
+	const [isPromptAnalysisOpen, setIsPromptAnalysisOpen] = useState(false)
 	const collapseHistory = useAction(api.summaries.collapseHistory)
 	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
 	const chatWithHistory = useAction(api.messages.chatWithHistory)
@@ -102,6 +105,11 @@ export const ChatExtraActions: React.FC = () => {
 						Ask a question
 					</DropdownMenuItem>
 
+					<DropdownMenuItem onClick={() => setIsPromptAnalysisOpen(true)}>
+						<BarChart3 />
+						Analyze prompt
+					</DropdownMenuItem>
+
 					<DropdownMenuItem
 						onClick={async () => {
 							await collapseHistory({
@@ -156,6 +164,13 @@ export const ChatExtraActions: React.FC = () => {
 				<PlanModal
 					campaignId={campaignId as Id<"campaigns">}
 					onClose={() => setIsPlanModalOpen(false)}
+				/>
+			)}
+
+			{isPromptAnalysisOpen && (
+				<PromptAnalysisModal
+					campaignId={campaignId as Id<"campaigns">}
+					onClose={() => setIsPromptAnalysisOpen(false)}
 				/>
 			)}
 		</>
