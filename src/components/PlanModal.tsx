@@ -4,6 +4,7 @@ import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { cn } from "../lib/utils"
 import { MessageMarkdown } from "./MessageMarkdown"
+import { AutoResizeTextarea } from "./ui/auto-resize-textarea"
 import { Dialog, DialogContent, DialogTitle } from "./ui/dialog"
 
 type Props = {
@@ -12,7 +13,8 @@ type Props = {
 }
 
 export const PlanModal: React.FC<Props> = ({ campaignId, onClose }) => {
-	const [isEditing, setIsEditing] = useState(false)
+	const [editingPart, setEditingPart] = useState<string | null>(null)
+	const [editingText, setEditingText] = useState("")
 	const [isSaving, setIsSaving] = useState(false)
 
 	const updatePlan = useMutation(api.campaigns.updatePlan)
@@ -38,33 +40,31 @@ export const PlanModal: React.FC<Props> = ({ campaignId, onClose }) => {
 						>
 							<h3 className="text-lg font-bold">{part}</h3>
 							<div
-								className={cn(
-									isEditing && "outline outline-2 outline-black",
-									isSaving && "animate-pulse",
-								)}
-								contentEditable={isEditing}
-								onDoubleClick={() => setIsEditing(true)}
-								onKeyDown={async (e) => {
-									if (e.key === "Escape") {
-										e.preventDefault()
-										setIsEditing(false)
-									}
-
-									if (e.key === "Enter" && !e.shiftKey) {
-										e.preventDefault()
-										setIsSaving(true)
-										await updatePlan({
-											campaignId,
-											plan: e.currentTarget.innerText,
-											part,
-										})
-										setIsSaving(false)
-										setIsEditing(false)
+								className={cn(isSaving && "animate-pulse")}
+								onDoubleClick={() => {
+									if (editingPart !== part) {
+										setEditingPart(part)
+										setEditingText(plan)
 									}
 								}}
 							>
-								{isEditing ? (
-									<div className="whitespace-pre-wrap">{plan}</div>
+								{editingPart === part ? (
+									<AutoResizeTextarea
+										autoFocus
+										value={editingText}
+										onChange={(e) => setEditingText(e.target.value)}
+										onSave={async (text) => {
+											setIsSaving(true)
+											await updatePlan({
+												campaignId,
+												plan: text,
+												part,
+											})
+											setIsSaving(false)
+											setEditingPart(null)
+										}}
+										onCancel={() => setEditingPart(null)}
+									/>
 								) : (
 									<MessageMarkdown>{plan}</MessageMarkdown>
 								)}

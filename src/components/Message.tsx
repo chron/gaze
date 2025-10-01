@@ -10,6 +10,7 @@ import { DiceRollResult } from "./DiceRollResult"
 import { DisplayToolCallBlock } from "./DisplayToolCallBlock"
 import { MessageMarkdown } from "./MessageMarkdown"
 import { SequentialAudioPlayer } from "./SequentialAudioPlayer"
+import { AutoResizeTextarea } from "./ui/auto-resize-textarea"
 import { Button } from "./ui/button"
 import {
 	Collapsible,
@@ -40,6 +41,7 @@ export const Message: React.FC<Props> = ({
 	const updateTextBlockMutation = useMutation(api.messages.updateTextBlock)
 
 	const [editingIndex, setEditingIndex] = useState<number | null>(null)
+	const [editingText, setEditingText] = useState("")
 	const [isSaving, setIsSaving] = useState(false)
 	const [showReasoning, setShowReasoning] = useState(true)
 
@@ -114,7 +116,7 @@ export const Message: React.FC<Props> = ({
 	return (
 		<div
 			className={cn(
-				"flex flex-col gap-2 p-2 rounded-md max-w-[80%]",
+				"flex flex-col gap-2 p-2 rounded-md w-fullmax-w-[80%]",
 				isSaving && "animate-pulse",
 				message.role === "user"
 					? "self-end bg-blue-100 text-blue-800"
@@ -154,35 +156,24 @@ export const Message: React.FC<Props> = ({
 							if (block.type === "text") {
 								if (editingIndex === index) {
 									return (
-										<div
+										<AutoResizeTextarea
 											// biome-ignore lint/suspicious/noArrayIndexKey: Complex editor block without stable id
 											key={`text-edit-${index}`}
-											className="whitespace-pre-wrap outline outline-2 outline-black rounded-md"
-											contentEditable
-											// biome-ignore lint/a11y/noAutofocus: Intentional focus for editing UX
 											autoFocus
-											onKeyDown={async (e) => {
-												if (e.key === "Escape") {
-													e.preventDefault()
-													setEditingIndex(null)
-													return
-												}
-
-												if (e.key === "Enter" && !e.shiftKey) {
-													e.preventDefault()
-													setIsSaving(true)
-													await updateTextBlockMutation({
-														messageId: message._id,
-														index,
-														text: e.currentTarget.innerText,
-													})
-													setIsSaving(false)
-													setEditingIndex(null)
-												}
+											value={editingText}
+											onChange={(e) => setEditingText(e.target.value)}
+											onSave={async (text) => {
+												setIsSaving(true)
+												await updateTextBlockMutation({
+													messageId: message._id,
+													index,
+													text,
+												})
+												setIsSaving(false)
+												setEditingIndex(null)
 											}}
-										>
-											{block.text}
-										</div>
+											onCancel={() => setEditingIndex(null)}
+										/>
 									)
 								}
 
@@ -191,6 +182,7 @@ export const Message: React.FC<Props> = ({
 										key={`text-${block.text}-${index}`}
 										onDoubleClick={() => {
 											setEditingIndex(index)
+											setEditingText(block.text)
 										}}
 									>
 										<MessageMarkdown
