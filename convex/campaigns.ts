@@ -90,6 +90,7 @@ export const addCampaign = mutation({
 		gameSystemId: v.optional(v.id("gameSystems")),
 		model: v.string(),
 		imageModel: v.string(),
+		enabledTools: v.optional(v.record(v.string(), v.boolean())),
 	},
 	handler: async (ctx, args) => {
 		const campaign = {
@@ -100,6 +101,7 @@ export const addCampaign = mutation({
 			model: args.model,
 			imageModel: args.imageModel,
 			archived: false,
+			enabledTools: args.enabledTools,
 		}
 
 		const campaignId = await ctx.db.insert("campaigns", campaign)
@@ -136,6 +138,7 @@ export const update = mutation({
 		gameSystemId: v.optional(v.id("gameSystems")),
 		model: v.string(),
 		imageModel: v.string(),
+		enabledTools: v.optional(v.record(v.string(), v.boolean())),
 	},
 	handler: async (ctx, args) => {
 		await ctx.db.patch(args.id, {
@@ -145,6 +148,7 @@ export const update = mutation({
 			gameSystemId: args.gameSystemId,
 			model: args.model,
 			imageModel: args.imageModel,
+			enabledTools: args.enabledTools,
 		})
 	},
 })

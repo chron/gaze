@@ -1,9 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router"
 import { useMutation, useQuery } from "convex/react"
+import { useEffect, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import models from "../models.json"
 import { Button } from "./ui/button"
+import { Checkbox } from "./ui/checkbox"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
 import {
@@ -20,6 +22,55 @@ type Props = {
 	campaignId?: Id<"campaigns"> | null
 }
 
+// Define all available tools with display names and descriptions
+const AVAILABLE_TOOLS = [
+	{
+		id: "update_character_sheet",
+		name: "Update Character Sheet",
+		description: "Allow AI to update character stats and inventory",
+	},
+	{
+		id: "change_scene",
+		name: "Change Scene",
+		description: "Allow AI to change scenes and generate images",
+	},
+	{
+		id: "introduce_character",
+		name: "Introduce Character",
+		description: "Allow AI to introduce new characters",
+	},
+	{
+		id: "request_dice_roll",
+		name: "Request Dice Roll",
+		description: "Allow AI to request dice rolls from the player",
+	},
+	{
+		id: "update_plan",
+		name: "Update Plan",
+		description: "Allow AI to update the campaign plan",
+	},
+	{
+		id: "update_quest_log",
+		name: "Update Quest Log",
+		description: "Allow AI to update quests",
+	},
+	{
+		id: "update_clock",
+		name: "Update Clock",
+		description: "Allow AI to update progress clocks",
+	},
+	{
+		id: "choose_name",
+		name: "Choose Name",
+		description: "Allow AI to request name choices from the player",
+	},
+	{
+		id: "set_campaign_info",
+		name: "Set Campaign Info",
+		description: "Allow AI to set campaign details (for new campaigns)",
+	},
+] as const
+
 export const CampaignForm: React.FC<Props> = ({ campaignId = null }) => {
 	const navigate = useNavigate()
 	const campaign = useQuery(
@@ -30,6 +81,31 @@ export const CampaignForm: React.FC<Props> = ({ campaignId = null }) => {
 
 	const addCampaign = useMutation(api.campaigns.addCampaign)
 	const updateCampaign = useMutation(api.campaigns.update)
+
+	// Initialize enabled tools state - all enabled by default
+	const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>(
+		() => {
+			if (!campaign?.enabledTools) {
+				// Default: all tools enabled
+				return {}
+			}
+			return campaign.enabledTools
+		},
+	)
+
+	// Update state when campaign loads
+	useEffect(() => {
+		if (campaign?.enabledTools) {
+			setEnabledTools(campaign.enabledTools)
+		}
+	}, [campaign?.enabledTools])
+
+	const handleToolToggle = (toolId: string, checked: boolean) => {
+		setEnabledTools((prev) => ({
+			...prev,
+			[toolId]: checked,
+		}))
+	}
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault()
@@ -53,6 +129,7 @@ export const CampaignForm: React.FC<Props> = ({ campaignId = null }) => {
 				gameSystemId,
 				model,
 				imageModel,
+				enabledTools,
 			})
 			navigate({ to: "/campaigns/$campaignId", params: { campaignId } })
 		} else {
@@ -63,6 +140,7 @@ export const CampaignForm: React.FC<Props> = ({ campaignId = null }) => {
 				gameSystemId,
 				model,
 				imageModel,
+				enabledTools,
 			})
 			navigate({ to: "/campaigns/$campaignId", params: { campaignId: newId } })
 		}
@@ -153,6 +231,39 @@ export const CampaignForm: React.FC<Props> = ({ campaignId = null }) => {
 						</SelectItem>
 					</SelectContent>
 				</Select>
+			</div>
+
+			<div className="grid gap-3">
+				<Label className="text-base font-semibold">Enabled Tools</Label>
+				<p className="text-sm text-slate-600 mb-2">
+					Select which tools the AI can use during gameplay. Tools are enabled
+					by default.
+				</p>
+				<div className="grid gap-3 border border-slate-200 rounded-lg p-4 bg-slate-50">
+					{AVAILABLE_TOOLS.map((tool) => {
+						const isChecked = enabledTools[tool.id] ?? true
+						return (
+							<div key={tool.id} className="flex items-start space-x-3">
+								<Checkbox
+									id={tool.id}
+									checked={isChecked}
+									onCheckedChange={(checked) =>
+										handleToolToggle(tool.id, checked === true)
+									}
+								/>
+								<div className="grid gap-1.5 leading-none">
+									<Label
+										htmlFor={tool.id}
+										className="text-sm font-medium leading-none cursor-pointer"
+									>
+										{tool.name}
+									</Label>
+									<p className="text-sm text-slate-600">{tool.description}</p>
+								</div>
+							</div>
+						)
+					})}
+				</div>
 			</div>
 
 			<div className="flex gap-2">

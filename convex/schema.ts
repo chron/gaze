@@ -50,6 +50,7 @@ export default defineSchema(
 			activeCharacters: v.optional(v.array(v.string())),
 			lastInteractionAt: v.optional(v.number()),
 			lastCampaignSummary: v.optional(v.string()),
+			enabledTools: v.optional(v.record(v.string(), v.boolean())),
 		})
 			.index("by_archived", ["archived"])
 			.index("by_lastInteractionAt", ["lastInteractionAt"]),

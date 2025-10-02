@@ -561,6 +561,49 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		},
 	})
 
+	// Helper function to check if a tool is enabled (enabled by default)
+	const isToolEnabled = (toolName: string): boolean => {
+		if (!campaign.enabledTools) return true
+		return campaign.enabledTools[toolName] ?? true
+	}
+
+	// Build tools object with only enabled tools
+	const allTools = {
+		...(isToolEnabled("update_character_sheet")
+			? { update_character_sheet: updateCharacterSheet(ctx, campaign._id) }
+			: {}),
+		...(isToolEnabled("change_scene")
+			? { change_scene: changeScene(ctx, campaign._id, message._id) }
+			: {}),
+		...(isToolEnabled("introduce_character")
+			? {
+					introduce_character: introduceCharacter(
+						ctx,
+						message._id,
+						campaign._id,
+					),
+				}
+			: {}),
+		...(isToolEnabled("request_dice_roll")
+			? { request_dice_roll: requestDiceRoll(ctx, message._id) }
+			: {}),
+		...(isToolEnabled("update_plan")
+			? { update_plan: updatePlan(ctx, message._id, campaign._id) }
+			: {}),
+		...(isToolEnabled("update_quest_log")
+			? { update_quest_log: updateQuestLog(ctx, campaign._id) }
+			: {}),
+		...(isToolEnabled("update_clock")
+			? { update_clock: updateClock(ctx, campaign._id) }
+			: {}),
+		...(isToolEnabled("choose_name") ? { choose_name: chooseName() } : {}),
+		...(campaign.name === "" && isToolEnabled("set_campaign_info")
+			? {
+					set_campaign_info: setCampaignInfo(ctx, campaign._id),
+				}
+			: {}),
+	}
+
 	const { fullStream } = streamText({
 		system: prompt,
 		temperature: 1.1, //0.7,
@@ -594,27 +637,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		},
 		messages: formattedMessages,
 		// maxSteps: 10,
-		tools: modelCanUseTools
-			? {
-					update_character_sheet: updateCharacterSheet(ctx, campaign._id),
-					change_scene: changeScene(ctx, campaign._id, message._id),
-					introduce_character: introduceCharacter(
-						ctx,
-						message._id,
-						campaign._id,
-					),
-					request_dice_roll: requestDiceRoll(ctx, message._id),
-					update_plan: updatePlan(ctx, message._id, campaign._id),
-					update_quest_log: updateQuestLog(ctx, campaign._id),
-					update_clock: updateClock(ctx, campaign._id),
-					choose_name: chooseName(),
-					...(campaign.name === ""
-						? {
-								set_campaign_info: setCampaignInfo(ctx, campaign._id),
-							}
-						: {}),
-				}
-			: undefined,
+		tools: modelCanUseTools ? allTools : undefined,
 		onError: async (error) => {
 			console.log("onError", error)
 
