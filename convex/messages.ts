@@ -44,6 +44,7 @@ import { chooseName } from "./tools/nameCharacter"
 import { requestDiceRoll } from "./tools/requestDiceRoll"
 import { setCampaignInfo } from "./tools/setCampaignInfo"
 import { updateCharacterSheet } from "./tools/updateCharacterSheet"
+import { updateClock } from "./tools/updateClock"
 import { updatePlan } from "./tools/updatePlan"
 import { updateQuestLog } from "./tools/updateQuestLog"
 import { googleSafetySettings } from "./utils"
@@ -550,8 +551,6 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 	const [prompt, formattedMessages] = await mainChatPrompt(ctx, campaign)
 
-	console.log(prompt, formattedMessages)
-
 	const modelCanUseTools =
 		models.find((m) => m.code === campaign.model)?.tools ?? false
 	const openrouter = createOpenRouter({
@@ -607,6 +606,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 					request_dice_roll: requestDiceRoll(ctx, message._id),
 					update_plan: updatePlan(ctx, message._id, campaign._id),
 					update_quest_log: updateQuestLog(ctx, campaign._id),
+					update_clock: updateClock(ctx, campaign._id),
 					choose_name: chooseName(),
 					...(campaign.name === ""
 						? {

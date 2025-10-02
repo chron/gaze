@@ -5,6 +5,7 @@ import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { CharacterList } from "./CharacterList"
 import { ChatExtraActions } from "./ChatExtraActions"
+import { ClockDisplay } from "./ClockDisplay"
 import { MessageList } from "./MessageList"
 import { QuestLog } from "./QuestLog"
 import { Button } from "./ui/button"
@@ -39,6 +40,9 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 			</div>
 
 			{campaign.questLog && <QuestLog questLog={campaign.questLog} />}
+			{campaign.clocks && campaign.clocks.length > 0 && (
+				<ClockDisplay clocks={campaign.clocks} />
+			)}
 
 			<div className="flex items-end gap-2 p-4 relative">
 				<CharacterList campaignId={campaign._id} />

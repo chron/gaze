@@ -3,6 +3,7 @@ import type { Doc, Id } from "../../convex/_generated/dataModel"
 import { CharacterIntroduction } from "./CharacterIntroduction"
 import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
 import { ChooseName } from "./ChooseName"
+import { ClockUpdate } from "./ClockUpdate"
 import { DiceRoll } from "./DiceRoll"
 import { PlanUpdate } from "./PlanUpdate"
 import { QuestUpdate } from "./QuestUpdate"
@@ -27,7 +28,9 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 	toolCallIndex,
 	setStreamId,
 }) => {
-	const toolResult = message.toolResults?.[toolCallIndex]
+	const toolResult = message.toolResults?.find(
+		(tr) => tr.toolCallId === block.toolCallId,
+	)
 
 	if (block.toolName === "change_scene") {
 		return (
@@ -119,6 +122,22 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 						quest_title: string
 						objective_description: string
 						action: "add" | "update_objective" | "complete" | "fail"
+					}
+				}
+			/>
+		)
+	}
+
+	if (block.toolName === "update_clock") {
+		return (
+			<ClockUpdate
+				key={`clock-update-${block.toolCallId}`}
+				parameters={
+					block.args as {
+						name: string
+						current_ticks: number
+						max_ticks: number
+						hint?: string
 					}
 				}
 			/>

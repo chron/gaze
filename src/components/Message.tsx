@@ -113,17 +113,9 @@ export const Message: React.FC<Props> = ({
 		return null
 	}
 
-	return (
-		<div
-			className={cn(
-				"flex flex-col gap-2 p-2 rounded-md w-fullmax-w-[80%]",
-				isSaving && "animate-pulse",
-				message.role === "user"
-					? "self-end bg-blue-100 text-blue-800"
-					: "self-start bg-gray-100 text-gray-800",
-			)}
-		>
-			{noContent ? (
+	if (noContent) {
+		return (
+			<div className="p-2 rounded-md self-start bg-gray-100 text-gray-800">
 				<div className="flex flex-col gap-2 font-serif relative group">
 					<p className="animate-pulse text-xl">...</p>
 
@@ -133,126 +125,134 @@ export const Message: React.FC<Props> = ({
 						setStreamId={setStreamId}
 					/>
 				</div>
-			) : (
-				<div className="flex flex-col font-serif relative group gap-2">
-					{combinedReasoning && (
-						<Collapsible open={showReasoning} onOpenChange={setShowReasoning}>
-							<CollapsibleTrigger asChild>
-								<Button variant="outline" size="sm" className="mb-2">
-									<Brain className="h-4 w-4 mr-2" />
-									Reasoning
-								</Button>
-							</CollapsibleTrigger>
-							<CollapsibleContent>
-								<div className="p-3 bg-gray-50 rounded-md text-sm">
-									<MessageMarkdown>{combinedReasoning}</MessageMarkdown>
-								</div>
-							</CollapsibleContent>
-						</Collapsible>
-					)}
+			</div>
+		)
+	}
 
-					{!noDatabaseContent ? (
-						message.content.map((block, index) => {
-							if (block.type === "text") {
-								if (editingIndex === index) {
-									return (
-										<AutoResizeTextarea
-											// biome-ignore lint/suspicious/noArrayIndexKey: Complex editor block without stable id
-											key={`text-edit-${index}`}
-											autoFocus
-											value={editingText}
-											onChange={(e) => setEditingText(e.target.value)}
-											onSave={async (text) => {
-												setIsSaving(true)
-												await updateTextBlockMutation({
-													messageId: message._id,
-													index,
-													text,
-												})
-												setIsSaving(false)
-												setEditingIndex(null)
-											}}
-											onCancel={() => setEditingIndex(null)}
-										/>
-									)
-								}
+	return (
+		<div
+			className={cn(
+				"flex flex-col gap-2 p-2 rounded-md w-full max-w-[80%]",
+				isSaving && "animate-pulse",
+				message.role === "user"
+					? "self-end bg-blue-100 text-blue-800"
+					: "self-start bg-gray-100 text-gray-800",
+			)}
+		>
+			<div className="flex flex-col font-serif relative group gap-2">
+				{combinedReasoning && (
+					<Collapsible open={showReasoning} onOpenChange={setShowReasoning}>
+						<CollapsibleTrigger asChild>
+							<Button variant="outline" size="sm" className="mb-2">
+								<Brain className="h-4 w-4 mr-2" />
+								Reasoning
+							</Button>
+						</CollapsibleTrigger>
+						<CollapsibleContent>
+							<div className="p-3 bg-gray-50 rounded-md text-sm">
+								<MessageMarkdown>{combinedReasoning}</MessageMarkdown>
+							</div>
+						</CollapsibleContent>
+					</Collapsible>
+				)}
 
+				{!noDatabaseContent ? (
+					message.content.map((block, index) => {
+						if (block.type === "text") {
+							if (editingIndex === index) {
 								return (
-									<div
-										key={`text-${block.text}-${index}`}
-										onDoubleClick={() => {
-											setEditingIndex(index)
-											setEditingText(block.text)
+									<AutoResizeTextarea
+										// biome-ignore lint/suspicious/noArrayIndexKey: Complex editor block without stable id
+										key={`text-edit-${index}`}
+										autoFocus
+										value={editingText}
+										onChange={(e) => setEditingText(e.target.value)}
+										onSave={async (text) => {
+											setIsSaving(true)
+											await updateTextBlockMutation({
+												messageId: message._id,
+												index,
+												text,
+											})
+											setIsSaving(false)
+											setEditingIndex(null)
 										}}
-									>
-										<MessageMarkdown
-											linkClickHandler={
-												isLastMessage
-													? (text) => {
-															navigator.clipboard.writeText(text)
-														}
-													: undefined
-											}
-										>
-											{block.text}
-										</MessageMarkdown>
-									</div>
-								)
-							}
-
-							if (block.type === "tool-call") {
-								return (
-									<DisplayToolCallBlock
-										key={`${message._id}-step-${index}-tool-call`}
-										block={block}
-										message={message}
-										toolCallIndex={index}
-										setStreamId={setStreamId}
+										onCancel={() => setEditingIndex(null)}
 									/>
 								)
 							}
-						})
-					) : (
-						<>
-							{steps.map((step, stepIndex) => {
-								return (
-									<React.Fragment key={`step-${step.stepId}-${stepIndex}`}>
-										{step.text && (
-											<MessageMarkdown>{step.text}</MessageMarkdown>
-										)}
 
-										{step.toolCalls.map((toolCall) => {
-											return (
-												<DisplayToolCallBlock
-													key={`${message._id}-step-${stepIndex}-tool-call`}
-													block={{
-														toolName: toolCall.toolName,
-														toolCallId: toolCall.toolCallId,
-														args: toolCall.args as Record<string, unknown>,
-													}}
-													message={message}
-													setStreamId={setStreamId}
-													toolCallIndex={stepIndex}
-												/>
-											)
-										})}
-									</React.Fragment>
-								)
-							})}
-						</>
-					)}
+							return (
+								<div
+									key={`text-${block.text}-${index}`}
+									onDoubleClick={() => {
+										setEditingIndex(index)
+										setEditingText(block.text)
+									}}
+								>
+									<MessageMarkdown
+										linkClickHandler={
+											isLastMessage
+												? (text) => {
+														navigator.clipboard.writeText(text)
+													}
+												: undefined
+										}
+									>
+										{block.text}
+									</MessageMarkdown>
+								</div>
+							)
+						}
 
-					<MessageActions
-						message={message}
-						isLastMessage={isLastMessage}
-						setStreamId={setStreamId}
-					/>
+						if (block.type === "tool-call") {
+							return (
+								<DisplayToolCallBlock
+									key={`${message._id}-step-${index}-tool-call`}
+									block={block}
+									message={message}
+									toolCallIndex={index}
+									setStreamId={setStreamId}
+								/>
+							)
+						}
+					})
+				) : (
+					<>
+						{steps.map((step, stepIndex) => {
+							return (
+								<React.Fragment key={`step-${step.stepId}-${stepIndex}`}>
+									{step.text && <MessageMarkdown>{step.text}</MessageMarkdown>}
 
-					{message?.audio && (
-						<SequentialAudioPlayer audioUrls={message.audio} />
-					)}
-				</div>
-			)}
+									{step.toolCalls.map((toolCall) => {
+										return (
+											<DisplayToolCallBlock
+												key={`${message._id}-step-${stepIndex}-tool-call`}
+												block={{
+													toolName: toolCall.toolName,
+													toolCallId: toolCall.toolCallId,
+													args: toolCall.args as Record<string, unknown>,
+												}}
+												message={message}
+												setStreamId={setStreamId}
+												toolCallIndex={stepIndex}
+											/>
+										)
+									})}
+								</React.Fragment>
+							)
+						})}
+					</>
+				)}
+
+				<MessageActions
+					message={message}
+					isLastMessage={isLastMessage}
+					setStreamId={setStreamId}
+				/>
+
+				{message?.audio && <SequentialAudioPlayer audioUrls={message.audio} />}
+			</div>
 		</div>
 	)
 }

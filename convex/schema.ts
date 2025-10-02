@@ -36,6 +36,16 @@ export default defineSchema(
 					}),
 				),
 			),
+			clocks: v.optional(
+				v.array(
+					v.object({
+						name: v.string(),
+						currentTicks: v.number(),
+						maxTicks: v.number(),
+						hint: v.optional(v.string()),
+					}),
+				),
+			),
 			archived: v.boolean(),
 			activeCharacters: v.optional(v.array(v.string())),
 			lastInteractionAt: v.optional(v.number()),

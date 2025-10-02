@@ -271,6 +271,57 @@ export const updateQuest = mutation({
 	},
 })
 
+export const updateClock = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		name: v.string(),
+		currentTicks: v.number(),
+		maxTicks: v.number(),
+		hint: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		const campaign = await ctx.db.get(args.campaignId)
+
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		const existingClock = campaign.clocks?.find(
+			(clock) => clock.name === args.name,
+		)
+
+		if (existingClock) {
+			const newClocks = (campaign.clocks ?? []).map((clock) => {
+				if (clock.name === args.name) {
+					return {
+						name: args.name,
+						currentTicks: args.currentTicks,
+						maxTicks: args.maxTicks,
+						hint: args.hint,
+					}
+				}
+				return clock
+			})
+
+			await ctx.db.patch(args.campaignId, {
+				clocks: newClocks,
+			})
+		} else {
+			await ctx.db.patch(args.campaignId, {
+				clocks: [
+					...(campaign.clocks ?? []),
+					{
+						name: args.name,
+						currentTicks: args.currentTicks,
+						maxTicks: args.maxTicks,
+						hint: args.hint,
+					},
+				],
+			})
+		}
+	},
+})
+
 export const updateLastInteraction = mutation({
 	args: {
 		campaignId: v.id("campaigns"),
