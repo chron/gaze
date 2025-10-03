@@ -13,6 +13,7 @@ import type * as characterSheets from "../characterSheets.js";
 import type * as characters from "../characters.js";
 import type * as gameSystems from "../gameSystems.js";
 import type * as http from "../http.js";
+import type * as jobProgress from "../jobProgress.js";
 import type * as memories from "../memories.js";
 import type * as messages from "../messages.js";
 import type * as migrations from "../migrations.js";
@@ -52,6 +53,7 @@ declare const fullApi: ApiFromModules<{
   characters: typeof characters;
   gameSystems: typeof gameSystems;
   http: typeof http;
+  jobProgress: typeof jobProgress;
   memories: typeof memories;
   messages: typeof messages;
   migrations: typeof migrations;

@@ -208,7 +208,7 @@ export const Message: React.FC<Props> = ({
 						if (block.type === "tool-call") {
 							return (
 								<DisplayToolCallBlock
-									key={`${message._id}-step-${index}-tool-call`}
+									key={`${message._id}-${index}-tool-call-${block.toolCallId}`}
 									block={block}
 									message={message}
 									toolCallIndex={index}
@@ -227,7 +227,7 @@ export const Message: React.FC<Props> = ({
 									{step.toolCalls.map((toolCall) => {
 										return (
 											<DisplayToolCallBlock
-												key={`${message._id}-step-${stepIndex}-tool-call`}
+												key={`${message._id}-tool-call-${toolCall.toolCallId}`}
 												block={{
 													toolName: toolCall.toolName,
 													toolCallId: toolCall.toolCallId,

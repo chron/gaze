@@ -158,6 +158,32 @@ export default defineSchema(
 			image: v.optional(v.id("_storage")),
 			humeVoiceId: v.optional(v.string()),
 		}),
+		jobProgress: defineTable({
+			campaignId: v.id("campaigns"),
+			type: v.string(), // e.g., "collapseHistory", "generateSummary"
+			status: v.union(
+				v.literal("running"),
+				v.literal("completed"),
+				v.literal("failed"),
+			),
+			currentStep: v.optional(v.string()),
+			steps: v.array(
+				v.object({
+					title: v.string(),
+					description: v.optional(v.string()),
+					status: v.union(
+						v.literal("pending"),
+						v.literal("running"),
+						v.literal("completed"),
+						v.literal("failed"),
+					),
+					data: v.optional(v.any()), // For storing step-specific data like summaries
+				}),
+			),
+			error: v.optional(v.string()),
+			startedAt: v.number(),
+			completedAt: v.optional(v.number()),
+		}).index("by_campaign", ["campaignId"]),
 	},
 	// For doing migrations and whatnot
 	{

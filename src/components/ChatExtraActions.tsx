@@ -14,6 +14,7 @@ import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { MessageMarkdown } from "./MessageMarkdown"
 import { PlanModal } from "./PlanModal"
+import { ProgressModal } from "./ProgressModal"
 import { PromptAnalysisModal } from "./PromptAnalysisModal"
 import { Button } from "./ui/button"
 import {
@@ -35,9 +36,14 @@ export const ChatExtraActions: React.FC = () => {
 	const [isLoading, setIsLoading] = useState(false)
 	const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
 	const [isPromptAnalysisOpen, setIsPromptAnalysisOpen] = useState(false)
+	const [isProgressModalOpen, setIsProgressModalOpen] = useState(false)
+	const [progressJobId, setProgressJobId] = useState<Id<"jobProgress"> | null>(
+		null,
+	)
 	const collapseHistory = useAction(api.summaries.collapseHistory)
 	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
 	const chatWithHistory = useAction(api.messages.chatWithHistory)
+	const deleteJob = useMutation(api.jobProgress.deleteJob)
 
 	const updatePlan = useMutation(api.campaigns.updatePlan)
 	const lookForThemesInCampaignSummaries = useAction(
@@ -112,9 +118,17 @@ export const ChatExtraActions: React.FC = () => {
 
 					<DropdownMenuItem
 						onClick={async () => {
-							await collapseHistory({
-								campaignId: campaignId as Id<"campaigns">,
-							})
+							// Show modal immediately
+							setIsProgressModalOpen(true)
+							try {
+								const jobId = await collapseHistory({
+									campaignId: campaignId as Id<"campaigns">,
+								})
+								setProgressJobId(jobId)
+							} catch (error) {
+								console.error("Failed to collapse history:", error)
+								setIsProgressModalOpen(false)
+							}
 						}}
 					>
 						<BetweenHorizontalStart />
@@ -173,6 +187,20 @@ export const ChatExtraActions: React.FC = () => {
 					onClose={() => setIsPromptAnalysisOpen(false)}
 				/>
 			)}
+
+			<ProgressModal
+				isOpen={isProgressModalOpen}
+				jobId={progressJobId}
+				onClose={async () => {
+					if (progressJobId) {
+						await deleteJob({ jobId: progressJobId })
+					}
+					setProgressJobId(null)
+					setIsProgressModalOpen(false)
+				}}
+				title="Collapsing History"
+				description="Breaking your chat history into chapters and creating summaries"
+			/>
 		</>
 	)
 }
