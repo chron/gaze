@@ -295,17 +295,23 @@ export const updateClock = mutation({
 		)
 
 		if (existingClock) {
-			const newClocks = (campaign.clocks ?? []).map((clock) => {
-				if (clock.name === args.name) {
-					return {
-						name: args.name,
-						currentTicks: args.currentTicks,
-						maxTicks: args.maxTicks,
-						hint: args.hint,
+			const newClocks = (campaign.clocks ?? [])
+				.map((clock) => {
+					if (clock.name === args.name) {
+						if (args.currentTicks >= args.maxTicks) {
+							return null
+						}
+
+						return {
+							name: args.name,
+							currentTicks: args.currentTicks,
+							maxTicks: args.maxTicks,
+							hint: args.hint,
+						}
 					}
-				}
-				return clock
-			})
+					return clock
+				})
+				.filter((clock) => clock !== null)
 
 			await ctx.db.patch(args.campaignId, {
 				clocks: newClocks,

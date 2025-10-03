@@ -59,6 +59,7 @@ export type PromptBreakdown = {
 		currentContext: {
 			plan: number
 			questLog: number
+			activeClocks: number
 			characters: number
 			characterSheet: number
 			missingCharacters: number
@@ -445,6 +446,14 @@ export const currentGameContext = async (
 		)
 		.join("\n")
 
+	const formattedClocks = campaign.clocks
+		?.filter((clock) => clock.currentTicks < clock.maxTicks)
+		.map(
+			(clock) =>
+				`- <clock_name>${clock.name}</clock_name> <clock_current_ticks>${clock.currentTicks}</clock_current_ticks> <clock_max_ticks>${clock.maxTicks}</clock_max_ticks> <clock_hint>${clock.hint}</clock_hint>`,
+		)
+		.join("\n")
+
 	// Build individual parts with character counts
 	let planText = ""
 	if (campaign.plan) {
@@ -468,6 +477,14 @@ export const currentGameContext = async (
 	} else {
 		questLogText =
 			"\n\nYou currently have no quests active. You can use the `update_quest_log` tool to create a quest for the player to track in their UI."
+	}
+
+	let activeClocksText = ""
+	if (formattedClocks) {
+		activeClocksText = `\n\nHere are the active clocks:\n\n${formattedClocks}`
+	} else {
+		activeClocksText =
+			"\n\nYou currently have no clocks active. You can use the `update_clocks` tool to create a clock for the player to track in their UI."
 	}
 
 	let charactersText = ""
@@ -494,6 +511,7 @@ export const currentGameContext = async (
 	const currentContext =
 		planText +
 		questLogText +
+		activeClocksText +
 		charactersText +
 		characterSheetText +
 		missingCharactersText
@@ -509,6 +527,7 @@ export const currentGameContext = async (
 			breakdown: {
 				plan: 0,
 				questLog: 0,
+				activeClocks: 0,
 				characters: 0,
 				characterSheet: 0,
 				missingCharacters: 0,
@@ -529,6 +548,7 @@ export const currentGameContext = async (
 		breakdown: {
 			plan: await countTokens(planText, model),
 			questLog: await countTokens(questLogText, model),
+			activeClocks: await countTokens(activeClocksText, model),
 			characters: await countTokens(charactersText, model),
 			characterSheet: await countTokens(characterSheetText, model),
 			missingCharacters: await countTokens(missingCharactersText, model),

@@ -118,21 +118,27 @@ export const PromptAnalysisModal: React.FC<Props> = ({
 					category: "Current Context",
 				},
 				{
+					label: "Active Clocks",
+					count: data.messages.currentContext.activeClocks,
+					color: "bg-green-300",
+					category: "Current Context",
+				},
+				{
 					label: "Character Sheet",
 					count: data.messages.currentContext.characterSheet,
-					color: "bg-green-300",
+					color: "bg-green-200",
 					category: "Current Context",
 				},
 				{
 					label: "Characters",
 					count: data.messages.currentContext.characters,
-					color: "bg-green-200",
+					color: "bg-green-100",
 					category: "Current Context",
 				},
 				{
 					label: "Missing Characters",
 					count: data.messages.currentContext.missingCharacters,
-					color: "bg-green-100",
+					color: "bg-green-50",
 					category: "Current Context",
 				},
 			].filter((s) => s.count > 0)

@@ -1,5 +1,5 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
-import type { Doc, Id } from "../../convex/_generated/dataModel"
+import type { Doc } from "../../convex/_generated/dataModel"
 import { CharacterIntroduction } from "./CharacterIntroduction"
 import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
 import { ChooseName } from "./ChooseName"

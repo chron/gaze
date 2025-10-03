@@ -575,15 +575,17 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		...(isToolEnabled("change_scene")
 			? { change_scene: changeScene(ctx, campaign._id, message._id) }
 			: {}),
-		...(isToolEnabled("introduce_character")
-			? {
-					introduce_character: introduceCharacter(
-						ctx,
-						message._id,
-						campaign._id,
-					),
-				}
-			: {}),
+		// ...(isToolEnabled("introduce_character")
+		// 	? {
+		// 			introduce_character: introduceCharacter(
+		// 				ctx,
+		// 				message._id,
+		// 				campaign._id,
+		// 			),
+		// 		}
+		// 	: {}),
+		// We need at least one always-on tool or the types break (cool)
+		introduce_character: introduceCharacter(ctx, message._id, campaign._id),
 		...(isToolEnabled("request_dice_roll")
 			? { request_dice_roll: requestDiceRoll(ctx, message._id) }
 			: {}),
@@ -1106,6 +1108,7 @@ export const analyzePrompt = action({
 					currentContext: {
 						plan: 0,
 						questLog: 0,
+						activeClocks: 0,
 						characters: 0,
 						characterSheet: 0,
 						missingCharacters: 0,

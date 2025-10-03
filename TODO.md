@@ -1,7 +1,5 @@
 NEXT
-- Merge tool call follow ups into a field on the original message to simplify UI and backend
 - [QUESTS] main vs sidequest?
-- [QUESTS] do something with completed / failed quests in context and UI?
 
 SPEECH
 - Different prompt for user messages that gets char info from the character sheet
@@ -38,11 +36,10 @@ OTHER STUFF
 - Order campaigns in sidebar by recently updated, show a subset (5?) with a link to view more
 - Editing previous messages (UI is done, but need to actually save the changes)
 - "End of session" tool that adds a summary to the UI somewhere?
-- z.describe("...") for tool params
 - edit character descriptions (and prompt? maybe an expandable section for it?)
 - when tool message is the last message it prevents the usage info from showing
 - Two scene changes in one message end up with the same image
-- followupToolBlock doesn't work well with multi tool calls, e.g. a name request + char sheet update
+- Clear old clocks
 
 PROMPT THINGS
 
@@ -86,3 +83,7 @@ DONE
 - quest log tool + storage + prompt + UI
 - Have it present choices/options as clickable links for no-typing response
 - Tidy up old images from convex storage before regenerating
+- followupToolBlock doesn't work well with multi tool calls, e.g. a name request + char sheet update
+- Merge tool call follow ups into a field on the original message to simplify UI and backend
+- [QUESTS] do something with completed / failed quests in context and UI?
+- z.describe("...") for tool params

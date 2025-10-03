@@ -78,12 +78,6 @@ export const ClockUpdate: React.FC<Props> = ({ parameters }) => {
 				</div>
 
 				{parameters.hint && <p className="text-xs italic">{parameters.hint}</p>}
-
-				{isFull && (
-					<p className="text-xs font-semibold">
-						⚠️ The clock is full! Something significant is about to happen.
-					</p>
-				)}
 			</div>
 		</div>
 	)
