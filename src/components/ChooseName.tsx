@@ -1,4 +1,3 @@
-import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { useMutation } from "convex/react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
@@ -14,7 +13,6 @@ type ChooseNameProps = {
 		description: string
 		suggestedNames: string[]
 	}
-	setStreamId: (streamId: StreamId) => void
 	toolResult: NonNullable<Doc<"messages">["toolResults"]>[number] | null
 }
 
@@ -22,7 +20,6 @@ export const ChooseName: React.FC<ChooseNameProps> = ({
 	messageId,
 	toolCallIndex,
 	parameters,
-	setStreamId,
 	toolResult,
 }) => {
 	const [isPending, setIsPending] = useState(false)
@@ -32,8 +29,16 @@ export const ChooseName: React.FC<ChooseNameProps> = ({
 
 	if (toolResult) {
 		return (
-			<div className="rounded-md border border-gray-200 bg-teal-600 text-white p-2">
-				Name chosen: {toolResult.result.name}
+			<div className="rounded-md border border-teal-200 bg-teal-50 p-3">
+				<div className="flex items-center gap-2">
+					<span className="text-teal-700 font-medium">✓ Name chosen:</span>
+					<span className="text-teal-900">{toolResult.result.name}</span>
+				</div>
+				{toolResult.result.otherDetails && (
+					<div className="mt-1 text-sm text-gray-600">
+						{toolResult.result.otherDetails}
+					</div>
+				)}
 			</div>
 		)
 	}
@@ -41,18 +46,14 @@ export const ChooseName: React.FC<ChooseNameProps> = ({
 	const handleChooseName = async (name: string) => {
 		if (isPending) return
 
-		console.log(toolCallIndex)
-
 		setIsPending(true)
 		try {
-			const { streamId } = await performUserChooseName({
+			await performUserChooseName({
 				messageId,
 				toolCallIndex,
 				chosenName: name,
 				otherDetails,
 			})
-
-			setStreamId(streamId)
 		} catch (error) {
 			console.error("Failed to choose name:", error)
 		} finally {

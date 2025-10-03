@@ -40,6 +40,7 @@ OTHER STUFF
 - when tool message is the last message it prevents the usage info from showing
 - Two scene changes in one message end up with the same image
 - Clear old clocks
+- change clock display to cooool segments
 
 PROMPT THINGS
 

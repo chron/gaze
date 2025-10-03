@@ -485,10 +485,7 @@ export const performUserChooseName = mutation({
 		chosenName: v.string(),
 		otherDetails: v.optional(v.string()),
 	},
-	handler: async (
-		ctx,
-		args,
-	): Promise<{ streamId: StreamId; chosenName: string }> => {
+	handler: async (ctx, args): Promise<{ chosenName: string }> => {
 		const message = await ctx.db.get(args.messageId)
 		if (!message) throw new Error("Message not found")
 
@@ -517,14 +514,7 @@ export const performUserChooseName = mutation({
 			],
 		})
 
-		const { streamId } = await ctx.runMutation(
-			api.messages.addAssistantMessage,
-			{
-				campaignId: message.campaignId,
-			},
-		)
-
-		return { streamId, chosenName: args.chosenName }
+		return { chosenName: args.chosenName }
 	},
 })
 

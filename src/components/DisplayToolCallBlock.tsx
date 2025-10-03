@@ -75,7 +75,6 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 					}
 				}
 				toolResult={toolResult ?? null}
-				setStreamId={setStreamId}
 			/>
 		)
 	}
