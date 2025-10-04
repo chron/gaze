@@ -1,3 +1,5 @@
+import type { Doc } from "./_generated/dataModel"
+
 export const googleSafetySettings = {
 	safetySettings: [
 		{
@@ -21,4 +23,9 @@ export const googleSafetySettings = {
 			threshold: "BLOCK_NONE" as const,
 		},
 	],
+}
+
+export const isToolEnabled = (toolName: string, campaign: Doc<"campaigns">) => {
+	if (!campaign.enabledTools) return true
+	return campaign.enabledTools[toolName] ?? true
 }

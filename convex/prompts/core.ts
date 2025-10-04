@@ -12,6 +12,7 @@ import { compact } from "../../src/utils/compact"
 import { api, internal } from "../_generated/api"
 import type { Doc, Id } from "../_generated/dataModel"
 import type { ActionCtx } from "../_generated/server"
+import { isToolEnabled } from "../utils"
 import systemPrompt from "./system"
 
 // Helper to count tokens using Google's API
@@ -480,11 +481,13 @@ export const currentGameContext = async (
 	}
 
 	let activeClocksText = ""
-	if (formattedClocks) {
-		activeClocksText = `\n\nHere are the active clocks:\n\n${formattedClocks}`
-	} else {
-		activeClocksText =
-			"\n\nYou currently have no clocks active. You can use the `update_clocks` tool to create a clock for the player to track in their UI."
+	if (isToolEnabled("update_clocks", campaign)) {
+		if (formattedClocks) {
+			activeClocksText = `\n\nHere are the active clocks:\n\n${formattedClocks}`
+		} else {
+			activeClocksText =
+				"\n\nYou currently have no clocks active. You can use the `update_clocks` tool to create a clock for the player to track in their UI."
+		}
 	}
 
 	let charactersText = ""

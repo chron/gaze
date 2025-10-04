@@ -47,7 +47,7 @@ import { updateCharacterSheet } from "./tools/updateCharacterSheet"
 import { updateClock } from "./tools/updateClock"
 import { updatePlan } from "./tools/updatePlan"
 import { updateQuestLog } from "./tools/updateQuestLog"
-import { googleSafetySettings } from "./utils"
+import { googleSafetySettings, isToolEnabled } from "./utils"
 
 type ArrayElement<ArrayType extends readonly unknown[]> =
 	ArrayType extends readonly (infer ElementType)[] ? ElementType : never
@@ -551,18 +551,12 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		},
 	})
 
-	// Helper function to check if a tool is enabled (enabled by default)
-	const isToolEnabled = (toolName: string): boolean => {
-		if (!campaign.enabledTools) return true
-		return campaign.enabledTools[toolName] ?? true
-	}
-
 	// Build tools object with only enabled tools
 	const allTools = {
-		...(isToolEnabled("update_character_sheet")
+		...(isToolEnabled("update_character_sheet", campaign)
 			? { update_character_sheet: updateCharacterSheet(ctx, campaign._id) }
 			: {}),
-		...(isToolEnabled("change_scene")
+		...(isToolEnabled("change_scene", campaign)
 			? { change_scene: changeScene(ctx, campaign._id, message._id) }
 			: {}),
 		// ...(isToolEnabled("introduce_character")
@@ -576,20 +570,22 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		// 	: {}),
 		// We need at least one always-on tool or the types break (cool)
 		introduce_character: introduceCharacter(ctx, message._id, campaign._id),
-		...(isToolEnabled("request_dice_roll")
+		...(isToolEnabled("request_dice_roll", campaign)
 			? { request_dice_roll: requestDiceRoll(ctx, message._id) }
 			: {}),
-		...(isToolEnabled("update_plan")
+		...(isToolEnabled("update_plan", campaign)
 			? { update_plan: updatePlan(ctx, message._id, campaign._id) }
 			: {}),
-		...(isToolEnabled("update_quest_log")
+		...(isToolEnabled("update_quest_log", campaign)
 			? { update_quest_log: updateQuestLog(ctx, campaign._id) }
 			: {}),
-		...(isToolEnabled("update_clock")
+		...(isToolEnabled("update_clock", campaign)
 			? { update_clock: updateClock(ctx, campaign._id) }
 			: {}),
-		...(isToolEnabled("choose_name") ? { choose_name: chooseName() } : {}),
-		...(campaign.name === "" && isToolEnabled("set_campaign_info")
+		...(isToolEnabled("choose_name", campaign)
+			? { choose_name: chooseName() }
+			: {}),
+		...(campaign.name === "" && isToolEnabled("set_campaign_info", campaign)
 			? {
 					set_campaign_info: setCampaignInfo(ctx, campaign._id),
 				}
