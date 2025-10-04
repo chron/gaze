@@ -1,7 +1,7 @@
 import { google } from "@ai-sdk/google"
-import { generateText, tool } from "ai"
+import { generateObject, generateText, tool } from "ai"
 import { v } from "convex/values"
-import z from "zod"
+import { z } from "zod"
 import { api, internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
 import { action, internalMutation, internalQuery } from "./_generated/server"
@@ -119,29 +119,22 @@ export const collapseHistory = action({
 					}
 				})
 
-			const { response, toolCalls } = await generateText({
+			const chaptersSchema = z.object({
+				chapters: z.array(
+					z.object({
+						summary: z.string(),
+						startMessageIndex: z.number(),
+						endMessageIndex: z.number(),
+						characters: z.array(z.string()),
+					}),
+				),
+			})
+
+			const { object } = await generateObject({
 				system: prompt,
 				model: google("gemini-2.5-flash"),
 				messages: formattedMessages,
-				toolChoice: {
-					type: "tool",
-					toolName: "chapters",
-				},
-				tools: {
-					chapters: tool({
-						description: "A list of chapters in the story",
-						parameters: z.object({
-							chapters: z.array(
-								z.object({
-									summary: z.string(),
-									startMessageIndex: z.number(),
-									endMessageIndex: z.number(),
-									characters: z.array(z.string()),
-								}),
-							),
-						}),
-					}),
-				},
+				schema: chaptersSchema,
 			})
 
 			await ctx.runMutation(api.jobProgress.updateStep, {
@@ -150,7 +143,7 @@ export const collapseHistory = action({
 				status: "completed",
 			})
 
-			const chapters = toolCalls[0].args.chapters
+			const chapters = object.chapters
 
 			// Create steps for each chapter summary (ignore the last one as it might be in progress)
 			const chaptersToProcess = chapters.slice(0, -1)

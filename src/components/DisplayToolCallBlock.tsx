@@ -16,7 +16,8 @@ type Props = {
 	block: {
 		toolName: string
 		toolCallId: string
-		args: Record<string, unknown>
+		args: Record<string, unknown> // Can be 'args' (old) or from streaming
+		input?: Record<string, unknown> // Can be 'input' (new stored format)
 	}
 	setStreamId: (streamId: StreamId) => void
 	toolCallIndex: number
@@ -32,13 +33,16 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 		(tr) => tr.toolCallId === block.toolCallId,
 	)
 
+	// Support both 'args' (old/streaming) and 'input' (new stored format)
+	const params = (block.input ?? block.args) as Record<string, unknown>
+
 	if (block.toolName === "change_scene") {
 		return (
 			<SceneChange
 				key={`scene-${block.toolCallId}`}
 				messageId={message._id}
 				scene={message.scene}
-				description={block.args.description as string}
+				description={params.description as string}
 			/>
 		)
 	}
@@ -50,7 +54,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 				messageId={message._id}
 				toolCallIndex={toolCallIndex}
 				parameters={
-					block.args as {
+					params as {
 						number: number
 						faces: number
 						bonus: number
@@ -69,7 +73,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 				messageId={message._id}
 				toolCallIndex={toolCallIndex}
 				parameters={
-					block.args as {
+					params as {
 						description: string
 						suggestedNames: string[]
 					}
@@ -84,7 +88,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 			<CharacterSheetUpdate
 				key={`character-sheet-${block.toolCallId}`}
 				parameters={
-					block.args as {
+					params as {
 						name: string
 						description: string
 						data: Record<string, unknown>
@@ -98,7 +102,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 		return (
 			<CharacterIntroduction
 				key={`character-introduction-${block.toolCallId}`}
-				parameters={block.args as { name: string; description: string }}
+				parameters={params as { name: string; description: string }}
 			/>
 		)
 	}
@@ -107,7 +111,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 		return (
 			<PlanUpdate
 				key={`plan-update-${block.toolCallId}`}
-				parameters={block.args as { plan: string }}
+				parameters={params as { plan: string }}
 			/>
 		)
 	}
@@ -117,7 +121,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 			<QuestUpdate
 				key={`quest-update-${block.toolCallId}`}
 				parameters={
-					block.args as {
+					params as {
 						quest_title: string
 						objective_description: string
 						action: "add" | "update_objective" | "complete" | "fail"
@@ -132,7 +136,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 			<ClockUpdate
 				key={`clock-update-${block.toolCallId}`}
 				parameters={
-					block.args as {
+					params as {
 						name: string
 						current_ticks: number
 						max_ticks: number
@@ -148,7 +152,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 			<SetCampaignInfo
 				key={`set-campaign-info-${block.toolCallId}`}
 				parameters={
-					block.args as {
+					params as {
 						name: string
 						description: string
 						imagePrompt: string
@@ -160,7 +164,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 
 	return (
 		<UnknownToolCall
-			parameters={block.args}
+			parameters={params}
 			key={`unknown-tool-call-${block.toolName}`}
 		/>
 	)

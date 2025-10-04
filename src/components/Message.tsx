@@ -33,7 +33,7 @@ export const Message: React.FC<Props> = ({
 	isStreaming,
 	scrollToBottom,
 }) => {
-	const { steps, reasoning } = useStructuredStream(
+	const { steps, reasoningText } = useStructuredStream(
 		isStreaming,
 		message.streamId as StreamId,
 	)
@@ -53,12 +53,14 @@ export const Message: React.FC<Props> = ({
 
 	const noStreamingContent =
 		steps.length === 0 ||
-		(steps.length === 1 && steps[0].text === "" && steps[0].reasoning === "")
+		(steps.length === 1 &&
+			steps[0].text === "" &&
+			steps[0].reasoningText === "")
 
 	const noContent = noDatabaseContent && noStreamingContent
 
 	const combinedReasoning = noDatabaseContent
-		? reasoning
+		? reasoningText
 		: message.content.reduce((acc, block) => {
 				if (block.type === "reasoning") {
 					return acc + block.text
@@ -209,7 +211,10 @@ export const Message: React.FC<Props> = ({
 							return (
 								<DisplayToolCallBlock
 									key={`${message._id}-${index}-tool-call-${block.toolCallId}`}
-									block={block}
+									block={{
+										...block,
+										args: (block as any).input ?? (block as any).args,
+									}}
 									message={message}
 									toolCallIndex={index}
 									setStreamId={setStreamId}

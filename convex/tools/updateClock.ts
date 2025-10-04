@@ -1,6 +1,6 @@
 import { tool } from "ai"
 import type { GenericActionCtx } from "convex/server"
-import z from "zod"
+import { z } from "zod"
 import { api } from "../_generated/api"
 import type { DataModel, Id } from "../_generated/dataModel"
 
@@ -11,7 +11,7 @@ export const updateClock = (
 	tool({
 		description:
 			"Updates a progress clock in the campaign. Clocks are circular trackers divided into segments that fill up over time as certain events occur in the story. Use this to track tension, countdowns, or progress towards story events. When a clock fills up (currentTicks reaches maxTicks), the hinted event should occur.",
-		parameters: z.object({
+		inputSchema: z.object({
 			name: z.string().describe("The unique name of the clock to update"),
 			current_ticks: z
 				.number()

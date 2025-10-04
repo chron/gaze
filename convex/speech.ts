@@ -1,6 +1,5 @@
 import { google } from "@ai-sdk/google"
-import { openrouter } from "@openrouter/ai-sdk-provider"
-import { generateText, tool } from "ai"
+import { generateObject, generateText, tool } from "ai"
 import { v } from "convex/values"
 import { HumeClient } from "hume"
 import { z } from "zod"
@@ -55,45 +54,44 @@ export const generateAudioForMessage = action({
 		${characterSheet ? `The protagonist of the game is: ${characterSheet.name}` : ""}
 
     The message to be split up is:
-    `
+`
 
-		const { toolCalls } = await generateText({
+		const utterancesSchema = z.object({
+			utterances: z.array(
+				z.object({
+					text: z.string(),
+					character: z.string(),
+					instructions: z.string(),
+				}),
+			),
+		})
+
+		const { object } = await generateObject({
 			system: prompt,
 			model: google("gemini-2.5-flash"),
 			messages: [
 				{
 					role: "user",
-					content: message.content
-						.map((c) => {
-							if (c.type === "text") {
-								return c.text
-							}
-							return ""
-						})
-						.join("\n\n"),
+					content: [
+						{
+							type: "text",
+
+							text: message.content
+								.map((c) => {
+									if (c.type === "text") {
+										return c.text
+									}
+									return ""
+								})
+								.join("\n\n"),
+						},
+					],
 				},
 			],
-			toolChoice: {
-				type: "tool",
-				toolName: "utterances",
-			},
-			tools: {
-				utterances: tool({
-					description: "A list of utterances",
-					parameters: z.object({
-						utterances: z.array(
-							z.object({
-								text: z.string(),
-								character: z.string(),
-								instructions: z.string(),
-							}),
-						),
-					}),
-				}),
-			},
+			schema: utterancesSchema,
 		})
 
-		const utterances = toolCalls[0].args.utterances
+		const utterances = object.utterances
 
 		const storageIds = []
 

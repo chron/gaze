@@ -1,6 +1,6 @@
 import { tool } from "ai"
 import type { GenericActionCtx } from "convex/server"
-import z from "zod"
+import { z } from "zod"
 import { api } from "../_generated/api"
 import type { DataModel, Id } from "../_generated/dataModel"
 
@@ -12,7 +12,7 @@ export const changeScene = (
 	tool({
 		description:
 			"Whenever the scene changes, use this tool to describe the new scene. The description will be shown to the player, and the prompt will be given to an AI to generate an image. You must also provide a list of which of the known characters are active in the scene. If you have follow-up narration or prompts, there will be a chance to add that after the tool call.",
-		parameters: z.object({
+		inputSchema: z.object({
 			description: z
 				.string()
 				.describe("A description of the scene, to display to the user."),

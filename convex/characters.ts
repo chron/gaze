@@ -28,7 +28,7 @@ export const generateImageForModel = async (
 	}
 
 	if (modelString === "gemini-2.5-flash-image") {
-		const { files, providerMetadata } = await generateText({
+		const { files } = await generateText({
 			model: google("gemini-2.5-flash-image-preview"),
 			providerOptions: {
 				google: {
@@ -39,12 +39,10 @@ export const generateImageForModel = async (
 			prompt,
 		})
 
-		console.log("Generated image!", providerMetadata)
-
 		const filesToReturn: GeneratedFile[] = []
 
 		for (const file of files) {
-			if (file.mimeType.startsWith("image/")) {
+			if (file.mediaType.startsWith("image/")) {
 				filesToReturn.push(file)
 			}
 		}
@@ -182,8 +180,10 @@ export const generateImageForCharacter = action({
 		const images = await generateImageForModel(prompt, campaign.imageModel)
 
 		for (const file of images) {
-			if (file.mimeType.startsWith("image/")) {
-				const blob = new Blob([file.uint8Array], { type: file.mimeType })
+			if (file.mediaType.startsWith("image/")) {
+				const blob = new Blob([file.uint8Array as BlobPart], {
+					type: file.mediaType,
+				})
 				const storageId = await ctx.storage.store(blob)
 				await ctx.runMutation(api.characters.storeImageForCharacter, {
 					characterId: args.characterId,

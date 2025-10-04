@@ -7,16 +7,10 @@ import {
 	type StreamId,
 	StreamIdValidator,
 } from "@convex-dev/persistent-text-streaming"
-import { GoogleGenAI } from "@google/genai"
 import { createOpenRouter, openrouter } from "@openrouter/ai-sdk-provider"
 import {
 	type AssistantContent,
-	type CoreAssistantMessage,
-	type CoreMessage,
-	type CoreToolMessage,
-	type CoreUserMessage,
-	type FilePart,
-	embed,
+	type ModelMessage,
 	experimental_generateImage as generateImage,
 	generateText,
 	streamText,
@@ -24,9 +18,7 @@ import {
 import { paginationOptsValidator } from "convex/server"
 import { v } from "convex/values"
 import models from "../src/models.json"
-import { compact } from "../src/utils/compact"
 import { api, components, internal } from "./_generated/api"
-import type { Doc, Id } from "./_generated/dataModel"
 import {
 	action,
 	httpAction,
@@ -37,7 +29,6 @@ import {
 } from "./_generated/server"
 import { generateImageForModel } from "./characters"
 import { mainChatPrompt } from "./prompts/core"
-import systemPrompt from "./prompts/system"
 import { changeScene } from "./tools/changeScene"
 import { introduceCharacter } from "./tools/introduceCharacter"
 import { chooseName } from "./tools/nameCharacter"
@@ -173,8 +164,9 @@ export const update = mutation({
 				v.object({
 					type: v.literal("tool-call"),
 					toolName: v.string(),
-					args: v.any(),
 					toolCallId: v.string(),
+					// v5 uses 'input'
+					input: v.any(),
 				}),
 				// v.object({
 				// 	type: v.literal("tool-result"),
@@ -393,7 +385,9 @@ export const appendReasoning = mutation({
 		if (!message) throw new Error("Message not found")
 
 		await ctx.db.patch(args.messageId, {
-			reasoning: message.reasoning ? message.reasoning + args.text : args.text,
+			reasoningText: message.reasoningText
+				? message.reasoningText + args.text
+				: args.text,
 		})
 	},
 })
@@ -414,8 +408,8 @@ export const addUsageToMessage = mutation({
 	args: {
 		messageId: v.id("messages"),
 		usage: v.object({
-			promptTokens: v.number(),
-			completionTokens: v.number(),
+			inputTokens: v.number(),
+			outputTokens: v.number(),
 		}),
 	},
 	handler: async (ctx, args) => {
@@ -596,19 +590,18 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		system: prompt,
 		temperature: 1.1, //0.7,
 		model: campaign.model.startsWith("google")
-			? google(campaign.model.split("/")[1], {
-					...googleSafetySettings,
-				})
+			? google(campaign.model.split("/")[1])
 			: campaign.model.startsWith("anthropic")
 				? anthropic("claude-sonnet-4-20250514") // Temporarily hardcoded for testing
 				: campaign.model.startsWith("moonshotai")
 					? groq(campaign.model)
 					: campaign.model.startsWith("openai")
 						? openai(campaign.model.split("/")[1])
-						: openrouter(campaign.model, {}),
+						: openrouter(campaign.model),
 		providerOptions: {
 			google: {
 				// thinkingConfig: { thinkingBudget: 1024, includeThoughts: true },
+				...googleSafetySettings,
 				responseModalities: ["TEXT"],
 			} satisfies GoogleGenerativeAIProviderOptions,
 			openrouter: {
@@ -626,8 +619,8 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		messages: formattedMessages,
 		// maxSteps: 10,
 		tools: modelCanUseTools ? allTools : undefined,
-		onError: async (error) => {
-			console.log("onError", error)
+		onError: async ({ error }) => {
+			console.error("onError", error)
 
 			await ctx.runMutation(api.messages.addError, {
 				messageId: message._id,
@@ -662,7 +655,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 									type: "tool-call",
 									toolName: block.toolName,
 									toolCallId: block.toolCallId,
-									args: block.args,
+									input: block.input,
 								})
 							}
 						}
@@ -672,7 +665,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 			await ctx.runMutation(api.messages.update, {
 				messageId: message._id,
-				content: allContent,
+				content: allContent as any, // Type mismatch between AI SDK types and stored content
 			})
 		},
 	})
@@ -693,13 +686,13 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 			let lastReasoningDelta: string | null = null
 
 			for await (const chunk of fullStream) {
-				if (chunk.type === "reasoning") {
-					if (chunk.textDelta && chunk.textDelta !== lastReasoningDelta) {
-						lastReasoningDelta = chunk.textDelta
+				if (chunk.type === "reasoning-delta") {
+					if (chunk.text && chunk.text !== lastReasoningDelta) {
+						lastReasoningDelta = chunk.text
 						chunkAppender(
 							`${JSON.stringify({
 								type: "reasoning",
-								delta: chunk.textDelta,
+								delta: chunk.text,
 							})}\n`,
 						)
 					}
@@ -707,7 +700,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 					chunkAppender(
 						`${JSON.stringify({
 							type: "text",
-							delta: chunk.textDelta,
+							delta: chunk.text,
 						})}\n`,
 					)
 				} else if (chunk.type === "tool-call") {
@@ -716,7 +709,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 							type: "tool-call",
 							toolName: chunk.toolName,
 							toolCallId: chunk.toolCallId,
-							args: chunk.args,
+							args: chunk.input,
 						})}\n`,
 					)
 				} else if (chunk.type === "tool-result") {
@@ -724,40 +717,21 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						type: "tool-result",
 						toolCallId: chunk.toolCallId,
 						toolName: chunk.toolName,
-						result: chunk.result,
+						result: chunk.output,
 					})
 					chunkAppender(
 						`${JSON.stringify({
 							type: "tool-result",
 							toolCallId: chunk.toolCallId,
-							result: chunk.result,
-						})}\n`,
-					)
-				} else if (chunk.type === "step-start") {
-					// New step -> reset dedupe window
-					lastReasoningDelta = null
-					chunkAppender(
-						`${JSON.stringify({
-							type: "step-start",
-							messageId: chunk.messageId,
-						})}\n`,
-					)
-				} else if (chunk.type === "step-finish") {
-					chunkAppender(
-						`${JSON.stringify({
-							type: "step-finish",
-							messageId: chunk.messageId,
-							finishReason: chunk.finishReason,
-							usage: chunk.usage,
-							isContinued: chunk.isContinued,
+							result: chunk.output,
 						})}\n`,
 					)
 				} else if (chunk.type === "finish") {
 					await ctx.scheduler.runAfter(1000, api.messages.addUsageToMessage, {
 						messageId: message._id,
 						usage: {
-							promptTokens: chunk.usage.promptTokens,
-							completionTokens: chunk.usage.completionTokens,
+							inputTokens: chunk.totalUsage.inputTokens ?? 0,
+							outputTokens: chunk.totalUsage.outputTokens ?? 0,
 						},
 					})
 				}
@@ -792,13 +766,13 @@ export const summarizeChatHistory = action({
 		const prompt =
 			"You are an expert game master, compiling notes from a RPG session. Summarize the following transcript:"
 
-		const formattedMessages: CoreMessage[] = messages
+		const formattedMessages = messages
 			.map((msg) => {
 				if (msg.role === "user") {
 					return {
-						role: "user",
+						role: "user" as const,
 						content: msg.content.filter((block) => block.type === "text"),
-					} satisfies CoreUserMessage
+					}
 				}
 
 				if (msg.role === "tool") {
@@ -807,14 +781,14 @@ export const summarizeChatHistory = action({
 				}
 
 				return {
-					role: "assistant",
+					role: "assistant" as const,
 					content: msg.content.filter(
 						// Remove tool calls and reasoning
 						(block) => block.type === "text",
 					),
-				} satisfies CoreAssistantMessage
+				}
 			})
-			.filter((m) => m !== null)
+			.filter((m) => m !== null) as ModelMessage[]
 
 		const { text, response } = await generateText({
 			system: prompt,
@@ -823,7 +797,12 @@ export const summarizeChatHistory = action({
 				...formattedMessages,
 				{
 					role: "user",
-					content: "Summarize the storyline so far.",
+					content: [
+						{
+							type: "text",
+							text: "Summarize the storyline so far.",
+						},
+					],
 				},
 			],
 		})
@@ -856,13 +835,13 @@ export const chatWithHistory = action({
 		const prompt =
 			"You are an expert game master, answering questions about a transcript of an RPG session."
 
-		const formattedMessages: CoreMessage[] = messages
+		const formattedMessages: ModelMessage[] = messages
 			.map((msg) => {
 				if (msg.role === "user") {
 					return {
 						role: "user",
 						content: msg.content.filter((block) => block.type === "text"),
-					} satisfies CoreUserMessage
+					}
 				}
 
 				if (msg.role === "tool") {
@@ -871,14 +850,14 @@ export const chatWithHistory = action({
 				}
 
 				return {
-					role: "assistant",
+					role: "assistant" as const,
 					content: msg.content.filter(
 						// Remove tool calls and reasoning
 						(block) => block.type === "text",
 					),
-				} satisfies CoreAssistantMessage
+				}
 			})
-			.filter((m) => m !== null)
+			.filter((m) => m !== null) as ModelMessage[]
 
 		const { text } = await generateText({
 			system: prompt,
@@ -887,7 +866,12 @@ export const chatWithHistory = action({
 				...formattedMessages,
 				{
 					role: "user",
-					content: `The user's question is: ${args.question}`,
+					content: [
+						{
+							type: "text",
+							text: `The user's question is: ${args.question}`,
+						},
+					],
 				},
 			],
 		})
@@ -990,8 +974,8 @@ export const generateSceneImage = action({
 		const images = await generateImageForModel(prompt, campaign.imageModel)
 
 		for (const file of images) {
-			if (file.mimeType.startsWith("image/")) {
-				const blob = new Blob([file.uint8Array], { type: file.mimeType })
+			if (file.mediaType.startsWith("image/")) {
+				const blob = new Blob([file.uint8Array], { type: file.mediaType })
 				const storageId = await ctx.storage.store(blob)
 				await ctx.runMutation(api.messages.storeSceneImage, {
 					messageId: args.messageId,

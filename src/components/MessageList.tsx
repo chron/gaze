@@ -92,14 +92,14 @@ export const MessageList: React.FC<Props> = ({
 	}
 
 	return (
-		<div
+        <div
 			className="flex-1 flex flex-col justify-end gap-4 min-h-0 py-4 px-4"
 			// style={{
 			// 	// CSS scroll anchoring - keeps scroll position at bottom as content grows
 			// 	overflowAnchor: "none",
 			// }}
 		>
-			{status === "CanLoadMore" && (
+            {status === "CanLoadMore" && (
 				<Button
 					variant="outline"
 					size="sm"
@@ -121,8 +121,7 @@ export const MessageList: React.FC<Props> = ({
 					Load more
 				</Button>
 			)}
-
-			<div
+            <div
 				className="messages-container flex flex-col gap-4"
 				// style={{
 				// 	// Enable scroll anchoring for the messages container
@@ -146,16 +145,15 @@ export const MessageList: React.FC<Props> = ({
 				{/* Invisible element to anchor scrolling */}
 				{/* <div ref={messagesEndRef} style={{ overflowAnchor: "auto" }} /> */}
 			</div>
-
-			{usage && (
+            {usage && (
 				<div className="text-sm text-gray-200">
-					{usage.promptTokens} input tokens
-					{Number.isNaN(usage.completionTokens)
+					{usage.inputTokens} input tokens
+					{Number.isNaN(usage.outputTokens)
 						? ""
-						: `, ${usage.completionTokens} output tokens`}
+						: `, ${usage.outputTokens} output tokens`}
 					{/* (total: {totalTokens?.promptTokens} input +{" "} {totalTokens?.completionTokens} output) */}
 				</div>
 			)}
-		</div>
-	)
+        </div>
+    );
 }

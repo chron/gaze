@@ -84,7 +84,9 @@ export default defineSchema(
 						type: v.literal("tool-call"),
 						toolName: v.string(),
 						toolCallId: v.string(),
-						args: v.any(),
+						// v5 uses 'input', but we keep 'args' for backwards compat
+						args: v.optional(v.any()),
+						input: v.optional(v.any()),
 					}),
 					v.object({
 						type: v.literal("tool-result"),
@@ -108,7 +110,7 @@ export default defineSchema(
 				),
 			),
 			error: v.optional(v.string()),
-			reasoning: v.optional(v.string()),
+			reasoningText: v.optional(v.string()),
 			scene: v.optional(
 				v.object({
 					description: v.string(),
@@ -122,8 +124,8 @@ export default defineSchema(
 			summaryId: v.optional(v.id("summaries")),
 			usage: v.optional(
 				v.object({
-					promptTokens: v.number(),
-					completionTokens: v.number(),
+					inputTokens: v.number(),
+					outputTokens: v.number(),
 				}),
 			),
 		})

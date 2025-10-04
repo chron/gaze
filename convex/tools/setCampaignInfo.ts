@@ -1,6 +1,6 @@
 import { tool } from "ai"
 import type { GenericActionCtx } from "convex/server"
-import z from "zod"
+import { z } from "zod"
 import { api } from "../_generated/api"
 import type { DataModel, Id } from "../_generated/dataModel"
 
@@ -11,7 +11,7 @@ export const setCampaignInfo = (
 	tool({
 		description:
 			"Once you have a plan for the campaign, use this tool to set a name, description, and imagePrompt.",
-		parameters: z.object({
+		inputSchema: z.object({
 			name: z
 				.string()
 				.describe(

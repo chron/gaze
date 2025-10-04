@@ -1,8 +1,8 @@
 import { google } from "@ai-sdk/google"
 import { openrouter } from "@openrouter/ai-sdk-provider"
-import { embed, generateText, tool } from "ai"
+import { embed, generateObject, generateText, tool } from "ai"
 import { v } from "convex/values"
-import z from "zod"
+import { z } from "zod"
 import { api, internal } from "./_generated/api"
 import {
 	internalAction,
@@ -106,50 +106,43 @@ export const scanForNewMemories = internalAction({
 			.filter((message) => message !== null)
 
 		// See if any memories are worth saving based on the content
-		const { toolCalls } = await generateText({
-			system: extractMemories,
-			messages: formattedMessages,
-			tools: {
-				memories: tool({
-					description:
-						"Respond with an array of memories that you have identified in the transcript.",
-					parameters: z.object({
-						memories: z.array(
-							z.object({
-								type: z.string(),
-								summary: z.string(),
-								context: z.string(),
-								tags: z.array(z.string()),
-							}),
-						),
-					}),
+		const memoriesSchema = z.object({
+			memories: z.array(
+				z.object({
+					type: z.string(),
+					summary: z.string(),
+					context: z.string(),
+					tags: z.array(z.string()),
 				}),
-			},
-			model: google("gemini-2.5-flash"),
-			toolChoice: {
-				type: "tool",
-				toolName: "memories",
-			},
+			),
 		})
 
-		for (const memoryList of toolCalls) {
-			for (const memory of memoryList.args.memories) {
-				const { embedding } = await embed({
-					model: google.textEmbeddingModel("gemini-embedding-exp-03-07", {
-						taskType: "RETRIEVAL_DOCUMENT",
-					}),
-					value: memory.summary,
-				})
+		const { object } = await generateObject({
+			system: extractMemories,
+			messages: formattedMessages,
+			schema: memoriesSchema,
+			model: google("gemini-2.5-flash"),
+		})
 
-				await ctx.runMutation(api.memories.add, {
-					campaignId: messages[0].campaignId,
-					type: memory.type,
-					summary: memory.summary,
-					context: memory.context,
-					tags: memory.tags,
-					embedding,
-				})
-			}
+		for (const memory of object.memories) {
+			const { embedding } = await embed({
+				model: google.textEmbeddingModel("gemini-embedding-exp-03-07"),
+				value: memory.summary,
+				providerOptions: {
+					google: {
+						embeddingTaskType: "RETRIEVAL_DOCUMENT",
+					},
+				},
+			})
+
+			await ctx.runMutation(api.memories.add, {
+				campaignId: messages[0].campaignId,
+				type: memory.type,
+				summary: memory.summary,
+				context: memory.context,
+				tags: memory.tags,
+				embedding,
+			})
 		}
 	},
 })

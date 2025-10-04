@@ -1,5 +1,5 @@
 import { google } from "@ai-sdk/google"
-import { type CoreMessage, type LanguageModelUsage, generateText } from "ai"
+import { type LanguageModelUsage, type ModelMessage, generateText } from "ai"
 import { v } from "convex/values"
 import { api, internal } from "./_generated/api"
 import { action, query } from "./_generated/server"
@@ -71,12 +71,11 @@ export const sumTokens = query({
 		const tokens = messages.reduce(
 			(acc, message) => {
 				return {
-					promptTokens: acc.promptTokens + (message.usage?.promptTokens ?? 0),
-					completionTokens:
-						acc.completionTokens + (message.usage?.completionTokens ?? 0),
+					inputTokens: acc.inputTokens + (message.usage?.inputTokens ?? 0),
+					outputTokens: acc.outputTokens + (message.usage?.outputTokens ?? 0),
 				}
 			},
-			{ promptTokens: 0, completionTokens: 0 },
+			{ inputTokens: 0, outputTokens: 0 },
 		)
 		return tokens
 	},
@@ -363,7 +362,7 @@ export const lookForThemesInCampaignSummaries = action({
 				return {
 					role: "user",
 					content: `## ${c.name}: ${c.description}\n\n### Summary\n\n${c.lastCampaignSummary}`,
-				} satisfies CoreMessage
+				} satisfies ModelMessage
 			})
 			.filter((m) => m !== null)
 
@@ -379,9 +378,12 @@ export const lookForThemesInCampaignSummaries = action({
 				...formattedMessages,
 				{
 					role: "user",
-					content:
-						// "What are the repeated themes across the different campaigns? Anything else interesting to note?",
-						"Given the user's preferences based on what you've seen, suggest some possible themes, settings, storylines, or other aspects for future campaigns in a similar vein.",
+					content: [
+						{
+							type: "text",
+							text: "Given the user's preferences based on what you've seen, suggest some possible themes, settings, storylines, or other aspects for future campaigns in a similar vein.", // "What are the repeated themes across the different campaigns? Anything else interesting to note?",
+						},
+					],
 				},
 			],
 		})

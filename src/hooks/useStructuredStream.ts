@@ -20,13 +20,13 @@ type StreamChunk =
 type ToolCall = {
 	toolName: string
 	toolCallId: string
-	args: unknown
+	args: unknown // Stores as 'args' in streaming
 	result?: unknown
 }
 
 type Step = {
 	stepId: string
-	reasoning: string
+	reasoningText: string
 	text: string
 	toolCalls: ToolCall[]
 	isFinished: boolean
@@ -38,12 +38,12 @@ type StructuredStreamContent = {
 }
 
 function parseStreamContent(rawText: string): StructuredStreamContent & {
-	reasoning: string
+	reasoningText: string
 } {
 	if (!rawText) {
 		return {
 			steps: [],
-			reasoning: "",
+			reasoningText: "",
 		}
 	}
 
@@ -61,7 +61,7 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 					// Start a new step
 					steps.push({
 						stepId: chunk.messageId,
-						reasoning: "",
+						reasoningText: "",
 						text: "",
 						toolCalls: [],
 						isFinished: false,
@@ -86,7 +86,7 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 					if (steps.length === 0) {
 						steps.push({
 							stepId: "default",
-							reasoning: "",
+							reasoningText: "",
 							text: "",
 							toolCalls: [],
 							isFinished: false,
@@ -95,7 +95,7 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 
 					// Add to current step
 					const currentStep = steps[steps.length - 1]
-					currentStep.reasoning += chunk.delta
+					currentStep.reasoningText += chunk.delta
 					break
 				}
 
@@ -104,7 +104,7 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 					if (steps.length === 0) {
 						steps.push({
 							stepId: "default",
-							reasoning: "",
+							reasoningText: "",
 							text: "",
 							toolCalls: [],
 							isFinished: false,
@@ -122,7 +122,7 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 					if (steps.length === 0) {
 						steps.push({
 							stepId: "default",
-							reasoning: "",
+							reasoningText: "",
 							text: "",
 							toolCalls: [],
 							isFinished: false,
@@ -175,13 +175,13 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 
 	// Provide backward compatibility by flattening all steps
 	const flattenedReasoning = steps.reduce(
-		(acc, step) => acc + step.reasoning,
+		(acc, step) => acc + step.reasoningText,
 		"",
 	)
 
 	return {
 		steps,
-		reasoning: flattenedReasoning,
+		reasoningText: flattenedReasoning,
 	}
 }
 
@@ -189,7 +189,7 @@ export const useStructuredStream = (
 	isStreaming: boolean,
 	streamId?: StreamId,
 ): StructuredStreamContent & {
-	reasoning: string
+	reasoningText: string
 	status: string
 } => {
 	const { text: rawText, status } = useStream(

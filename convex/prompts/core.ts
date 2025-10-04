@@ -1,13 +1,6 @@
 import { google } from "@ai-sdk/google"
 import { GoogleGenAI } from "@google/genai"
-import {
-	type CoreAssistantMessage,
-	type CoreMessage,
-	type CoreToolMessage,
-	type CoreUserMessage,
-	type FilePart,
-	embed,
-} from "ai"
+import { type ModelMessage, embed } from "ai"
 import { compact } from "../../src/utils/compact"
 import { api, internal } from "../_generated/api"
 import type { Doc, Id } from "../_generated/dataModel"
@@ -17,7 +10,7 @@ import systemPrompt from "./system"
 
 // Helper to count tokens using Google's API
 const countTokens = async (
-	content: string | CoreMessage[],
+	content: string | ModelMessage[],
 	model: string,
 ): Promise<number> => {
 	const ai = new GoogleGenAI({
@@ -74,7 +67,7 @@ export type PromptBreakdown = {
 export const mainChatPrompt = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
-): Promise<[string, CoreMessage[]]> => {
+): Promise<[string, ModelMessage[]]> => {
 	const { prompt } = await componseSystemPrompt(ctx, campaign)
 
 	// Intro message for a new campaign
@@ -83,18 +76,26 @@ export const mainChatPrompt = async (
 		const otherSummaries = await otherCampaignSummaries(ctx, model, false)
 		const recent = await recentMessages(ctx, campaign, false)
 		const introInstruction = {
-			role: "user",
-			content:
-				"<game_information>We have not yet locked in the campaign details. You can ask the user any questions you need to. Once you have enough information from the user, use the `set_campaign_info` tool to set the name, description, and imagePrompt.</game_information>",
-		} as const
+			role: "user" as const,
+			content: [
+				{
+					type: "text" as const,
+					text: "<game_information>We have not yet locked in the campaign details. You can ask the user any questions you need to. Once you have enough information from the user, use the `set_campaign_info` tool to set the name, description, and imagePrompt.</game_information>",
+				},
+			],
+		}
 
 		return [
 			prompt,
 			[
 				{
-					role: "user",
-					content:
-						"Here are the summaries of the other campaigns we have played together:",
+					role: "user" as const,
+					content: [
+						{
+							type: "text" as const,
+							text: "Here are the summaries of the other campaigns we have played together:",
+						},
+					],
 				},
 				...otherSummaries.messages,
 				// ...(await uploadedFiles(ctx, campaign)),
@@ -162,24 +163,27 @@ export const componseSystemPrompt = async (
 const constructMessages = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
-): Promise<CoreMessage[]> => {
+): Promise<ModelMessage[]> => {
 	const uploaded = await uploadedFiles(ctx, campaign)
 	const summaries = await messageSummaries(ctx, campaign)
 	const recent = await recentMessages(ctx, campaign)
 	const context = await currentGameContext(ctx, campaign)
-	return [
+
+	const allMessages: ModelMessage[] = [
 		...uploaded.messages,
 		...summaries.messages,
 		...recent.messages,
 		...context.messages,
 	]
+
+	return allMessages
 }
 
 export const messageSummaries = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
 	countTokensFlag = false,
-): Promise<{ messages: CoreMessage[]; charCount: number }> => {
+): Promise<{ messages: ModelMessage[]; charCount: number }> => {
 	const allSummaries = await ctx.runQuery(internal.summaries.list, {
 		campaignId: campaign._id,
 	})
@@ -189,12 +193,17 @@ export const messageSummaries = async (
 			? `Here is the summary of the previous sessions:\n\n${allSummaries.map((summary) => summary.summary).join("\n")}`
 			: ""
 
-	const messages: CoreMessage[] =
+	const messages: ModelMessage[] =
 		allSummaries.length > 0
 			? [
 					{
-						role: "user",
-						content,
+						role: "user" as const,
+						content: [
+							{
+								type: "text" as const,
+								text: content,
+							},
+						],
 					},
 				]
 			: []
@@ -215,47 +224,112 @@ export const recentMessages = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
 	countTokensFlag = false,
-): Promise<{ messages: CoreMessage[]; charCount: number }> => {
+): Promise<{ messages: ModelMessage[]; charCount: number }> => {
 	const allMessages = await ctx.runQuery(api.messages.list, {
 		campaignId: campaign._id,
 	})
 
-	const formatted: CoreMessage[] = []
+	const formatted: ModelMessage[] = []
 
 	for (const msg of allMessages.slice(0, -1)) {
 		if (msg.role === "user") {
+			const userContent = msg.content.filter((block) => block.type === "text")
+			// Skip messages with empty content (invalid in AI SDK v5)
+			if (userContent.length === 0) continue
+
 			formatted.push({
 				role: "user",
-				content: msg.content.filter((block) => block.type === "text"),
-			} satisfies CoreUserMessage)
+				content: userContent,
+			})
 			continue
 		}
 
 		if (msg.role === "tool") {
+			const toolContent = msg.content
+				.filter((block) => block.type === "tool-result")
+				.map((block) => ({
+					type: "tool-result" as const,
+					toolCallId: block.toolCallId,
+					toolName: block.toolName,
+					result: block.result,
+				}))
+
+			// Skip messages with empty content (invalid in AI SDK v5)
+			if (toolContent.length === 0) continue
+
 			formatted.push({
 				role: "tool",
-				content: msg.content.filter((block) => block.type === "tool-result"),
-			} satisfies CoreToolMessage)
+				content: toolContent as any, // Transform from stored format to AI SDK format
+			})
 			continue
 		}
 
-		// Assistant message
+		// Assistant message - convert stored 'args' to AI SDK v5 'input'
+		const assistantContent = msg.content
+			.filter((block) => block.type === "text" || block.type === "tool-call")
+			.map((block) => {
+				if (block.type === "tool-call") {
+					// Handle both old format (args) and new format (input) for backwards compat
+					return {
+						type: "tool-call" as const,
+						toolCallId: block.toolCallId,
+						toolName: block.toolName,
+						input: block.input ?? block.args, // Support both formats
+					}
+				}
+				return block
+			})
+
+		// Skip messages with empty content (invalid in AI SDK v5)
+		if (assistantContent.length === 0) continue
+
 		formatted.push({
 			role: "assistant",
-			content: msg.content.filter(
-				(block) =>
-					block.type === "text" ||
-					// See note above about reasoning
-					block.type === "tool-call",
-			),
-		} satisfies CoreAssistantMessage)
+			content: assistantContent,
+		})
 
 		// If this assistant message has toolResults, synthesize a tool message after it
 		if (msg.toolResults && msg.toolResults.length > 0) {
 			formatted.push({
 				role: "tool",
-				content: msg.toolResults,
-			} satisfies CoreToolMessage)
+				content: msg.toolResults.map((tr) => {
+					// v5 requires output to have structure: { type: 'content', value: [content parts] }
+					let output: any
+					const result = tr.result
+
+					if (typeof result === "string") {
+						// String results become text content part
+						output = {
+							type: "content",
+							value: [{ type: "text", text: result }],
+						}
+					} else if (
+						typeof result === "number" ||
+						typeof result === "boolean" ||
+						result === null ||
+						result === undefined
+					) {
+						// Other primitives get stringified
+						output = {
+							type: "content",
+							value: [{ type: "text", text: String(result) }],
+						}
+					} else {
+						// Objects/arrays get JSON-serialized
+						output = {
+							type: "content",
+							value: [{ type: "text", text: JSON.stringify(result) }],
+						}
+					}
+
+					return {
+						type: "tool-result" as const,
+						toolCallId: tr.toolCallId,
+						toolName: tr.toolName,
+						output,
+					}
+				}) as any, // Transform from stored format to AI SDK format
+			})
 		}
 	}
 
@@ -278,7 +352,7 @@ export const uploadedFiles = async (
 	campaign: Doc<"campaigns">,
 	countTokensFlag = false,
 ) => {
-	let uploadedFiles: (FilePart | null)[] = []
+	let uploadedFiles: (any | null)[] = [] // File parts from Google AI
 
 	let gameSystem: // TODO: there MUST be a way to get this type properly
 		| (Omit<Doc<"gameSystems">, "files"> & {
@@ -319,8 +393,7 @@ export const uploadedFiles = async (
 						return {
 							type: "file",
 							data: existingFile.uri || "",
-							mimeType: existingFile.mimeType || "",
-							filename: existingFile.displayName || "",
+							mediaType: existingFile.mimeType || "",
 						}
 					}
 
@@ -351,8 +424,7 @@ export const uploadedFiles = async (
 					return {
 						type: "file",
 						data: myfile.uri || "",
-						mimeType: myfile.mimeType || "",
-						filename: myfile.displayName || "",
+						mediaType: myfile.mimeType || "",
 					}
 				}),
 			)
@@ -361,12 +433,12 @@ export const uploadedFiles = async (
 			const compactedFiles = compact(uploadedFiles)
 
 			if (compactedFiles.length > 0) {
-				const messages: CoreMessage[] = [
+				const messages: ModelMessage[] = [
 					{
-						role: "user",
+						role: "user" as const,
 						content: [
 							{
-								type: "text",
+								type: "text" as const,
 								text: "Here are the files that are relevant to the game system:",
 							},
 							...compactedFiles,
@@ -523,10 +595,15 @@ export const currentGameContext = async (
 		return {
 			messages: [
 				{
-					role: "user",
-					content: `Here is the current context of the game: ${currentContext}`,
+					role: "user" as const,
+					content: [
+						{
+							type: "text" as const,
+							text: `Here is the current context of the game: ${currentContext}`,
+						},
+					],
 				},
-			] as const,
+			],
 			breakdown: {
 				plan: 0,
 				questLog: 0,
@@ -544,10 +621,15 @@ export const currentGameContext = async (
 	return {
 		messages: [
 			{
-				role: "user",
-				content: `Here is the current context of the game: ${currentContext}`,
+				role: "user" as const,
+				content: [
+					{
+						type: "text" as const,
+						text: `Here is the current context of the game: ${currentContext}`,
+					},
+				],
 			},
-		] as const,
+		],
 		breakdown: {
 			plan: await countTokens(planText, model),
 			questLog: await countTokens(questLogText, model),
@@ -563,8 +645,8 @@ export const currentGameContext = async (
 const campaignMemories = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
-	lastMessage: CoreMessage,
-): Promise<CoreMessage[]> => {
+	lastMessage: ModelMessage,
+): Promise<ModelMessage[]> => {
 	const anyMemories = await ctx.runQuery(internal.memories.count, {
 		campaignId: campaign._id,
 	})
@@ -578,9 +660,12 @@ const campaignMemories = async (
 
 	if (anyMemories > 0) {
 		const { embedding } = await embed({
-			model: google.textEmbeddingModel("gemini-embedding-exp-03-07", {
-				taskType: "RETRIEVAL_QUERY",
-			}),
+			model: google.textEmbeddingModel("gemini-embedding-exp-03-07"),
+			providerOptions: {
+				google: {
+					embeddingTaskType: "RETRIEVAL_QUERY",
+				},
+			},
 			value:
 				typeof lastMessage.content === "string"
 					? lastMessage.content
@@ -617,12 +702,17 @@ const campaignMemories = async (
 		// TOOD: maybe split these out into individual messages?
 		return [
 			{
-				role: "user",
-				content: `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
-					serializedMemories,
-				)}`,
+				role: "user" as const,
+				content: [
+					{
+						type: "text" as const,
+						text: `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
+							serializedMemories,
+						)}`,
+					},
+				],
 			},
-		] as const
+		]
 	}
 
 	return []
@@ -632,7 +722,7 @@ export const otherCampaignSummaries = async (
 	ctx: ActionCtx,
 	model: string,
 	countTokensFlag = false,
-): Promise<{ messages: CoreMessage[]; charCount: number }> => {
+): Promise<{ messages: ModelMessage[]; charCount: number }> => {
 	const allCampaigns = await ctx.runQuery(api.campaigns.list, {})
 
 	const formattedMessages = allCampaigns
@@ -642,9 +732,14 @@ export const otherCampaignSummaries = async (
 			}
 
 			return {
-				role: "user",
-				content: `## ${c.name}: ${c.description}\n\n### Summary\n\n${c.lastCampaignSummary}`,
-			} satisfies CoreMessage
+				role: "user" as const,
+				content: [
+					{
+						type: "text" as const,
+						text: `## ${c.name}: ${c.description}\n\n### Summary\n\n${c.lastCampaignSummary}`,
+					},
+				],
+			}
 		})
 		.filter((m) => m !== null)
 		.slice(-20) // Max last 20 campaigns to keep token count down
