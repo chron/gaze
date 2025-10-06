@@ -727,6 +727,8 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						})}\n`,
 					)
 				} else if (chunk.type === "finish") {
+					console.log("addUsageToMessage", chunk.totalUsage)
+
 					await ctx.scheduler.runAfter(1000, api.messages.addUsageToMessage, {
 						messageId: message._id,
 						usage: {

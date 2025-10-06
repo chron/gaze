@@ -22,8 +22,7 @@ type Props = {
 	campaignId?: Id<"campaigns"> | null
 }
 
-// Define all available tools with display names and descriptions
-const AVAILABLE_TOOLS = [
+export const AVAILABLE_TOOLS = [
 	{
 		id: "update_character_sheet",
 		name: "Update Character Sheet",

@@ -31,7 +31,7 @@ export const ChooseName: React.FC<ChooseNameProps> = ({
 		return (
 			<div className="rounded-md border border-teal-200 bg-teal-50 p-3">
 				<div className="flex items-center gap-2">
-					<span className="text-teal-700 font-medium">✓ Name chosen:</span>
+					<span className="text-teal-700">✓ Name chosen:</span>
 					<span className="text-teal-900">{toolResult.result.name}</span>
 				</div>
 				{toolResult.result.otherDetails && (

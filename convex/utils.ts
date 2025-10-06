@@ -25,7 +25,22 @@ export const googleSafetySettings = {
 	],
 }
 
-export const isToolEnabled = (toolName: string, campaign: Doc<"campaigns">) => {
+// TODO: DRY this up with the other tool definition places
+type ToolName =
+	| "update_character_sheet"
+	| "change_scene"
+	| "introduce_character"
+	| "request_dice_roll"
+	| "update_plan"
+	| "update_quest_log"
+	| "update_clock"
+	| "choose_name"
+	| "set_campaign_info"
+
+export const isToolEnabled = (
+	toolName: ToolName,
+	campaign: Doc<"campaigns">,
+) => {
 	if (!campaign.enabledTools) return true
 	return campaign.enabledTools[toolName] ?? true
 }

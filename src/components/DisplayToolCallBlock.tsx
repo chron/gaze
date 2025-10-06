@@ -165,6 +165,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 	return (
 		<UnknownToolCall
 			parameters={params}
+			toolName={block.toolName}
 			key={`unknown-tool-call-${block.toolName}`}
 		/>
 	)

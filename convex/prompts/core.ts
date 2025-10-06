@@ -470,7 +470,7 @@ export const currentGameContext = async (
 		campaignId: campaign._id,
 	})
 
-	if (!characterSheet) {
+	if (!characterSheet && isToolEnabled("update_character_sheet", campaign)) {
 		let defaultCharacterData: Record<string, unknown> = {}
 
 		if (campaign.gameSystemId) {
@@ -553,12 +553,12 @@ export const currentGameContext = async (
 	}
 
 	let activeClocksText = ""
-	if (isToolEnabled("update_clocks", campaign)) {
+	if (isToolEnabled("update_clock", campaign)) {
 		if (formattedClocks) {
 			activeClocksText = `\n\nHere are the active clocks:\n\n${formattedClocks}`
 		} else {
 			activeClocksText =
-				"\n\nYou currently have no clocks active. You can use the `update_clocks` tool to create a clock for the player to track in their UI."
+				"\n\nYou currently have no clocks active. You can use the `update_clock` tool to create a clock for the player to track in their UI."
 		}
 	}
 
@@ -742,7 +742,7 @@ export const otherCampaignSummaries = async (
 			}
 		})
 		.filter((m) => m !== null)
-		.slice(-20) // Max last 20 campaigns to keep token count down
+	// .slice(-20) // Max last 20 campaigns to keep token count down
 
 	const messages = compact(formattedMessages)
 
