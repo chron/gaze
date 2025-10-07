@@ -118,7 +118,7 @@ export const componseSystemPrompt = async (
 	const basePrompt = systemPrompt
 
 	const gameSystem = campaign.gameSystemId
-		? await ctx.runQuery(api.gameSystems.get, {
+		? await ctx.runQuery(internal.gameSystems.getInternal, {
 				id: campaign.gameSystemId,
 			})
 		: null
@@ -225,7 +225,7 @@ export const recentMessages = async (
 	campaign: Doc<"campaigns">,
 	countTokensFlag = false,
 ): Promise<{ messages: ModelMessage[]; charCount: number }> => {
-	const allMessages = await ctx.runQuery(api.messages.list, {
+	const allMessages = await ctx.runQuery(internal.messages.listInternal, {
 		campaignId: campaign._id,
 	})
 
@@ -466,35 +466,38 @@ export const currentGameContext = async (
 	campaign: Doc<"campaigns">,
 	countTokensFlag = false,
 ) => {
-	let characterSheet = await ctx.runQuery(api.characterSheets.get, {
-		campaignId: campaign._id,
-	})
+	let characterSheet = await ctx.runQuery(
+		internal.characterSheets.getInternal,
+		{
+			campaignId: campaign._id,
+		},
+	)
 
 	if (!characterSheet && isToolEnabled("update_character_sheet", campaign)) {
 		let defaultCharacterData: Record<string, unknown> = {}
 
 		if (campaign.gameSystemId) {
 			// Already have a query for this, will it be cached? Or should we pass it around?
-			const gameSystem = await ctx.runQuery(api.gameSystems.get, {
+			const gameSystem = await ctx.runQuery(internal.gameSystems.getInternal, {
 				id: campaign.gameSystemId,
 			})
 
 			defaultCharacterData = gameSystem?.defaultCharacterData ?? {}
 		}
 		// TODO: can you do this in one operation?
-		await ctx.runMutation(api.characterSheets.create, {
+		await ctx.runMutation(internal.characterSheets.createInternal, {
 			campaignId: campaign._id,
 			name: "New Character",
 			description: "",
 			data: defaultCharacterData,
 		})
 
-		characterSheet = await ctx.runQuery(api.characterSheets.get, {
+		characterSheet = await ctx.runQuery(internal.characterSheets.getInternal, {
 			campaignId: campaign._id,
 		})
 	}
 
-	const characters = await ctx.runQuery(api.characters.list, {
+	const characters = await ctx.runQuery(internal.characters.listInternal, {
 		campaignId: campaign._id,
 	})
 
@@ -723,7 +726,7 @@ export const otherCampaignSummaries = async (
 	model: string,
 	countTokensFlag = false,
 ): Promise<{ messages: ModelMessage[]; charCount: number }> => {
-	const allCampaigns = await ctx.runQuery(api.campaigns.list, {})
+	const allCampaigns = await ctx.runQuery(internal.campaigns.listInternal, {})
 
 	const formattedMessages = allCampaigns
 		.map((c) => {

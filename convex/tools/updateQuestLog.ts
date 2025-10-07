@@ -1,7 +1,7 @@
 import { tool } from "ai"
 import type { GenericActionCtx } from "convex/server"
 import { z } from "zod"
-import { api } from "../_generated/api"
+import { internal } from "../_generated/api"
 import type { DataModel, Id } from "../_generated/dataModel"
 
 export const updateQuestLog = (
@@ -23,7 +23,7 @@ export const updateQuestLog = (
 				.describe("The text for the new quest or the updated objective."),
 		}),
 		execute: async ({ action, quest_title, objective_description }) => {
-			await ctx.runMutation(api.campaigns.updateQuest, {
+			await ctx.runMutation(internal.campaigns.updateQuestInternal, {
 				campaignId,
 				status:
 					action === "complete"

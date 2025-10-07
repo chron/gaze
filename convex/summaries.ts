@@ -23,6 +23,11 @@ export const collapseHistory = action({
 		campaignId: v.id("campaigns"),
 	},
 	handler: async (ctx, args): Promise<Id<"jobProgress">> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		// Create a job to track progress
 		const jobId: Id<"jobProgress"> = await ctx.runMutation(
 			api.jobProgress.create,

@@ -13,6 +13,11 @@ export const create = mutation({
 		),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const jobId = await ctx.db.insert("jobProgress", {
 			campaignId: args.campaignId,
 			type: args.type,
@@ -43,6 +48,11 @@ export const addStep = mutation({
 		),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const job = await ctx.db.get(args.jobId)
 		if (!job) throw new Error("Job not found")
 
@@ -73,6 +83,11 @@ export const updateStep = mutation({
 		data: v.optional(v.any()),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const job = await ctx.db.get(args.jobId)
 		if (!job) throw new Error("Job not found")
 
@@ -97,6 +112,11 @@ export const complete = mutation({
 		error: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		await ctx.db.patch(args.jobId, {
 			status: args.success ? "completed" : "failed",
 			completedAt: Date.now(),
@@ -110,6 +130,11 @@ export const get = query({
 		jobId: v.id("jobProgress"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		return await ctx.db.get(args.jobId)
 	},
 })
@@ -120,6 +145,11 @@ export const getLatestByType = query({
 		type: v.string(),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const jobs = await ctx.db
 			.query("jobProgress")
 			.withIndex("by_campaign", (q) => q.eq("campaignId", args.campaignId))
@@ -136,6 +166,11 @@ export const deleteJob = mutation({
 		jobId: v.id("jobProgress"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		await ctx.db.delete(args.jobId)
 	},
 })

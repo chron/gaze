@@ -68,12 +68,12 @@ function CampaignCard({ campaign }: { campaign: Doc<"campaigns"> }) {
 	})
 
 	return (
-        <Link
+		<Link
 			to="/campaigns/$campaignId"
 			params={{ campaignId: campaign._id }}
 			className="group"
 		>
-            <div className="bg-white rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow p-6 h-full flex flex-col">
+			<div className="bg-white rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow p-6 h-full flex flex-col">
 				<div className="flex-1">
 					<h3 className="text-xl font-bold mb-2 group-hover:text-blue-600 transition-colors">
 						{campaign.name}
@@ -116,6 +116,6 @@ function CampaignCard({ campaign }: { campaign: Doc<"campaigns"> }) {
 					</div>
 				</div>
 			</div>
-        </Link>
-    );
+		</Link>
+	)
 }

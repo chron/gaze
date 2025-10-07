@@ -1,7 +1,7 @@
 import { tool } from "ai"
 import type { GenericActionCtx } from "convex/server"
 import { z } from "zod"
-import { api } from "../_generated/api"
+import { internal } from "../_generated/api"
 import type { DataModel, Id } from "../_generated/dataModel"
 
 export const updateCharacterSheet = (
@@ -17,19 +17,22 @@ export const updateCharacterSheet = (
 			data: z.any(), //z.record(z.string(), z.any()), // Several models including GPT-5 don't seem to see this!
 		}),
 		execute: async ({ name, description, data }, _toolCall) => {
-			const characterSheet = await ctx.runQuery(api.characterSheets.get, {
-				campaignId,
-			})
+			const characterSheet = await ctx.runQuery(
+				internal.characterSheets.getInternal,
+				{
+					campaignId,
+				},
+			)
 
 			if (characterSheet) {
-				await ctx.runMutation(api.characterSheets.update, {
+				await ctx.runMutation(internal.characterSheets.updateInternal, {
 					characterSheetId: characterSheet._id,
 					name,
 					description,
 					data: data ?? {},
 				})
 			} else {
-				await ctx.runMutation(api.characterSheets.create, {
+				await ctx.runMutation(internal.characterSheets.createInternal, {
 					campaignId,
 					name,
 					description,

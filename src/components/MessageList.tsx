@@ -148,6 +148,8 @@ export const MessageList: React.FC<Props> = ({
 			{usage && (
 				<div className="text-sm text-gray-200">
 					{usage.inputTokens} input tokens
+					{usage.cachedInputTokens &&
+						`(${usage.cachedInputTokens} cached input tokens)`}
 					{Number.isNaN(usage.outputTokens)
 						? ""
 						: `, ${usage.outputTokens} output tokens`}

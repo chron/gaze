@@ -126,6 +126,9 @@ export default defineSchema(
 				v.object({
 					inputTokens: v.number(),
 					outputTokens: v.number(),
+					totalTokens: v.number(),
+					reasoningTokens: v.number(),
+					cachedInputTokens: v.number(),
 				}),
 			),
 		})

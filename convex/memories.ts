@@ -22,6 +22,11 @@ export const add = mutation({
 		embedding: v.array(v.float64()),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		await ctx.db.insert("memories", {
 			campaignId: args.campaignId,
 			type: args.type,
@@ -68,6 +73,11 @@ export const list = query({
 		campaignId: v.id("campaigns"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		return await ctx.db
 			.query("memories")
 			.withIndex("by_campaignId", (q) => q.eq("campaignId", args.campaignId))

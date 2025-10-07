@@ -23,6 +23,7 @@ import {
 	action,
 	httpAction,
 	internalAction,
+	internalMutation,
 	internalQuery,
 	mutation,
 	query,
@@ -52,6 +53,11 @@ export const get = query({
 		messageId: v.id("messages"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		return await ctx.db.get(args.messageId)
 	},
 })
@@ -74,6 +80,27 @@ export const getMany = internalQuery({
 })
 
 export const list = query({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const messages = await ctx.db
+			.query("messages")
+			.withIndex("by_campaignId_and_summaryId", (q) =>
+				q.eq("campaignId", args.campaignId).eq("summaryId", undefined),
+			)
+			.collect()
+
+		return messages
+	},
+})
+
+export const listInternal = internalQuery({
 	args: {
 		campaignId: v.id("campaigns"),
 	},
@@ -109,6 +136,11 @@ export const paginatedList = query({
 		paginationOpts: paginationOptsValidator,
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const result = await ctx.db
 			.query("messages")
 			.withIndex("by_campaign", (q) => q.eq("campaignId", args.campaignId))
@@ -140,7 +172,7 @@ export const paginatedList = query({
 	},
 })
 
-export const getByStreamId = query({
+export const getByStreamId = internalQuery({
 	args: {
 		streamId: StreamIdValidator,
 	},
@@ -152,7 +184,7 @@ export const getByStreamId = query({
 	},
 })
 
-export const update = mutation({
+export const update = internalMutation({
 	args: {
 		messageId: v.id("messages"),
 		content: v.array(
@@ -195,6 +227,11 @@ export const updateTextBlock = mutation({
 		text: v.string(),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const message = await ctx.db.get(args.messageId)
 		if (!message) throw new Error("Message not found")
 
@@ -217,6 +254,11 @@ export const setSummaryId = mutation({
 		summaryId: v.id("summaries"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		await ctx.db.patch(args.messageId, {
 			summaryId: args.summaryId,
 		})
@@ -229,13 +271,18 @@ export const addError = mutation({
 		error: v.string(),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		await ctx.db.patch(args.messageId, {
 			error: args.error,
 		})
 	},
 })
 
-export const addToolResultsMessage = mutation({
+export const addToolResultsMessage = internalMutation({
 	args: {
 		messageId: v.id("messages"),
 		toolResults: v.array(
@@ -266,6 +313,11 @@ export const addUserMessage = mutation({
 		content: v.string(),
 	},
 	handler: async (ctx, args): Promise<{ streamId: StreamId }> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		if (args.content.length === 0) {
 			throw new Error("Content cannot be empty")
 		}
@@ -302,6 +354,11 @@ export const addAssistantMessage = mutation({
 		campaignId: v.id("campaigns"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const streamId = await persistentTextStreaming.createStream(ctx)
 
 		const messageId = await ctx.db.insert("messages", {
@@ -320,6 +377,11 @@ export const regenerateLastMessage = mutation({
 		messageId: v.id("messages"),
 	},
 	handler: async (ctx, args): Promise<{ streamId: StreamId }> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const message = await ctx.db.get(args.messageId)
 		if (!message) throw new Error("Message not found")
 
@@ -345,6 +407,11 @@ export const appendTextBlock = mutation({
 		text: v.string(),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const message = await ctx.db.get(args.messageId)
 		if (!message) throw new Error("Message not found")
 
@@ -381,6 +448,11 @@ export const appendReasoning = mutation({
 		text: v.string(),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const message = await ctx.db.get(args.messageId)
 		if (!message) throw new Error("Message not found")
 
@@ -397,6 +469,11 @@ export const getMessageBody = query({
 		streamId: StreamIdValidator,
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		return await persistentTextStreaming.getStreamBody(
 			ctx,
 			args.streamId as StreamId,
@@ -404,12 +481,15 @@ export const getMessageBody = query({
 	},
 })
 
-export const addUsageToMessage = mutation({
+export const addUsageToMessage = internalMutation({
 	args: {
 		messageId: v.id("messages"),
 		usage: v.object({
 			inputTokens: v.number(),
 			outputTokens: v.number(),
+			totalTokens: v.number(),
+			reasoningTokens: v.number(),
+			cachedInputTokens: v.optional(v.number()),
 		}),
 	},
 	handler: async (ctx, args) => {
@@ -428,6 +508,11 @@ export const performUserDiceRoll = mutation({
 		ctx,
 		args,
 	): Promise<{ streamId: StreamId; results: number[]; total: number }> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const message = await ctx.db.get(args.messageId)
 		if (!message) throw new Error("Message not found")
 
@@ -480,6 +565,11 @@ export const performUserChooseName = mutation({
 		otherDetails: v.optional(v.string()),
 	},
 	handler: async (ctx, args): Promise<{ chosenName: string }> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const message = await ctx.db.get(args.messageId)
 		if (!message) throw new Error("Message not found")
 
@@ -517,7 +607,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		streamId: StreamId
 	}
 
-	const message = await ctx.runQuery(api.messages.getByStreamId, {
+	const message = await ctx.runQuery(internal.messages.getByStreamId, {
 		streamId: args.streamId,
 	})
 
@@ -525,7 +615,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		throw new Error("Message not found")
 	}
 
-	const campaign = await ctx.runQuery(api.campaigns.get, {
+	const campaign = await ctx.runQuery(internal.campaigns.getInternal, {
 		id: message.campaignId,
 	})
 
@@ -663,7 +753,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 				}
 			}
 
-			await ctx.runMutation(api.messages.update, {
+			await ctx.runMutation(internal.messages.update, {
 				messageId: message._id,
 				content: allContent as any, // Type mismatch between AI SDK types and stored content
 			})
@@ -729,18 +819,25 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 				} else if (chunk.type === "finish") {
 					console.log("addUsageToMessage", chunk.totalUsage)
 
-					await ctx.scheduler.runAfter(1000, api.messages.addUsageToMessage, {
-						messageId: message._id,
-						usage: {
-							inputTokens: chunk.totalUsage.inputTokens ?? 0,
-							outputTokens: chunk.totalUsage.outputTokens ?? 0,
+					await ctx.scheduler.runAfter(
+						1000,
+						internal.messages.addUsageToMessage,
+						{
+							messageId: message._id,
+							usage: {
+								inputTokens: chunk.totalUsage.inputTokens ?? 0,
+								outputTokens: chunk.totalUsage.outputTokens ?? 0,
+								totalTokens: chunk.totalUsage.totalTokens ?? 0,
+								reasoningTokens: chunk.totalUsage.reasoningTokens ?? 0,
+								cachedInputTokens: chunk.totalUsage.cachedInputTokens ?? 0,
+							},
 						},
-					})
+					)
 				}
 			}
 
 			if (toolResults.length > 0) {
-				await ctx.runMutation(api.messages.addToolResultsMessage, {
+				await ctx.runMutation(internal.messages.addToolResultsMessage, {
 					messageId: message._id,
 					toolResults,
 				})
@@ -759,6 +856,11 @@ export const summarizeChatHistory = action({
 		campaignId: v.id("campaigns"),
 	},
 	handler: async (ctx, args): Promise<string> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		// For now we're ignoring summaries and summarising the entire history
 		// Could get way too large at some point, so will have to revisit this
 		const messages = await ctx.runQuery(internal.messages.listAll, {
@@ -828,6 +930,11 @@ export const chatWithHistory = action({
 		question: v.string(),
 	},
 	handler: async (ctx, args): Promise<string> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		// For now we're ignoring summaries and summarising the entire history
 		// Could get way too large at some point, so will have to revisit this
 		const messages = await ctx.runQuery(internal.messages.listAll, {
@@ -891,6 +998,11 @@ export const storeSceneImage = mutation({
 		storageId: v.id("_storage"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		return await ctx.db.patch(args.messageId, {
 			scene: {
 				description: args.description,
@@ -907,6 +1019,11 @@ export const clearSceneImage = mutation({
 		messageId: v.id("messages"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const message = await ctx.runQuery(api.messages.get, {
 			messageId: args.messageId,
 		})
@@ -932,6 +1049,11 @@ export const generateSceneImage = action({
 		activeCharacters: v.array(v.string()),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const message = await ctx.runQuery(api.messages.get, {
 			messageId: args.messageId,
 		})
@@ -996,6 +1118,11 @@ export const regenerateSceneImage = action({
 		messageId: v.id("messages"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const message = await ctx.runQuery(api.messages.get, {
 			messageId: args.messageId,
 		})
@@ -1027,6 +1154,11 @@ export const analyzePrompt = action({
 		campaignId: v.id("campaigns"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const campaign = await ctx.runQuery(api.campaigns.get, {
 			id: args.campaignId,
 		})

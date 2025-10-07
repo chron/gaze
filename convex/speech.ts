@@ -16,6 +16,11 @@ export const generateAudioForMessage = action({
 		messageId: v.id("messages"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const message = await ctx.runQuery(api.messages.get, {
 			messageId: args.messageId,
 		})

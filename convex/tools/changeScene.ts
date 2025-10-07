@@ -1,7 +1,7 @@
 import { tool } from "ai"
 import type { GenericActionCtx } from "convex/server"
 import { z } from "zod"
-import { api } from "../_generated/api"
+import { internal } from "../_generated/api"
 import type { DataModel, Id } from "../_generated/dataModel"
 
 export const changeScene = (
@@ -22,7 +22,7 @@ export const changeScene = (
 				.describe("The characters that are active in the scene"),
 		}),
 		execute: async ({ description, prompt, activeCharacters }, toolCall) => {
-			await ctx.runMutation(api.campaigns.updateActiveCharacters, {
+			await ctx.runMutation(internal.campaigns.updateActiveCharactersInternal, {
 				campaignId,
 				activeCharacters: activeCharacters ?? [],
 			})

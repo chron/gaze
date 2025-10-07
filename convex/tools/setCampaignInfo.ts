@@ -1,7 +1,7 @@
 import { tool } from "ai"
 import type { GenericActionCtx } from "convex/server"
 import { z } from "zod"
-import { api } from "../_generated/api"
+import { internal } from "../_generated/api"
 import type { DataModel, Id } from "../_generated/dataModel"
 
 export const setCampaignInfo = (
@@ -29,7 +29,7 @@ export const setCampaignInfo = (
 				),
 		}),
 		execute: async ({ name, description, imagePrompt }, toolCall) => {
-			const campaign = await ctx.runQuery(api.campaigns.get, {
+			const campaign = await ctx.runQuery(internal.campaigns.getInternal, {
 				id: campaignId,
 			})
 
@@ -37,7 +37,7 @@ export const setCampaignInfo = (
 				throw new Error("Campaign not found")
 			}
 
-			await ctx.runMutation(api.campaigns.update, {
+			await ctx.runMutation(internal.campaigns.updateInternal, {
 				id: campaignId,
 				name,
 				description,

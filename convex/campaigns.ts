@@ -2,8 +2,13 @@ import { google } from "@ai-sdk/google"
 import { type LanguageModelUsage, type ModelMessage, generateText } from "ai"
 import { v } from "convex/values"
 import { api, internal } from "./_generated/api"
-import { action, query } from "./_generated/server"
-import { mutation } from "./_generated/server"
+import {
+	action,
+	internalMutation,
+	internalQuery,
+	mutation,
+	query,
+} from "./_generated/server"
 import { googleSafetySettings } from "./utils"
 
 export const list = query({
@@ -11,14 +16,37 @@ export const list = query({
 		limit: v.optional(v.number()),
 	},
 	handler: async (ctx, args) => {
-		// const identity = await ctx.auth.getUserIdentity()
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
 
-		// console.log("identity", identity)
+		const campaigns = await ctx.db
+			.query("campaigns")
+			.withIndex("by_archived", (q) => q.eq("archived", false))
+			.collect()
 
-		// if (identity === null) {
-		// 	throw new Error("Not authenticated")
-		// }
+		// Sort by lastInteractionAt descending (most recent first), then by creation time
+		const sortedCampaigns = campaigns.sort((a, b) => {
+			const aTime = a.lastInteractionAt ?? a._creationTime
+			const bTime = b.lastInteractionAt ?? b._creationTime
+			return bTime - aTime
+		})
 
+		// Apply limit if specified
+		if (args.limit !== undefined) {
+			return sortedCampaigns.slice(0, args.limit)
+		}
+
+		return sortedCampaigns
+	},
+})
+
+export const listInternal = internalQuery({
+	args: {
+		limit: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
 		const campaigns = await ctx.db
 			.query("campaigns")
 			.withIndex("by_archived", (q) => q.eq("archived", false))
@@ -45,6 +73,30 @@ export const get = query({
 		id: v.id("campaigns"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const campaign = await ctx.db.get(args.id)
+		if (!campaign) {
+			return null
+		}
+
+		return {
+			...campaign,
+			gameSystemName: campaign.gameSystemId
+				? (await ctx.db.get(campaign.gameSystemId))?.name
+				: null,
+		}
+	},
+})
+
+export const getInternal = internalQuery({
+	args: {
+		id: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
 		const campaign = await ctx.db.get(args.id)
 		if (!campaign) {
 			return null
@@ -64,6 +116,11 @@ export const sumTokens = query({
 		campaignId: v.id("campaigns"),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const messages = await ctx.db
 			.query("messages")
 			.withIndex("by_campaign", (q) => q.eq("campaignId", args.campaignId))
@@ -92,6 +149,11 @@ export const addCampaign = mutation({
 		enabledTools: v.optional(v.record(v.string(), v.boolean())),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const campaign = {
 			name: args.name,
 			description: args.description,
@@ -115,6 +177,11 @@ export const addCampaign = mutation({
 
 export const quickAddCampaign = mutation({
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		const campaignId = await ctx.db.insert("campaigns", {
 			name: "",
 			description: "",
@@ -140,6 +207,11 @@ export const update = mutation({
 		enabledTools: v.optional(v.record(v.string(), v.boolean())),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		await ctx.db.patch(args.id, {
 			name: args.name,
 			description: args.description,
@@ -158,13 +230,149 @@ export const updateCampaignSummary = mutation({
 		summary: v.string(),
 	},
 	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
 		await ctx.db.patch(args.campaignId, {
 			lastCampaignSummary: args.summary,
 		})
 	},
 })
 
-export const updateActiveCharacters = mutation({
+export const updatePlan = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		plan: v.string(),
+		part: v.optional(v.string()),
+	},
+	handler: async (ctx, args): Promise<void> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const campaign = await ctx.db.get(args.campaignId)
+
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+		let newPlan: string | Record<string, string>
+
+		if (args.part) {
+			const oldPlan =
+				typeof campaign.plan === "string"
+					? { overall_story: campaign.plan }
+					: campaign.plan
+			newPlan = { ...oldPlan, [args.part]: args.plan }
+		} else {
+			newPlan = args.plan
+		}
+
+		await ctx.db.patch(args.campaignId, {
+			plan: newPlan,
+		})
+	},
+})
+
+export const updateLastInteraction = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		await ctx.db.patch(args.campaignId, {
+			lastInteractionAt: Date.now(),
+		})
+	},
+})
+
+export const lookForThemesInCampaignSummaries = action({
+	handler: async (
+		ctx,
+		args,
+	): Promise<{ text: string; usage: LanguageModelUsage }> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const allCampaigns = await ctx.runQuery(api.campaigns.list, {})
+
+		const prompt = `
+		You are a game master, responsible for several different campaigns with the user. You will be given the name, description, and a full summary of each campaign.
+		`
+
+		const formattedMessages = allCampaigns
+			.map((c) => {
+				if (!c.lastCampaignSummary) {
+					return null
+				}
+
+				return {
+					role: "user",
+					content: `## ${c.name}: ${c.description}\n\n### Summary\n\n${c.lastCampaignSummary}`,
+				} satisfies ModelMessage
+			})
+			.filter((m) => m !== null)
+
+		const { text, usage } = await generateText({
+			system: prompt,
+			model: google("gemini-2.5-pro"),
+			providerOptions: {
+				google: {
+					...googleSafetySettings,
+				},
+			},
+			messages: [
+				...formattedMessages,
+				{
+					role: "user",
+					content: [
+						{
+							type: "text",
+							text: "Given the user's preferences based on what you've seen, suggest some possible themes, settings, storylines, or other aspects for future campaigns in a similar vein.", // "What are the repeated themes across the different campaigns? Anything else interesting to note?",
+						},
+					],
+				},
+			],
+		})
+
+		return { text, usage }
+	},
+})
+
+// Internal mutations (no auth required - for use within httpActions/internalActions)
+export const updateInternal = internalMutation({
+	args: {
+		id: v.id("campaigns"),
+		name: v.optional(v.string()),
+		description: v.string(),
+		imagePrompt: v.string(),
+		gameSystemId: v.optional(v.id("gameSystems")),
+		model: v.string(),
+		imageModel: v.string(),
+		enabledTools: v.optional(v.record(v.string(), v.boolean())),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.id, {
+			name: args.name,
+			description: args.description,
+			imagePrompt: args.imagePrompt,
+			gameSystemId: args.gameSystemId,
+			model: args.model,
+			imageModel: args.imageModel,
+			enabledTools: args.enabledTools,
+		})
+	},
+})
+
+export const updateActiveCharactersInternal = internalMutation({
 	args: {
 		campaignId: v.id("campaigns"),
 		activeCharacters: v.array(v.string()),
@@ -176,31 +384,7 @@ export const updateActiveCharacters = mutation({
 	},
 })
 
-export const addActiveCharacter = mutation({
-	args: {
-		campaignId: v.id("campaigns"),
-		activeCharacter: v.string(),
-	},
-	handler: async (ctx, args) => {
-		const campaign = await ctx.db.get(args.campaignId)
-		if (!campaign) {
-			throw new Error("Campaign not found")
-		}
-
-		if (campaign.activeCharacters?.includes(args.activeCharacter)) {
-			return
-		}
-
-		await ctx.db.patch(args.campaignId, {
-			activeCharacters: [
-				...(campaign.activeCharacters ?? []),
-				args.activeCharacter,
-			],
-		})
-	},
-})
-
-export const updatePlan = mutation({
+export const updatePlanInternal = internalMutation({
 	args: {
 		campaignId: v.id("campaigns"),
 		plan: v.string(),
@@ -230,7 +414,7 @@ export const updatePlan = mutation({
 	},
 })
 
-export const updateQuest = mutation({
+export const updateQuestInternal = internalMutation({
 	args: {
 		campaignId: v.id("campaigns"),
 		title: v.string(),
@@ -274,7 +458,7 @@ export const updateQuest = mutation({
 	},
 })
 
-export const updateClock = mutation({
+export const updateClockInternal = internalMutation({
 	args: {
 		campaignId: v.id("campaigns"),
 		name: v.string(),
@@ -331,63 +515,26 @@ export const updateClock = mutation({
 	},
 })
 
-export const updateLastInteraction = mutation({
+export const addActiveCharacterInternal = internalMutation({
 	args: {
 		campaignId: v.id("campaigns"),
+		activeCharacter: v.string(),
 	},
 	handler: async (ctx, args) => {
+		const campaign = await ctx.db.get(args.campaignId)
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		if (campaign.activeCharacters?.includes(args.activeCharacter)) {
+			return
+		}
+
 		await ctx.db.patch(args.campaignId, {
-			lastInteractionAt: Date.now(),
-		})
-	},
-})
-
-export const lookForThemesInCampaignSummaries = action({
-	handler: async (
-		ctx,
-		args,
-	): Promise<{ text: string; usage: LanguageModelUsage }> => {
-		const allCampaigns = await ctx.runQuery(api.campaigns.list, {})
-
-		const prompt = `
-		You are a game master, responsible for several different campaigns with the user. You will be given the name, description, and a full summary of each campaign.
-		`
-
-		const formattedMessages = allCampaigns
-			.map((c) => {
-				if (!c.lastCampaignSummary) {
-					return null
-				}
-
-				return {
-					role: "user",
-					content: `## ${c.name}: ${c.description}\n\n### Summary\n\n${c.lastCampaignSummary}`,
-				} satisfies ModelMessage
-			})
-			.filter((m) => m !== null)
-
-		const { text, usage } = await generateText({
-			system: prompt,
-			model: google("gemini-2.5-pro"),
-			providerOptions: {
-				google: {
-					...googleSafetySettings,
-				},
-			},
-			messages: [
-				...formattedMessages,
-				{
-					role: "user",
-					content: [
-						{
-							type: "text",
-							text: "Given the user's preferences based on what you've seen, suggest some possible themes, settings, storylines, or other aspects for future campaigns in a similar vein.", // "What are the repeated themes across the different campaigns? Anything else interesting to note?",
-						},
-					],
-				},
+			activeCharacters: [
+				...(campaign.activeCharacters ?? []),
+				args.activeCharacter,
 			],
 		})
-
-		return { text, usage }
 	},
 })

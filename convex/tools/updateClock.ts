@@ -1,7 +1,7 @@
 import { tool } from "ai"
 import type { GenericActionCtx } from "convex/server"
 import { z } from "zod"
-import { api } from "../_generated/api"
+import { internal } from "../_generated/api"
 import type { DataModel, Id } from "../_generated/dataModel"
 
 export const updateClock = (
@@ -31,7 +31,7 @@ export const updateClock = (
 				),
 		}),
 		execute: async ({ name, current_ticks, max_ticks, hint }) => {
-			await ctx.runMutation(api.campaigns.updateClock, {
+			await ctx.runMutation(internal.campaigns.updateClockInternal, {
 				campaignId,
 				name,
 				currentTicks: current_ticks,
