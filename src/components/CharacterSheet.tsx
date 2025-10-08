@@ -256,7 +256,13 @@ const PrimitiveValue: React.FC<{
 		return (
 			<div className="flex flex-wrap gap-2">
 				{value.map((item, index) => (
-					<Badge key={`${item}-${index}`}>{item}</Badge>
+					<Badge
+						key={`${typeof item === "string" ? item : JSON.stringify(item)}-${index}`}
+					>
+						{typeof item === "string" || typeof item === "number"
+							? item
+							: JSON.stringify(item)}
+					</Badge>
 				))}
 			</div>
 		)

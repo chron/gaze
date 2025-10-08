@@ -18,7 +18,7 @@ export const SceneChange = ({
 		description: string
 		prompt?: string
 		image?: string
-		imageUrl?: string
+		imageUrl?: string | null
 	}
 }) => {
 	const regenerateImage = useAction(api.messages.regenerateSceneImage)

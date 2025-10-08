@@ -10,7 +10,7 @@ export const Route = createFileRoute("/")({
 })
 
 function HomePage() {
-	const campaigns = useQuery(api.campaigns.list)
+	const campaigns = useQuery(api.campaigns.list, {})
 
 	if (campaigns === undefined) {
 		return (

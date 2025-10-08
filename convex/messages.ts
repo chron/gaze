@@ -7,11 +7,10 @@ import {
 	type StreamId,
 	StreamIdValidator,
 } from "@convex-dev/persistent-text-streaming"
-import { createOpenRouter, openrouter } from "@openrouter/ai-sdk-provider"
+import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 import {
 	type AssistantContent,
 	type ModelMessage,
-	experimental_generateImage as generateImage,
 	generateText,
 	streamText,
 } from "ai"
@@ -22,7 +21,6 @@ import { api, components, internal } from "./_generated/api"
 import {
 	action,
 	httpAction,
-	internalAction,
 	internalMutation,
 	internalQuery,
 	mutation,

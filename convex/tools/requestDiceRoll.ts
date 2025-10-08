@@ -4,8 +4,8 @@ import { z } from "zod"
 import type { DataModel, Id } from "../_generated/dataModel"
 
 export const requestDiceRoll = (
-	ctx: GenericActionCtx<DataModel>,
-	assistantMessageId: Id<"messages">,
+	_ctx: GenericActionCtx<DataModel>,
+	_assistantMessageId: Id<"messages">,
 ) => {
 	return tool({
 		description:

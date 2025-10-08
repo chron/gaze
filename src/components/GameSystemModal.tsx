@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "convex/react"
-import { Code, FileIcon, FileText, Globe, Pencil, Trash2 } from "lucide-react"
+import { Code, FileIcon, FileText, Globe, Pencil } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"

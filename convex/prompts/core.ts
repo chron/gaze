@@ -645,7 +645,8 @@ export const currentGameContext = async (
 	}
 }
 
-const campaignMemories = async (
+// @ts-expect-error - Keeping this function for potential future use
+const _campaignMemories = async (
 	ctx: ActionCtx,
 	campaign: Doc<"campaigns">,
 	lastMessage: ModelMessage,

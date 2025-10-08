@@ -1,5 +1,5 @@
 import { google } from "@ai-sdk/google"
-import { generateObject, generateText, tool } from "ai"
+import { generateObject } from "ai"
 import { v } from "convex/values"
 import { z } from "zod"
 import { api, internal } from "./_generated/api"

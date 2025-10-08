@@ -19,11 +19,17 @@ import {
 } from "./ui/collapsible"
 
 type Props = {
-	message: Doc<"messages">
+	message: Omit<Doc<"messages">, "audio"> & {
+		audio?: (string | null)[]
+		scene?: Omit<NonNullable<Doc<"messages">["scene"]>, "image"> & {
+			imageUrl?: string | null
+		}
+	}
 	isLastMessage: boolean
 	setStreamId: (streamId: StreamId) => void
 	isStreaming: boolean
 	scrollToBottom: () => void
+	scrollToMessageTop?: (el: HTMLElement) => void
 }
 
 export const Message: React.FC<Props> = ({
@@ -256,14 +262,20 @@ export const Message: React.FC<Props> = ({
 					setStreamId={setStreamId}
 				/>
 
-				{message?.audio && <SequentialAudioPlayer audioUrls={message.audio} />}
+				{message?.audio && (
+					<SequentialAudioPlayer
+						audioUrls={message.audio.filter(
+							(url): url is string => url !== null,
+						)}
+					/>
+				)}
 			</div>
 		</div>
 	)
 }
 
 type MessageActionsProps = {
-	message: Doc<"messages">
+	message: Props["message"]
 	isLastMessage: boolean
 	setStreamId: (streamId: StreamId) => void
 }

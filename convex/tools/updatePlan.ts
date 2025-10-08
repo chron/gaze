@@ -6,7 +6,7 @@ import type { DataModel, Id } from "../_generated/dataModel"
 
 export const updatePlan = (
 	ctx: GenericActionCtx<DataModel>,
-	assistantMessageId: Id<"messages">,
+	_assistantMessageId: Id<"messages">,
 	campaignId: Id<"campaigns">,
 ) =>
 	tool({
@@ -24,7 +24,7 @@ export const updatePlan = (
 				.optional()
 				.describe("The part of the plan you'd like to update"),
 		}),
-		execute: async ({ plan, part }, toolCall) => {
+		execute: async ({ plan, part }) => {
 			await ctx.runMutation(internal.campaigns.updatePlanInternal, {
 				campaignId,
 				plan,

@@ -1,6 +1,6 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { useMutation } from "convex/react"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"
 import { Button } from "./ui/button"

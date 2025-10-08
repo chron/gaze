@@ -1,7 +1,7 @@
 import { google } from "@ai-sdk/google"
 import { type LanguageModelUsage, type ModelMessage, generateText } from "ai"
 import { v } from "convex/values"
-import { api, internal } from "./_generated/api"
+import { api } from "./_generated/api"
 import {
 	action,
 	internalMutation,
@@ -176,7 +176,7 @@ export const addCampaign = mutation({
 })
 
 export const quickAddCampaign = mutation({
-	handler: async (ctx, args) => {
+	handler: async (ctx) => {
 		const identity = await ctx.auth.getUserIdentity()
 		if (!identity) {
 			throw new Error("Not authenticated")
@@ -295,7 +295,6 @@ export const updateLastInteraction = mutation({
 export const lookForThemesInCampaignSummaries = action({
 	handler: async (
 		ctx,
-		args,
 	): Promise<{ text: string; usage: LanguageModelUsage }> => {
 		const identity = await ctx.auth.getUserIdentity()
 		if (!identity) {

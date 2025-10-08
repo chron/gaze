@@ -1,12 +1,12 @@
 import { tool } from "ai"
 import type { GenericActionCtx } from "convex/server"
 import { z } from "zod"
-import { api, internal } from "../_generated/api"
+import { internal } from "../_generated/api"
 import type { DataModel, Id } from "../_generated/dataModel"
 
 export const introduceCharacter = (
 	ctx: GenericActionCtx<DataModel>,
-	assistantMessageId: Id<"messages">,
+	_assistantMessageId: Id<"messages">,
 	campaignId: Id<"campaigns">,
 ) => {
 	return tool({
@@ -17,7 +17,7 @@ export const introduceCharacter = (
 			description: z.string(),
 			imagePrompt: z.string(),
 		}),
-		execute: async ({ name, description, imagePrompt }, toolCall) => {
+		execute: async ({ name, description, imagePrompt }) => {
 			const characterId = await ctx.runMutation(
 				internal.characters.createInternal,
 				{

@@ -28,7 +28,7 @@ export const setCampaignInfo = (
 					"The image prompt for the campaign - a very short description of the visual style of AI-generated images for the campaign. Examples: 'a simple cartoon style', '1990s anime', 'modern american comic book style'",
 				),
 		}),
-		execute: async ({ name, description, imagePrompt }, toolCall) => {
+		execute: async ({ name, description, imagePrompt }) => {
 			const campaign = await ctx.runQuery(internal.campaigns.getInternal, {
 				id: campaignId,
 			})

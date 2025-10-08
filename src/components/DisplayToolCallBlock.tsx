@@ -12,7 +12,12 @@ import { SetCampaignInfo } from "./SetCampaignInfo"
 import { UnknownToolCall } from "./UnknownToolCall"
 
 type Props = {
-	message: Doc<"messages">
+	message: Omit<Doc<"messages">, "audio"> & {
+		audio?: (string | null)[]
+		scene?: Omit<NonNullable<Doc<"messages">["scene"]>, "image"> & {
+			imageUrl?: string | null
+		}
+	}
 	block: {
 		toolName: string
 		toolCallId: string

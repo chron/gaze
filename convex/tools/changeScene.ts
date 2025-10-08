@@ -7,7 +7,7 @@ import type { DataModel, Id } from "../_generated/dataModel"
 export const changeScene = (
 	ctx: GenericActionCtx<DataModel>,
 	campaignId: Id<"campaigns">,
-	assistantMessageId: Id<"messages">,
+	_assistantMessageId: Id<"messages">,
 ) =>
 	tool({
 		description:
@@ -21,7 +21,7 @@ export const changeScene = (
 				.optional(z.array(z.string()))
 				.describe("The characters that are active in the scene"),
 		}),
-		execute: async ({ description, prompt, activeCharacters }, toolCall) => {
+		execute: async ({ description, prompt, activeCharacters }) => {
 			await ctx.runMutation(internal.campaigns.updateActiveCharactersInternal, {
 				campaignId,
 				activeCharacters: activeCharacters ?? [],

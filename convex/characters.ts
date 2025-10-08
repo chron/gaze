@@ -6,7 +6,7 @@ import {
 	generateText,
 } from "ai"
 import { v } from "convex/values"
-import { api, internal } from "./_generated/api"
+import { internal } from "./_generated/api"
 import {
 	action,
 	internalAction,
