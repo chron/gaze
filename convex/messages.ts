@@ -265,17 +265,12 @@ export const setSummaryId = mutation({
 	},
 })
 
-export const addError = mutation({
+export const addError = internalMutation({
 	args: {
 		messageId: v.id("messages"),
 		error: v.string(),
 	},
 	handler: async (ctx, args) => {
-		const identity = await ctx.auth.getUserIdentity()
-		if (!identity) {
-			throw new Error("Not authenticated")
-		}
-
 		await ctx.db.patch(args.messageId, {
 			error: args.error,
 		})
@@ -489,7 +484,7 @@ export const addUsageToMessage = internalMutation({
 			outputTokens: v.number(),
 			totalTokens: v.number(),
 			reasoningTokens: v.number(),
-			cachedInputTokens: v.optional(v.number()),
+			cachedInputTokens: v.number(),
 		}),
 	},
 	handler: async (ctx, args) => {
@@ -678,7 +673,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 	const { fullStream } = streamText({
 		system: prompt,
-		temperature: 1.1, //0.7,
+		temperature: 1.2, //0.7,
 		model: campaign.model.startsWith("google")
 			? google(campaign.model.split("/")[1])
 			: campaign.model.startsWith("anthropic")
@@ -690,7 +685,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						: openrouter(campaign.model),
 		providerOptions: {
 			google: {
-				// thinkingConfig: { thinkingBudget: 1024, includeThoughts: true },
+				thinkingConfig: { thinkingBudget: -1, includeThoughts: true },
 				...googleSafetySettings,
 				responseModalities: ["TEXT"],
 			} satisfies GoogleGenerativeAIProviderOptions,
@@ -712,7 +707,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		onError: async ({ error }) => {
 			console.error("onError", error)
 
-			await ctx.runMutation(api.messages.addError, {
+			await ctx.runMutation(internal.messages.addError, {
 				messageId: message._id,
 				error: JSON.stringify(error, null, 2),
 			})
@@ -755,7 +750,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 			await ctx.runMutation(internal.messages.update, {
 				messageId: message._id,
-				content: allContent as any, // Type mismatch between AI SDK types and stored content
+				content: allContent,
 			})
 		},
 	})
@@ -1099,7 +1094,9 @@ export const generateSceneImage = action({
 
 		for (const file of images) {
 			if (file.mediaType.startsWith("image/")) {
-				const blob = new Blob([file.uint8Array], { type: file.mediaType })
+				const blob = new Blob([file.uint8Array as BlobPart], {
+					type: file.mediaType,
+				})
 				const storageId = await ctx.storage.store(blob)
 				await ctx.runMutation(api.messages.storeSceneImage, {
 					messageId: args.messageId,

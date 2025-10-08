@@ -43,7 +43,7 @@ export const Message: React.FC<Props> = ({
 	const [editingIndex, setEditingIndex] = useState<number | null>(null)
 	const [editingText, setEditingText] = useState("")
 	const [isSaving, setIsSaving] = useState(false)
-	const [showReasoning, setShowReasoning] = useState(true)
+	const [showReasoning, setShowReasoning] = useState(false)
 
 	const noDatabaseContent =
 		message.content.length === 0 ||
@@ -145,7 +145,7 @@ export const Message: React.FC<Props> = ({
 				{combinedReasoning && (
 					<Collapsible open={showReasoning} onOpenChange={setShowReasoning}>
 						<CollapsibleTrigger asChild>
-							<Button variant="outline" size="sm" className="mb-2">
+							<Button variant="outline" size="sm">
 								<Brain className="h-4 w-4 mr-2" />
 								Reasoning
 							</Button>

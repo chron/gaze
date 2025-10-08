@@ -48,7 +48,10 @@ function CharacterDetailsPage() {
 				description,
 				imagePrompt,
 			})
-			navigate({ to: "/campaigns/$campaignId" })
+			navigate({
+				to: "/campaigns/$campaignId",
+				params: { campaignId },
+			})
 		} finally {
 			setIsSaving(false)
 		}
@@ -120,6 +123,14 @@ function CharacterDetailsPage() {
 							</Link>
 						</Button>
 					</div>
+
+					{character.imageUrl && (
+						<img
+							src={character.imageUrl}
+							alt={character.name}
+							className="w-full h-full object-contain"
+						/>
+					)}
 				</div>
 			</div>
 		</div>

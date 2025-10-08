@@ -121,7 +121,15 @@ export const get = query({
 			throw new Error("Not authenticated")
 		}
 
-		return await ctx.db.get(args.characterId)
+		const character = await ctx.db.get(args.characterId)
+		if (!character) throw new Error("Character not found")
+
+		return {
+			...character,
+			imageUrl: character.image
+				? await ctx.storage.getUrl(character.image)
+				: null,
+		}
 	},
 })
 
