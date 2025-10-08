@@ -57,7 +57,7 @@ export const ChatExtraActions: React.FC = () => {
 		<>
 			{result ? (
 				<Dialog open={!!result} onOpenChange={(v) => !v && setResult(null)}>
-					<DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+					<DialogContent className="sm:max-w-2xl max-h-[80dvh] overflow-y-auto">
 						<DialogTitle>Result</DialogTitle>
 						<DialogDescription>The result of the action</DialogDescription>
 						<MessageMarkdown>{result}</MessageMarkdown>

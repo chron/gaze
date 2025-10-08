@@ -140,7 +140,7 @@ export const Message: React.FC<Props> = ({
 	return (
 		<div
 			className={cn(
-				"flex flex-col gap-2 p-2 rounded-md w-full max-w-[80%]",
+				"flex flex-col gap-2 p-2 rounded-md w-full max-w-[95%] sm:max-w-[80%]",
 				isSaving && "animate-pulse",
 				message.role === "user"
 					? "self-end bg-blue-100 text-blue-800"

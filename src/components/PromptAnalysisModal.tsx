@@ -146,7 +146,7 @@ export const PromptAnalysisModal: React.FC<Props> = ({
 
 	return (
 		<Dialog open={true} onOpenChange={(v) => !v && onClose()}>
-			<DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
+			<DialogContent className="sm:max-w-3xl max-h-[80dvh] overflow-y-auto">
 				<DialogTitle className="flex items-center gap-2">
 					<BarChart3 />
 					Prompt Analysis

@@ -32,10 +32,12 @@ function ChatPage() {
 				<Tabs defaultValue="chat">
 					<div className="flex justify-between items-center group me-2 mt-2 ms-10 text-white">
 						<div className="flex items-center gap-2">
-							<h1 className="text-3xl font-title uppercase truncate">
+							<h1 className="text-3xl font-title uppercase truncate hidden sm:block">
 								{campaign.name || "New Campaign"}
 							</h1>
-							<Badge>{campaign.model.split("/")[1]}</Badge>
+							<Badge className="hidden sm:block">
+								{campaign.model.split("/")[1]}
+							</Badge>
 
 							<div className="group-hover:block hidden">
 								<Button variant="ghost" asChild>
@@ -53,7 +55,7 @@ function ChatPage() {
 							<TabsTrigger value="chat">Chat</TabsTrigger>
 							<TabsTrigger value="character_sheet">Character sheet</TabsTrigger>
 							<TabsTrigger value="characters">Characters</TabsTrigger>
-							<TabsTrigger value="memories">Memories</TabsTrigger>
+							{/* <TabsTrigger value="memories">Memories</TabsTrigger> */}
 						</TabsList>
 					</div>
 

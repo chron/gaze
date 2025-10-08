@@ -69,7 +69,7 @@ export const ProgressModal: React.FC<Props> = ({
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-			<DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col">
+			<DialogContent className="sm:max-w-3xl max-h-[85dvh] flex flex-col">
 				<DialogTitle>{title}</DialogTitle>
 				<DialogDescription>{description}</DialogDescription>
 

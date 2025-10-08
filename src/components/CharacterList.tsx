@@ -25,14 +25,14 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 		campaign.activeCharacters ?? characters.map((c) => c.name)
 
 	return (
-		<div className="flex flex-wrap absolute top-[-64px] right-0 ">
+		<div className="flex flex-wrap absolute top-[-40px] sm:top-[-64px] right-0 ">
 			{activeCharacters.map((charName) => {
 				const character = characters.find((c) => c.name === charName)
 				if (!character)
 					return (
 						<div
 							key={charName}
-							className="flex justify-center items-center w-[80px] aspect-square text-red-500"
+							className="flex justify-center items-center w-[56px] sm:w-[80px] aspect-square text-red-500"
 						>
 							{charName}
 						</div>
@@ -45,7 +45,7 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 							<p className="text-sm">{character.description}</p>
 						</TooltipContent>
 						<TooltipTrigger>
-							<div className="w-[80px] aspect-square">
+							<div className="w-[56px] sm:w-[80px] aspect-square">
 								{character.imageUrl && (
 									<img
 										className="w-full h-full object-contain"
