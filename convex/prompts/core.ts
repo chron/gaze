@@ -1,6 +1,5 @@
-import { google } from "@ai-sdk/google"
 import { GoogleGenAI } from "@google/genai"
-import { type ModelMessage, embed } from "ai"
+import type { ModelMessage } from "ai"
 import { compact } from "../../src/utils/compact"
 import { api, internal } from "../_generated/api"
 import type { Doc, Id } from "../_generated/dataModel"
@@ -328,7 +327,7 @@ export const recentMessages = async (
 						toolName: tr.toolName,
 						output,
 					}
-				}) as any, // Transform from stored format to AI SDK format
+				}),
 			})
 		}
 	}
@@ -645,82 +644,81 @@ export const currentGameContext = async (
 	}
 }
 
-// @ts-expect-error - Keeping this function for potential future use
-const _campaignMemories = async (
-	ctx: ActionCtx,
-	campaign: Doc<"campaigns">,
-	lastMessage: ModelMessage,
-): Promise<ModelMessage[]> => {
-	const anyMemories = await ctx.runQuery(internal.memories.count, {
-		campaignId: campaign._id,
-	})
+// const _campaignMemories = async (
+// 	ctx: ActionCtx,
+// 	campaign: Doc<"campaigns">,
+// 	lastMessage: ModelMessage,
+// ): Promise<ModelMessage[]> => {
+// 	const anyMemories = await ctx.runQuery(internal.memories.count, {
+// 		campaignId: campaign._id,
+// 	})
 
-	let serializedMemories: {
-		type: string
-		summary: string
-		context: string
-		tags: string[]
-	}[] = []
+// 	let serializedMemories: {
+// 		type: string
+// 		summary: string
+// 		context: string
+// 		tags: string[]
+// 	}[] = []
 
-	if (anyMemories > 0) {
-		const { embedding } = await embed({
-			model: google.textEmbeddingModel("gemini-embedding-exp-03-07"),
-			providerOptions: {
-				google: {
-					embeddingTaskType: "RETRIEVAL_QUERY",
-				},
-			},
-			value:
-				typeof lastMessage.content === "string"
-					? lastMessage.content
-					: lastMessage.content
-							.map((block) => {
-								if (block.type === "text") {
-									return block.text
-								}
+// 	if (anyMemories > 0) {
+// 		const { embedding } = await embed({
+// 			model: google.textEmbeddingModel("gemini-embedding-exp-03-07"),
+// 			providerOptions: {
+// 				google: {
+// 					embeddingTaskType: "RETRIEVAL_QUERY",
+// 				},
+// 			},
+// 			value:
+// 				typeof lastMessage.content === "string"
+// 					? lastMessage.content
+// 					: lastMessage.content
+// 							.map((block) => {
+// 								if (block.type === "text") {
+// 									return block.text
+// 								}
 
-								return ""
-							})
-							.join(""),
-		})
+// 								return ""
+// 							})
+// 							.join(""),
+// 		})
 
-		const memoryRefs = await ctx.vectorSearch("memories", "by_embedding", {
-			vector: embedding,
-			limit: 10,
-			filter: (q) => q.eq("campaignId", campaign._id),
-		})
+// 		const memoryRefs = await ctx.vectorSearch("memories", "by_embedding", {
+// 			vector: embedding,
+// 			limit: 10,
+// 			filter: (q) => q.eq("campaignId", campaign._id),
+// 		})
 
-		const memories = await ctx.runQuery(internal.memories.findMany, {
-			ids: memoryRefs.map((ref) => ref._id),
-		})
+// 		const memories = await ctx.runQuery(internal.memories.findMany, {
+// 			ids: memoryRefs.map((ref) => ref._id),
+// 		})
 
-		serializedMemories = memories.map((memory) => ({
-			type: memory.type,
-			summary: memory.summary,
-			context: memory.context,
-			tags: memory.tags,
-		}))
-	}
+// 		serializedMemories = memories.map((memory) => ({
+// 			type: memory.type,
+// 			summary: memory.summary,
+// 			context: memory.context,
+// 			tags: memory.tags,
+// 		}))
+// 	}
 
-	if (serializedMemories.length > 0) {
-		// TOOD: maybe split these out into individual messages?
-		return [
-			{
-				role: "user" as const,
-				content: [
-					{
-						type: "text" as const,
-						text: `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
-							serializedMemories,
-						)}`,
-					},
-				],
-			},
-		]
-	}
+// 	if (serializedMemories.length > 0) {
+// 		// TOOD: maybe split these out into individual messages?
+// 		return [
+// 			{
+// 				role: "user" as const,
+// 				content: [
+// 					{
+// 						type: "text" as const,
+// 						text: `\n\nHere are some memories from the game that might relate to this situation: ${JSON.stringify(
+// 							serializedMemories,
+// 						)}`,
+// 					},
+// 				],
+// 			},
+// 		]
+// 	}
 
-	return []
-}
+// 	return []
+// }
 
 export const otherCampaignSummaries = async (
 	ctx: ActionCtx,
