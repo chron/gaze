@@ -26,3 +26,6 @@ dist-ssr
 *.sw?
 
 .env
+
+# NPM lockfile (project uses PNPM)
+package-lock.json

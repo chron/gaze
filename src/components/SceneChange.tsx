@@ -45,7 +45,7 @@ export const SceneChange = ({
 
 			<div
 				className={cn("bg-black rounded-md p-2", {
-					"bg-black/50 absolute m-4 bottom-0 right-0 hidden group-hover:block":
+					"bg-black/50 absolute m-4 bottom-0 right-0 block md:hidden md:group-hover:block":
 						scene?.imageUrl,
 				})}
 			>
@@ -59,7 +59,7 @@ export const SceneChange = ({
 			{scene?.imageUrl && (
 				<Button
 					onClick={handleRegenerate}
-					className="absolute top-2 right-2 hidden group-hover:block"
+					className="absolute top-2 right-2 block md:hidden md:group-hover:block"
 					aria-label="Click to regenerate scene image"
 					title="Click to regenerate scene image"
 					disabled={regenerating}

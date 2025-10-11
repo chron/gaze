@@ -58,7 +58,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
 			</div>
 
 			<Button
-				className="hidden group-hover:block absolute bottom-2 left-2"
+				className="block md:hidden md:group-hover:block absolute bottom-2 left-2"
 				onClick={async (e) => {
 					setIsLoading(true)
 					e.preventDefault()
