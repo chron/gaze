@@ -28,7 +28,6 @@ type Props = {
 	isLastMessage: boolean
 	setStreamId: (streamId: StreamId) => void
 	isStreaming: boolean
-	scrollToBottom: () => void
 	scrollToMessageTop?: (el: HTMLElement) => void
 }
 
@@ -37,7 +36,6 @@ export const Message: React.FC<Props> = ({
 	isLastMessage,
 	setStreamId,
 	isStreaming,
-	scrollToBottom,
 }) => {
 	const { steps, reasoningText } = useStructuredStream(
 		isStreaming,
@@ -81,11 +79,7 @@ export const Message: React.FC<Props> = ({
 		}
 	}, [noDatabaseContent])
 
-	useEffect(() => {
-		if (isLastMessage && steps.length > 0) {
-			scrollToBottom()
-		}
-	}, [isLastMessage, scrollToBottom, steps])
+
 
 	if (message.error) {
 		return (
@@ -139,6 +133,7 @@ export const Message: React.FC<Props> = ({
 
 	return (
 		<div
+			data-message-id={message._id}
 			className={cn(
 				"flex flex-col gap-2 p-2 rounded-md w-full max-w-[95%] sm:max-w-[80%]",
 				isSaving && "animate-pulse",

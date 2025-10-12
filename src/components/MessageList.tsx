@@ -20,6 +20,7 @@ export const MessageList: React.FC<Props> = ({
 	setStreamId,
 }) => {
 	const isInitialLoadRef = useRef(true)
+	const lastAssistantMessageIdRef = useRef<string | null>(null)
 
 	// const totalTokens = useQuery(api.campaigns.sumTokens, { campaignId })
 	const {
@@ -40,18 +41,10 @@ export const MessageList: React.FC<Props> = ({
 	const reversedMessages = [...(messages ?? [])]
 	reversedMessages.reverse()
 
-	// Scroll to bottom with optional smooth behavior
-	const scrollToBottom = useCallback(
-		(smooth = true) => {
-			if (messagePanelRef.current) {
-				messagePanelRef.current.scrollTo({
-					top: messagePanelRef.current.scrollHeight,
-					behavior: smooth ? "smooth" : "instant",
-				})
-			}
-		},
-		[messagePanelRef],
-	)
+	// Find the most recent assistant message
+	const lastAssistantMessage = messages?.find((m) => m.role === "assistant")
+
+
 
 	// Scroll the container so that the given element's top aligns near the top
 	const scrollMessageToTop = useCallback(
@@ -72,16 +65,28 @@ export const MessageList: React.FC<Props> = ({
 		[messagePanelRef],
 	)
 
-	// Scroll to bottom once messages load - instant on initial load
+	// Track initial load state
 	useEffect(() => {
 		if (lastMessage?._id) {
 			if (isInitialLoadRef.current) {
-				// First time loading messages - scroll instantly to bottom
-				scrollToBottom(false)
 				isInitialLoadRef.current = false
 			}
 		}
-	}, [lastMessage?._id, scrollToBottom])
+	}, [lastMessage?._id])
+
+	// Scroll new assistant messages to top of viewport
+	useEffect(() => {
+		if (lastAssistantMessage?._id && 
+		    lastAssistantMessage._id !== lastAssistantMessageIdRef.current &&
+		    !isInitialLoadRef.current) {
+			// New assistant message detected, scroll it to top
+			const messageElement = document.querySelector(`[data-message-id="${lastAssistantMessage._id}"]`)
+			if (messageElement) {
+				scrollMessageToTop(messageElement as HTMLElement)
+			}
+			lastAssistantMessageIdRef.current = lastAssistantMessage._id
+		}
+	}, [lastAssistantMessage?._id, scrollMessageToTop])
 
 	if (isLoadingMessages) {
 		return (
@@ -136,14 +141,14 @@ export const MessageList: React.FC<Props> = ({
 							isLastMessage={message._id === lastMessage?._id}
 							isStreaming={message.streamId === streamId}
 							setStreamId={setStreamId}
-							scrollToBottom={scrollToBottom}
+
 							scrollToMessageTop={scrollMessageToTop}
 						/>
 					)
 				})}
 
-				{/* Invisible element to anchor scrolling */}
-				{/* <div ref={messagesEndRef} style={{ overflowAnchor: "auto" }} /> */}
+				{/* Spacer to allow scrolling messages to top of viewport */}
+				<div className="h-screen" />
 			</div>
 			{usage && (
 				<div className="text-sm text-gray-200">
