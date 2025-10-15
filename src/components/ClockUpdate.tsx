@@ -1,6 +1,7 @@
 import { ClockIcon } from "lucide-react"
 import type React from "react"
 import { cn } from "../lib/utils"
+import { ClockWheel } from "./ui/clock-wheel"
 
 type Props = {
 	parameters: {
@@ -42,39 +43,13 @@ export const ClockUpdate: React.FC<Props> = ({ parameters }) => {
 						Progress: {parameters.current_ticks}/{parameters.max_ticks}
 					</div>
 
-					{/* Mini clock visualization */}
-					<div className="relative w-8 h-8">
-						<svg
-							className="w-full h-full -rotate-90"
-							viewBox="0 0 100 100"
-							xmlns="http://www.w3.org/2000/svg"
-							aria-label={`Clock progress: ${parameters.current_ticks} of ${parameters.max_ticks}`}
-						>
-							<title>{`${parameters.name} clock: ${parameters.current_ticks}/${parameters.max_ticks}`}</title>
-							{/* Background circle */}
-							<circle
-								cx="50"
-								cy="50"
-								r="40"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="8"
-								opacity="0.3"
-							/>
-
-							{/* Progress circle */}
-							<circle
-								cx="50"
-								cy="50"
-								r="40"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="8"
-								strokeDasharray={`${(parameters.current_ticks / parameters.max_ticks) * 251.327} 251.327`}
-								strokeLinecap="round"
-							/>
-						</svg>
-					</div>
+					{/* Mini clock wheel visualization */}
+					<ClockWheel
+						currentTicks={parameters.current_ticks}
+						maxTicks={parameters.max_ticks}
+						size="sm"
+						isFull={isFull}
+					/>
 				</div>
 
 				{parameters.hint && <p className="text-xs italic">{parameters.hint}</p>}
