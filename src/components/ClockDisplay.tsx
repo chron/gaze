@@ -1,11 +1,14 @@
-import { ChevronUpIcon, ClockIcon } from "lucide-react"
+import { useMutation } from "convex/react"
+import { ChevronUpIcon, ClockIcon, Trash2Icon } from "lucide-react"
 import { useState } from "react"
-import type { Doc } from "../../convex/_generated/dataModel"
+import { api } from "../../convex/_generated/api"
+import type { Doc, Id } from "../../convex/_generated/dataModel"
 import { cn } from "../lib/utils"
 import { Button } from "./ui/button"
 
 type Props = {
 	clocks: NonNullable<Doc<"campaigns">["clocks"]>
+	campaignId: Id<"campaigns">
 }
 
 const Clock: React.FC<{
@@ -13,7 +16,8 @@ const Clock: React.FC<{
 	currentTicks: number
 	maxTicks: number
 	hint?: string
-}> = ({ name, currentTicks, maxTicks, hint }) => {
+	onDelete: () => void
+}> = ({ name, currentTicks, maxTicks, hint, onDelete }) => {
 	const isFull = currentTicks >= maxTicks
 	const percentage = (currentTicks / maxTicks) * 100
 
@@ -23,9 +27,20 @@ const Clock: React.FC<{
 				<span className={cn("text-sm font-bold", isFull && "text-red-600")}>
 					{name}
 				</span>
-				<span className="text-xs text-gray-600">
-					{currentTicks}/{maxTicks}
-				</span>
+				<div className="flex items-center gap-1">
+					<span className="text-xs text-gray-600">
+						{currentTicks}/{maxTicks}
+					</span>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-6 w-6"
+						onClick={onDelete}
+						title="Delete clock"
+					>
+						<Trash2Icon className="h-3 w-3" />
+					</Button>
+				</div>
 			</div>
 
 			{/* Clock circle visualization */}
@@ -90,8 +105,13 @@ const Clock: React.FC<{
 	)
 }
 
-export const ClockDisplay: React.FC<Props> = ({ clocks }) => {
+export const ClockDisplay: React.FC<Props> = ({ clocks, campaignId }) => {
 	const [expanded, setExpanded] = useState(false)
+	const deleteClock = useMutation(api.campaigns.deleteClock)
+
+	const handleDelete = (name: string) => {
+		deleteClock({ campaignId, name })
+	}
 
 	return (
 		<div className="absolute top-20 right-2 max-w-[300px] flex flex-col gap-2 items-end">
@@ -118,6 +138,7 @@ export const ClockDisplay: React.FC<Props> = ({ clocks }) => {
 								currentTicks={clock.currentTicks}
 								maxTicks={clock.maxTicks}
 								hint={clock.hint}
+								onDelete={() => handleDelete(clock.name)}
 							/>
 						))
 					)}

@@ -76,7 +76,7 @@ export const MessageList: React.FC<Props> = ({
 					// Scroll to bottom - the spacer will keep the message at top
 					container.scrollTo({
 						top: container.scrollHeight,
-						behavior: "smooth",
+						behavior: "instant", // ideally smooth for new messages, instant for page load
 					})
 				})
 			})
@@ -189,10 +189,6 @@ export const MessageList: React.FC<Props> = ({
 			<div
 				ref={messagesContainerRef}
 				className="messages-container flex flex-col gap-4"
-				// style={{
-				// 	// Enable scroll anchoring for the messages container
-				// 	overflowAnchor: "auto",
-				// }}
 			>
 				{reversedMessages?.map((message) => {
 					return (

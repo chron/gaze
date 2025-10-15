@@ -518,6 +518,33 @@ export const updateClockInternal = internalMutation({
 	},
 })
 
+export const deleteClock = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		name: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const campaign = await ctx.db.get(args.campaignId)
+
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		const newClocks = (campaign.clocks ?? []).filter(
+			(clock) => clock.name !== args.name,
+		)
+
+		await ctx.db.patch(args.campaignId, {
+			clocks: newClocks,
+		})
+	},
+})
+
 export const addActiveCharacterInternal = internalMutation({
 	args: {
 		campaignId: v.id("campaigns"),

@@ -41,7 +41,7 @@ export const ChatInterface: React.FC<Props> = ({ campaignId }) => {
 
 			{campaign.questLog && <QuestLog questLog={campaign.questLog} />}
 			{campaign.clocks && campaign.clocks.length > 0 && (
-				<ClockDisplay clocks={campaign.clocks} />
+				<ClockDisplay clocks={campaign.clocks} campaignId={campaign._id} />
 			)}
 
 			<div className="flex items-end gap-2 p-4 relative">
