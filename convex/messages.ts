@@ -331,6 +331,11 @@ export const addUserMessage = mutation({
 			campaignId: args.campaignId,
 		})
 
+		// Increment message count
+		await ctx.runMutation(internal.campaigns.incrementMessageCount, {
+			campaignId: args.campaignId,
+		})
+
 		const { streamId } = await ctx.runMutation(
 			api.messages.addAssistantMessage,
 			{
@@ -361,6 +366,11 @@ export const addAssistantMessage = mutation({
 			streamId,
 		})
 
+		// Increment message count
+		await ctx.runMutation(internal.campaigns.incrementMessageCount, {
+			campaignId: args.campaignId,
+		})
+
 		return { messageId, streamId }
 	},
 })
@@ -381,6 +391,10 @@ export const regenerateLastMessage = mutation({
 		// If it's a user message, regen without deleting!
 		if (message.role === "assistant") {
 			await ctx.db.delete(args.messageId)
+			// Decrement message count since we deleted a message
+			await ctx.runMutation(internal.campaigns.decrementMessageCount, {
+				campaignId: message.campaignId,
+			})
 		}
 
 		const { streamId } = await ctx.runMutation(
@@ -909,6 +923,11 @@ export const summarizeChatHistory = action({
 		await ctx.runMutation(api.campaigns.updateCampaignSummary, {
 			campaignId: args.campaignId,
 			summary: text,
+		})
+
+		// Set message count at last summary
+		await ctx.runMutation(api.campaigns.setMessageCountAtLastSummary, {
+			campaignId: args.campaignId,
 		})
 
 		return `${text}\n\nTotal messages: ${messages.length}`

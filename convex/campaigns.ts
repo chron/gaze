@@ -163,6 +163,8 @@ export const addCampaign = mutation({
 			imageModel: args.imageModel,
 			archived: false,
 			enabledTools: args.enabledTools,
+			messageCount: 0,
+			messageCountAtLastSummary: 0,
 		}
 
 		const campaignId = await ctx.db.insert("campaigns", campaign)
@@ -189,6 +191,8 @@ export const quickAddCampaign = mutation({
 			model: "google/gemini-2.5-pro",
 			imageModel: "gpt-image-1",
 			archived: false,
+			messageCount: 0,
+			messageCountAtLastSummary: 0,
 		})
 
 		return campaignId
@@ -534,6 +538,59 @@ export const addActiveCharacterInternal = internalMutation({
 				...(campaign.activeCharacters ?? []),
 				args.activeCharacter,
 			],
+		})
+	},
+})
+
+export const incrementMessageCount = internalMutation({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		const campaign = await ctx.db.get(args.campaignId)
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		await ctx.db.patch(args.campaignId, {
+			messageCount: campaign.messageCount + 1,
+		})
+	},
+})
+
+export const decrementMessageCount = internalMutation({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		const campaign = await ctx.db.get(args.campaignId)
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		await ctx.db.patch(args.campaignId, {
+			messageCount: Math.max(0, campaign.messageCount - 1),
+		})
+	},
+})
+
+export const setMessageCountAtLastSummary = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const campaign = await ctx.db.get(args.campaignId)
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		await ctx.db.patch(args.campaignId, {
+			messageCountAtLastSummary: campaign.messageCount,
 		})
 	},
 })

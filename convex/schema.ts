@@ -51,6 +51,8 @@ export default defineSchema(
 			lastInteractionAt: v.optional(v.number()),
 			lastCampaignSummary: v.optional(v.string()),
 			enabledTools: v.optional(v.record(v.string(), v.boolean())),
+			messageCount: v.number(),
+			messageCountAtLastSummary: v.number(),
 		})
 			.index("by_archived", ["archived"])
 			.index("by_lastInteractionAt", ["lastInteractionAt"]),

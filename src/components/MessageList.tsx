@@ -1,5 +1,5 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
-import { usePaginatedQuery } from "convex/react"
+import { usePaginatedQuery, useQuery } from "convex/react"
 import { useCallback, useEffect, useRef } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
@@ -22,6 +22,7 @@ export const MessageList: React.FC<Props> = ({
 	const isInitialLoadRef = useRef(true)
 	const lastAssistantMessageIdRef = useRef<string | null>(null)
 
+	const campaign = useQuery(api.campaigns.get, { id: campaignId })
 	// const totalTokens = useQuery(api.campaigns.sumTokens, { campaignId })
 	const {
 		results: messages,
@@ -43,8 +44,6 @@ export const MessageList: React.FC<Props> = ({
 
 	// Find the most recent assistant message
 	const lastAssistantMessage = messages?.find((m) => m.role === "assistant")
-
-
 
 	// Scroll the container so that the given element's top aligns near the top
 	const scrollMessageToTop = useCallback(
@@ -76,11 +75,15 @@ export const MessageList: React.FC<Props> = ({
 
 	// Scroll new assistant messages to top of viewport
 	useEffect(() => {
-		if (lastAssistantMessage?._id && 
-		    lastAssistantMessage._id !== lastAssistantMessageIdRef.current &&
-		    !isInitialLoadRef.current) {
+		if (
+			lastAssistantMessage?._id &&
+			lastAssistantMessage._id !== lastAssistantMessageIdRef.current &&
+			!isInitialLoadRef.current
+		) {
 			// New assistant message detected, scroll it to top
-			const messageElement = document.querySelector(`[data-message-id="${lastAssistantMessage._id}"]`)
+			const messageElement = document.querySelector(
+				`[data-message-id="${lastAssistantMessage._id}"]`,
+			)
 			if (messageElement) {
 				scrollMessageToTop(messageElement as HTMLElement)
 			}
@@ -141,7 +144,6 @@ export const MessageList: React.FC<Props> = ({
 							isLastMessage={message._id === lastMessage?._id}
 							isStreaming={message.streamId === streamId}
 							setStreamId={setStreamId}
-
 							scrollToMessageTop={scrollMessageToTop}
 						/>
 					)
@@ -160,6 +162,14 @@ export const MessageList: React.FC<Props> = ({
 						? ""
 						: `, ${usage.outputTokens} output tokens`}
 					{/* (total: {totalTokens?.promptTokens} input +{" "} {totalTokens?.completionTokens} output) */}
+					{campaign && (
+						<>
+							, {campaign.messageCount} messages
+							{campaign.messageCountAtLastSummary !== 0
+								? ` (${campaign.messageCount - campaign.messageCountAtLastSummary} since last summary)`
+								: ""}
+						</>
+					)}
 				</div>
 			)}
 		</div>
