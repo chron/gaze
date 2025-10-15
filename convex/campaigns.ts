@@ -319,7 +319,7 @@ export const lookForThemesInCampaignSummaries = action({
 
 				return {
 					role: "user",
-					content: `## ${c.name}: ${c.description}\n\n### Summary\n\n${c.lastCampaignSummary}`,
+					content: `## ${c.name}: ${c.description}\n\nTotal messages: ${c.messageCount}\n\n### Summary\n\n${c.lastCampaignSummary}`,
 				} satisfies ModelMessage
 			})
 			.filter((m) => m !== null)

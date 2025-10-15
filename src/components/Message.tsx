@@ -28,7 +28,6 @@ type Props = {
 	isLastMessage: boolean
 	setStreamId: (streamId: StreamId) => void
 	isStreaming: boolean
-	scrollToMessageTop?: (el: HTMLElement) => void
 }
 
 export const Message: React.FC<Props> = ({
@@ -79,8 +78,6 @@ export const Message: React.FC<Props> = ({
 		}
 	}, [noDatabaseContent])
 
-
-
 	if (message.error) {
 		return (
 			<pre className="text-sm bg-red-200 p-4 overflow-x-auto relative group">
@@ -117,8 +114,11 @@ export const Message: React.FC<Props> = ({
 
 	if (noContent) {
 		return (
-			<div className="p-2 rounded-md self-start bg-gray-100 text-gray-800">
-				<div className="flex flex-col gap-2 font-serif relative group">
+			<div
+				data-message-id={message._id}
+				className="p-2 rounded-md self-start bg-gray-100 text-gray-800"
+			>
+				<div className="flex flex-col gap-2 font-serif relative group h-8">
 					<p className="animate-pulse text-xl">...</p>
 
 					<MessageActions
