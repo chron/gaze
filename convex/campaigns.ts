@@ -480,6 +480,9 @@ export const updateClockInternal = internalMutation({
 			(clock) => clock.name === args.name,
 		)
 
+		// Store previous tick count for return value
+		const previousTicks = existingClock?.currentTicks ?? 0
+
 		if (existingClock) {
 			const newClocks = (campaign.clocks ?? [])
 				.map((clock) => {
@@ -514,6 +517,11 @@ export const updateClockInternal = internalMutation({
 					},
 				],
 			})
+		}
+
+		return {
+			previousTicks,
+			currentTicks: args.currentTicks,
 		}
 	},
 })

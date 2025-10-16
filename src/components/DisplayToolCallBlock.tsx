@@ -137,17 +137,30 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 	}
 
 	if (block.toolName === "update_clock") {
-		return (
-			<ClockUpdate
-				key={`clock-update-${block.toolCallId}`}
-				parameters={
-					params as {
+		// If tool result is available and structured, use it (includes previous_ticks)
+		// Otherwise fall back to params (tool call arguments)
+		const clockParams =
+			toolResult?.result &&
+			typeof toolResult.result === "object" &&
+			"current_ticks" in toolResult.result
+				? (toolResult.result as {
+						name: string
+						current_ticks: number
+						max_ticks: number
+						previous_ticks?: number
+						hint?: string
+					})
+				: (params as {
 						name: string
 						current_ticks: number
 						max_ticks: number
 						hint?: string
-					}
-				}
+					})
+
+		return (
+			<ClockUpdate
+				key={`clock-update-${block.toolCallId}`}
+				parameters={clockParams}
 			/>
 		)
 	}

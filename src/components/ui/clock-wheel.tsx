@@ -6,6 +6,7 @@ type ClockWheelProps = {
 	size?: "sm" | "md" | "lg"
 	isFull?: boolean
 	className?: string
+	previousTicks?: number // For animating newly added segments
 }
 
 /**
@@ -17,6 +18,7 @@ export const ClockWheel: React.FC<ClockWheelProps> = ({
 	size = "md",
 	isFull = false,
 	className,
+	previousTicks,
 }) => {
 	const sizeClasses = {
 		sm: "w-8 h-8",
@@ -66,14 +68,32 @@ export const ClockWheel: React.FC<ClockWheelProps> = ({
 	const strokeColor = "#ffffff" // white borders between segments
 
 	// Generate segments with stable identifiers
-	const segments = Array.from({ length: maxTicks }, (_, i) => ({
-		id: `${maxTicks}-${i}`,
-		index: i,
-		isFilled: i < currentTicks,
-	}))
+	const segments = Array.from({ length: maxTicks }, (_, i) => {
+		const isFilled = i < currentTicks
+		// Determine if this segment is newly added
+		const isNew =
+			previousTicks !== undefined && i >= previousTicks && i < currentTicks
+
+		return {
+			id: `${maxTicks}-${i}`,
+			index: i,
+			isFilled,
+			isNew,
+		}
+	})
 
 	return (
 		<div className={cn(sizeClasses[size], className)}>
+			<style>{`
+				@keyframes clock-pulse {
+					0%, 100% {
+						opacity: 1;
+					}
+					50% {
+						opacity: 0.4;
+					}
+				}
+			`}</style>
 			<svg
 				className="w-full h-full -rotate-90"
 				viewBox="0 0 100 100"
@@ -90,6 +110,13 @@ export const ClockWheel: React.FC<ClockWheelProps> = ({
 						fill={segment.isFilled ? filledColor : emptyColor}
 						stroke={strokeColor}
 						strokeWidth="1.5"
+						style={
+							segment.isNew
+								? {
+										animation: "clock-pulse 1s ease-in-out infinite",
+									}
+								: undefined
+						}
 					/>
 				))}
 

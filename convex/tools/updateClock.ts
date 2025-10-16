@@ -31,18 +31,30 @@ export const updateClock = (
 				),
 		}),
 		execute: async ({ name, current_ticks, max_ticks, hint }) => {
-			await ctx.runMutation(internal.campaigns.updateClockInternal, {
-				campaignId,
+			const result = await ctx.runMutation(
+				internal.campaigns.updateClockInternal,
+				{
+					campaignId,
+					name,
+					currentTicks: current_ticks,
+					maxTicks: max_ticks,
+					hint,
+				},
+			)
+
+			const message =
+				current_ticks >= max_ticks
+					? `Clock "${name}" is now full! The event should occur.`
+					: `Clock "${name}" updated: ${current_ticks}/${max_ticks} segments filled`
+
+			// Return structured data including previous ticks for UI animation
+			return {
+				message,
 				name,
-				currentTicks: current_ticks,
-				maxTicks: max_ticks,
+				current_ticks,
+				max_ticks,
+				previous_ticks: result?.previousTicks ?? 0,
 				hint,
-			})
-
-			if (current_ticks >= max_ticks) {
-				return `Clock "${name}" is now full! The event should occur.`
 			}
-
-			return `Clock "${name}" updated: ${current_ticks}/${max_ticks} segments filled`
 		},
 	})

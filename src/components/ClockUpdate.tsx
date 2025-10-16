@@ -8,6 +8,7 @@ type Props = {
 		name: string
 		current_ticks: number
 		max_ticks: number
+		previous_ticks?: number
 		hint?: string
 	}
 }
@@ -49,6 +50,7 @@ export const ClockUpdate: React.FC<Props> = ({ parameters }) => {
 						maxTicks={parameters.max_ticks}
 						size="sm"
 						isFull={isFull}
+						previousTicks={parameters.previous_ticks}
 					/>
 				</div>
 
