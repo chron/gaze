@@ -1,10 +1,12 @@
 import { Link } from "@tanstack/react-router"
-import { useAction, useQuery } from "convex/react"
+import { useAction, useMutation, useQuery } from "convex/react"
 import { Loader2, RefreshCcwIcon } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"
 import { Button } from "./ui/button"
+import { Checkbox } from "./ui/checkbox"
+import { Label } from "./ui/label"
 
 type Props = {
 	campaignId: Id<"campaigns">
@@ -42,6 +44,7 @@ type CharacterCardProps = {
 const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
 	const [isLoading, setIsLoading] = useState(false)
 	const regenerateImage = useAction(api.characters.generateImageForCharacter)
+	const toggleActive = useMutation(api.characters.toggleActive)
 
 	return (
 		<div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow border border-gray-200 relative group">
@@ -55,6 +58,36 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
 			<div className="flex flex-col gap-1 flex-1 min-w-0">
 				<h2 className="text-lg font-bold">{character.name}</h2>
 				<p className="text-sm text-gray-500">{character.description}</p>
+			</div>
+
+			<div className="flex items-center gap-2">
+				<div
+					className="flex items-center gap-2"
+					onClick={(e) => {
+						e.preventDefault()
+						e.stopPropagation()
+					}}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault()
+							e.stopPropagation()
+						}
+					}}
+				>
+					<Checkbox
+						id={`active-${character._id}`}
+						checked={character.active}
+						onCheckedChange={() => {
+							toggleActive({ characterId: character._id })
+						}}
+					/>
+					<Label
+						htmlFor={`active-${character._id}`}
+						className="text-sm cursor-pointer"
+					>
+						Active
+					</Label>
+				</div>
 			</div>
 
 			<Button

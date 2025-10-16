@@ -35,3 +35,16 @@ export const runIt = migrations.runner(
 export const runArchivedMigration = migrations.runner(
 	internal.migrations.setDefaultArchived,
 )
+
+export const setDefaultActive = migrations.define({
+	table: "characters",
+	migrateOne: async (ctx, doc) => {
+		await ctx.db.patch(doc._id, {
+			active: true,
+		})
+	},
+})
+
+export const runActiveMigration = migrations.runner(
+	internal.migrations.setDefaultActive,
+)

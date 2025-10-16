@@ -500,7 +500,10 @@ export const currentGameContext = async (
 		campaignId: campaign._id,
 	})
 
-	const serializedCharacters = characters.map(
+	// Only send active characters to the LLM
+	const activeCharacters = characters.filter((c) => c.active)
+
+	const serializedCharacters = activeCharacters.map(
 		(character) =>
 			`<character_name>${character.name}</character_name>\n<character_description>${character.description}</character_description>\n<character_image_prompt>${character.imagePrompt}</character_image_prompt>`,
 	)

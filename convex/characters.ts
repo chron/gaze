@@ -151,6 +151,25 @@ export const update = mutation({
 	},
 })
 
+export const toggleActive = mutation({
+	args: {
+		characterId: v.id("characters"),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const character = await ctx.db.get(args.characterId)
+		if (!character) throw new Error("Character not found")
+
+		await ctx.db.patch(args.characterId, {
+			active: !character.active,
+		})
+	},
+})
+
 export const destroy = mutation({
 	args: {
 		characterId: v.id("characters"),
@@ -262,6 +281,7 @@ export const createInternal = internalMutation({
 			description: args.description,
 			campaignId: args.campaignId,
 			imagePrompt: args.imagePrompt,
+			active: true,
 		})
 	},
 })

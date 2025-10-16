@@ -164,6 +164,7 @@ export default defineSchema(
 			imagePrompt: v.string(),
 			image: v.optional(v.id("_storage")),
 			humeVoiceId: v.optional(v.string()),
+			active: v.boolean(),
 		}),
 		jobProgress: defineTable({
 			campaignId: v.id("campaigns"),
