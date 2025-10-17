@@ -747,7 +747,7 @@ export const otherCampaignSummaries = async (
 			}
 		})
 		.filter((m) => m !== null)
-	// .slice(-20) // Max last 20 campaigns to keep token count down
+		.slice(-20) // Max last 20 campaigns to keep token count down
 
 	const messages = compact(formattedMessages)
 

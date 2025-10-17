@@ -116,7 +116,7 @@ export const collapseHistory = action({
 					}
 				})
 				.filter((message): message is FormattedMessage => message !== null)
-				.slice(0, -40) // Keep the last 40 messages so we have full access to the recent content
+				.slice(0, -30) // Keep the last 40 messages so we have full access to the recent content
 				.map((message, index) => {
 					return {
 						...message,

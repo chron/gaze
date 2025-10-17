@@ -1,5 +1,5 @@
 NEXT
-- [QUESTS] main vs sidequest?
+- [AUTH] make campaigns owned by a user id, enforce it in backend
 
 SPEECH
 - Different prompt for user messages that gets char info from the character sheet
@@ -7,22 +7,17 @@ SPEECH
 
 OTHER STUFF
 
-- inactive characters
-- Chunk summaries, store in table, show in the UI
 - New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
-- Auth
 - Update character tool and/or outfit system? Use an image edit model maybe?
 - Automate an initial welcome message once you create a campaign
 - Fix up data (or reset DB?) so we can turn `schemaValidation: true` back on
 - Claude + tool use is broken, it wants result messages for ALL tool calls
 - Disable text input when there's an active roll to do (maybe?)
-- Look into Gemini implicit caching — not sure it's being applied
 - If we're going to take JSON directly in the modal, need some friendly errors
 - Also the modal is too long with long JSON and files
 - Drop chat messages out of the pagination so you don't have to hard refresh to go back to 10.
 - Track age of memories in case that's useful for tapering their importance off over time
 - CMD+K
-- A way to not have to name/describe the campaign upfront (and even AI-name it later once it's locked in?)
 - Some indicator of progress when files are being uploaded
 - validation messages or errors when saving forms (form lib?)
 - Scrape the content at https://charsmith.com/wildsea-compendium to make a Wildsea doc?
@@ -33,21 +28,9 @@ OTHER STUFF
   - Also: for dice pool thresholds show number of successes instead of total somehow?
 - <Wiggly /> animation resets as new text streams in (negative offsets probably?)
 - Character sheet JSON doesn't maintain the original order
-- Order campaigns in sidebar by recently updated, show a subset (5?) with a link to view more
 - Editing previous messages (UI is done, but need to actually save the changes)
 - "End of session" tool that adds a summary to the UI somewhere?
-- edit character descriptions (and prompt? maybe an expandable section for it?)
-- when tool message is the last message it prevents the usage info from showing
 - Two scene changes in one message end up with the same image
-- Clear old clocks
-- change clock display to cooool segments
-
-PROMPT THINGS
-
-- It's not that reliable at introducing characters (always works when you ask if specifically though)
-- Sometimes a tool call (like updating character sheet) comes at the natural end of a message, and then the new message after kind of doubles things up
-- model specific tweaks maybe
-  - Claude uses A/B/C lists instead of markdown lists which don't render properly
 
 DONE
 
@@ -88,3 +71,15 @@ DONE
 - Merge tool call follow ups into a field on the original message to simplify UI and backend
 - [QUESTS] do something with completed / failed quests in context and UI?
 - z.describe("...") for tool params
+- inactive characters
+- Chunk summaries, store in table
+- Auth
+- Look into Gemini implicit caching — not sure it's being applied
+- A way to not have to name/describe the campaign upfront (and even AI-name it later once it's locked in?)
+- Order campaigns in sidebar by recently updated, show a subset (5?) with a link to view more
+- edit character descriptions (and prompt? maybe an expandable section for it?)
+- Clear old clocks
+- change clock display to cooool segments
+- when tool message is the last message it prevents the usage info from showing
+- It's not that reliable at introducing characters (always works when you ask if specifically though)
+- Sometimes a tool call (like updating character sheet) comes at the natural end of a message, and then the new message after kind of doubles things up
