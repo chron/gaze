@@ -209,14 +209,14 @@ export const MessageList: React.FC<Props> = ({
 			</div>
 			{usage && (
 				<div className="text-sm text-gray-200">
-					{usage.inputTokens} input tokens
+					{usage.inputTokens} input
 					{usage.cachedInputTokens
 						? ` (${usage.cachedInputTokens} cached)`
 						: ""}
 					{Number.isNaN(usage.outputTokens)
 						? ""
-						: `, ${usage.outputTokens} output tokens`}
-					{/* (total: {totalTokens?.promptTokens} input +{" "} {totalTokens?.completionTokens} output) */}
+						: `, ${usage.outputTokens} output`}
+					{usage.reasoningTokens ? `, ${usage.reasoningTokens} reasoning` : ""}
 					{campaign && (
 						<>
 							, {campaign.messageCount} messages
