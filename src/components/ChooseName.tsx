@@ -1,7 +1,9 @@
 import { useMutation } from "convex/react"
+import { Type } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"
+import { ToolCallContainer } from "./ToolCallContainer"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
@@ -27,22 +29,6 @@ export const ChooseName: React.FC<ChooseNameProps> = ({
 	const [otherDetails, setOtherDetails] = useState<string>("")
 	const performUserChooseName = useMutation(api.messages.performUserChooseName)
 
-	if (toolResult) {
-		return (
-			<div className="rounded-md border border-teal-200 bg-teal-50 p-3">
-				<div className="flex items-center gap-2">
-					<span className="text-teal-700">✓ Name chosen:</span>
-					<span className="text-teal-900">{toolResult.result.name}</span>
-				</div>
-				{toolResult.result.otherDetails && (
-					<div className="mt-1 text-sm text-gray-600">
-						{toolResult.result.otherDetails}
-					</div>
-				)}
-			</div>
-		)
-	}
-
 	const handleChooseName = async (name: string) => {
 		if (isPending) return
 
@@ -61,51 +47,65 @@ export const ChooseName: React.FC<ChooseNameProps> = ({
 		}
 	}
 
-	return (
-		<div className="p-4 bg-gradient-to-r from-teal-50 to-teal-100 rounded-lg border border-teal-200">
-			<div className="flex items-center gap-2 mb-3">
-				<span className="text-gray-700">{parameters.description}</span>
-			</div>
+	if (toolResult) {
+		return (
+			<ToolCallContainer
+				icon={Type}
+				title={`Name chosen: ${toolResult.result.name}`}
+			>
+				{toolResult.result.otherDetails && (
+					<p className="text-sm">{toolResult.result.otherDetails}</p>
+				)}
+			</ToolCallContainer>
+		)
+	}
 
-			<div className="flex flex-col gap-2 mb-3">
-				<div className="flex items-center gap-2 mb-3">
+	return (
+		<ToolCallContainer icon={Type} title={parameters.description} defaultOpen>
+			<div className="flex flex-col gap-3">
+				<div className="flex items-center gap-2">
 					<Input
 						value={chosenName}
 						onChange={(e) => setChosenName(e.target.value)}
+						placeholder="Enter custom name"
 					/>
-
 					<Button
 						onClick={() => handleChooseName(chosenName)}
 						disabled={isPending}
 					>
-						Choose Name
+						Choose
 					</Button>
 				</div>
 
-				<div className="flex items-center gap-2 mb-3">
-					<span className="text-gray-700 whitespace-nowrap">
-						Other details:
+				<div className="flex flex-col gap-2">
+					<span className="text-sm font-medium text-gray-700">
+						Other details (optional):
 					</span>
 					<Textarea
 						value={otherDetails}
 						onChange={(e) => setOtherDetails(e.target.value)}
+						placeholder="Additional information..."
 					/>
 				</div>
 
-				<div className="flex flex-wrap gap-2 mb-3">
-					<span className="text-gray-700">Suggested names:</span>
-
-					{parameters.suggestedNames.map((name) => (
-						<Button
-							key={`name-${messageId}-${name}`}
-							onClick={() => handleChooseName(name)}
-							disabled={isPending}
-						>
-							{name}
-						</Button>
-					))}
+				<div className="flex flex-col gap-2">
+					<span className="text-sm font-medium text-gray-700">
+						Suggested names:
+					</span>
+					<div className="flex flex-wrap gap-2">
+						{parameters.suggestedNames.map((name) => (
+							<Button
+								key={`name-${messageId}-${name}`}
+								onClick={() => handleChooseName(name)}
+								disabled={isPending}
+								variant="outline"
+							>
+								{name}
+							</Button>
+						))}
+					</div>
 				</div>
 			</div>
-		</div>
+		</ToolCallContainer>
 	)
 }

@@ -1,15 +1,26 @@
+import { UserPlus } from "lucide-react"
+import type React from "react"
+import { ToolCallContainer } from "./ToolCallContainer"
+
 type Props = {
 	parameters: {
 		name: string
 		description: string
 	}
+	className?: string
 }
 
-export const CharacterIntroduction: React.FC<Props> = ({ parameters }) => {
+export const CharacterIntroduction: React.FC<Props> = ({
+	parameters,
+	className,
+}) => {
 	return (
-		<div className="rounded-md border border-gray-200 bg-teal-600 text-white p-2">
-			<h3 className="text-lg font-bold">New character: {parameters.name}</h3>
-			<p>{parameters.description}</p>
-		</div>
+		<ToolCallContainer
+			icon={UserPlus}
+			title={`New character: ${parameters.name}`}
+			className={className}
+		>
+			<p className="text-sm">{parameters.description}</p>
+		</ToolCallContainer>
 	)
 }

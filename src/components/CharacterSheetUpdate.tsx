@@ -1,15 +1,27 @@
+import { UserCog } from "lucide-react"
+import type React from "react"
+import { ToolCallContainer } from "./ToolCallContainer"
+
 type Props = {
 	parameters: {
 		name: string
 		description: string
 		data: Record<string, unknown>
 	}
+	className?: string
 }
 
-export const CharacterSheetUpdate: React.FC<Props> = () => {
+export const CharacterSheetUpdate: React.FC<Props> = ({
+	parameters,
+	className,
+}) => {
 	return (
-		<div className="rounded-md border border-gray-200 bg-blue-800 text-white p-2">
-			<h3 className="text-lg font-bold">Character Sheet Updated!</h3>
-		</div>
+		<ToolCallContainer
+			icon={UserCog}
+			title={`Character Sheet Updated: ${parameters.name}`}
+			className={className}
+		>
+			<p className="text-sm">{parameters.description}</p>
+		</ToolCallContainer>
 	)
 }

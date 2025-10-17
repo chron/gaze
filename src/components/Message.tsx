@@ -160,7 +160,7 @@ export const Message: React.FC<Props> = ({
 				)}
 
 				{!noDatabaseContent ? (
-					message.content.map((block, index) => {
+					message.content.map((block, index, array) => {
 						if (block.type === "text") {
 							if (editingIndex === index) {
 								return (
@@ -209,6 +209,13 @@ export const Message: React.FC<Props> = ({
 						}
 
 						if (block.type === "tool-call") {
+							// Check if this is the first/last in a sequence of tool calls
+							const prevIsToolCall =
+								index > 0 && array[index - 1]?.type === "tool-call"
+							const nextIsToolCall =
+								index < array.length - 1 &&
+								array[index + 1]?.type === "tool-call"
+
 							return (
 								<DisplayToolCallBlock
 									key={`${message._id}-${index}-tool-call-${block.toolCallId}`}
@@ -219,6 +226,8 @@ export const Message: React.FC<Props> = ({
 									message={message}
 									toolCallIndex={index}
 									setStreamId={setStreamId}
+									isFirstInGroup={!prevIsToolCall}
+									isLastInGroup={!nextIsToolCall}
 								/>
 							)
 						}

@@ -26,6 +26,8 @@ type Props = {
 	}
 	setStreamId: (streamId: StreamId) => void
 	toolCallIndex: number
+	isFirstInGroup?: boolean
+	isLastInGroup?: boolean
 }
 
 export const DisplayToolCallBlock: React.FC<Props> = ({
@@ -33,7 +35,11 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 	message,
 	toolCallIndex,
 	setStreamId,
+	isFirstInGroup = true,
+	isLastInGroup = true,
 }) => {
+	const positionClass =
+		`${isFirstInGroup ? "first-tool-call" : ""} ${isLastInGroup ? "last-tool-call" : ""}`.trim()
 	const toolResult = message.toolResults?.find(
 		(tr) => tr.toolCallId === block.toolCallId,
 	)
@@ -99,6 +105,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 						data: Record<string, unknown>
 					}
 				}
+				className={positionClass}
 			/>
 		)
 	}
@@ -108,6 +115,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 			<CharacterIntroduction
 				key={`character-introduction-${block.toolCallId}`}
 				parameters={params as { name: string; description: string }}
+				className={positionClass}
 			/>
 		)
 	}
@@ -116,7 +124,17 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 		return (
 			<PlanUpdate
 				key={`plan-update-${block.toolCallId}`}
-				parameters={params as { plan: string }}
+				parameters={
+					params as {
+						plan: string
+						part?:
+							| "current_scene"
+							| "future_events"
+							| "player_requests"
+							| "overall_story"
+					}
+				}
+				className={positionClass}
 			/>
 		)
 	}
@@ -132,6 +150,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 						action: "add" | "update_objective" | "complete" | "fail"
 					}
 				}
+				className={positionClass}
 			/>
 		)
 	}
@@ -161,6 +180,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 			<ClockUpdate
 				key={`clock-update-${block.toolCallId}`}
 				parameters={clockParams}
+				className={positionClass}
 			/>
 		)
 	}
@@ -176,6 +196,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 						imagePrompt: string
 					}
 				}
+				className={positionClass}
 			/>
 		)
 	}
@@ -185,6 +206,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 			parameters={params}
 			toolName={block.toolName}
 			key={`unknown-tool-call-${block.toolName}`}
+			className={positionClass}
 		/>
 	)
 }

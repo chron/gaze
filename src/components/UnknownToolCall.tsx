@@ -1,22 +1,27 @@
 import { AlertCircle } from "lucide-react"
 import type React from "react"
+import { ToolCallContainer } from "./ToolCallContainer"
 
 type Props = {
 	toolName: string
 	parameters: unknown
+	className?: string
 }
 
-export const UnknownToolCall: React.FC<Props> = ({ toolName, parameters }) => {
+export const UnknownToolCall: React.FC<Props> = ({
+	toolName,
+	parameters,
+	className,
+}) => {
 	return (
-		<div className="flex flex-col p-3 bg-red-50 border border-red-200 rounded-md text-red-800 text-sm">
-			<div className="flex items-center gap-2">
-				<AlertCircle className="h-4 w-4" />
-				<span>Unknown tool call: {toolName}</span>
-			</div>
-
-			<pre className="text-xs whitespace-pre-wrap">
+		<ToolCallContainer
+			icon={AlertCircle}
+			title={`Unknown tool call: ${toolName}`}
+			className={className}
+		>
+			<pre className="text-xs whitespace-pre-wrap bg-white p-2 rounded border border-red-100">
 				{JSON.stringify(parameters, null, 2)}
 			</pre>
-		</div>
+		</ToolCallContainer>
 	)
 }

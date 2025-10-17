@@ -1,5 +1,6 @@
-import { MessageCircleWarningIcon } from "lucide-react"
+import { ScrollText } from "lucide-react"
 import type React from "react"
+import { ToolCallContainer } from "./ToolCallContainer"
 
 type Props = {
 	parameters: {
@@ -7,21 +8,16 @@ type Props = {
 		quest_title: string
 		objective_description: string
 	}
+	className?: string
 }
 
-export const QuestUpdate: React.FC<Props> = ({ parameters }) => {
-	return (
-		<div className="p-3 bg-purple-50 border border-purple-200 rounded-md text-purple-800 text-sm">
-			<div className="flex flex-col gap-2">
-				<div className="flex items-center gap-2 ">
-					<MessageCircleWarningIcon className="h-4 w-4" />
-					{getActionText(parameters.action)}{" "}
-					<span className="font-bold">{parameters.quest_title}</span>
-				</div>
+export const QuestUpdate: React.FC<Props> = ({ parameters, className }) => {
+	const title = `${getActionText(parameters.action)} ${parameters.quest_title}`
 
-				<p>{parameters.objective_description}</p>
-			</div>
-		</div>
+	return (
+		<ToolCallContainer icon={ScrollText} title={title} className={className}>
+			<p className="text-sm">{parameters.objective_description}</p>
+		</ToolCallContainer>
 	)
 }
 

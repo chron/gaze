@@ -1,17 +1,34 @@
-import { CheckCircle } from "lucide-react"
+import { ListChecks } from "lucide-react"
 import type React from "react"
+import { ToolCallContainer } from "./ToolCallContainer"
 
 type Props = {
 	parameters: {
 		plan: string
+		part?:
+			| "current_scene"
+			| "future_events"
+			| "player_requests"
+			| "overall_story"
 	}
+	className?: string
 }
 
-export const PlanUpdate: React.FC<Props> = () => {
+const partLabels = {
+	current_scene: "Current Scene",
+	future_events: "Future Events",
+	player_requests: "Player Requests",
+	overall_story: "Overall Story",
+}
+
+export const PlanUpdate: React.FC<Props> = ({ parameters, className }) => {
+	const title = parameters.part
+		? `Plan updated: ${partLabels[parameters.part]}`
+		: "Plan updated"
+
 	return (
-		<div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-md text-green-800 text-sm">
-			<CheckCircle className="h-4 w-4" />
-			<span>Plan updated!</span>
-		</div>
+		<ToolCallContainer icon={ListChecks} title={title} className={className}>
+			<p className="text-sm whitespace-pre-wrap">{parameters.plan}</p>
+		</ToolCallContainer>
 	)
 }

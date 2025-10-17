@@ -1,10 +1,10 @@
 import { useAction } from "convex/react"
-import { Loader2Icon, RefreshCcwIcon } from "lucide-react"
+import { Image, Loader2Icon, RefreshCcwIcon } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
-import { cn } from "../lib/utils"
 import { MessageMarkdown } from "./MessageMarkdown"
+import { ToolCallContainer } from "./ToolCallContainer"
 import { Button } from "./ui/button"
 
 export const SceneChange = ({
@@ -31,46 +31,38 @@ export const SceneChange = ({
 	}
 
 	return (
-		<div className="relative group">
-			{scene?.imageUrl ? (
-				<img
-					src={scene.imageUrl}
-					alt={scene.description}
-					className="h-full w-full object-contain rounded-md"
-				/>
-			) : (
-				// <div className="h-full w-full min-w-[300px] aspect-[16/9] bg-gray-700 rounded-md" />
-				<div />
-			)}
-
-			<div
-				className={cn("bg-black rounded-md p-2", {
-					"bg-black/50 absolute m-4 bottom-0 right-0 block md:hidden md:group-hover:block":
-						scene?.imageUrl,
-				})}
-			>
-				<div className="text-white text-sm">
+		<ToolCallContainer icon={Image} title="Scene Change" defaultOpen>
+			<div className="flex flex-col gap-2">
+				<div className="text-sm">
 					<MessageMarkdown>
 						{description ? description : (scene?.description ?? "")}
 					</MessageMarkdown>
 				</div>
-			</div>
 
-			{scene?.imageUrl && (
-				<Button
-					onClick={handleRegenerate}
-					className="absolute top-2 right-2 block md:hidden md:group-hover:block"
-					aria-label="Click to regenerate scene image"
-					title="Click to regenerate scene image"
-					disabled={regenerating}
-				>
-					{regenerating ? (
-						<Loader2Icon className="animate-spin" />
-					) : (
-						<RefreshCcwIcon />
-					)}
-				</Button>
-			)}
-		</div>
+				{scene?.imageUrl && (
+					<div className="relative group/image mt-2">
+						<img
+							src={scene.imageUrl}
+							alt={scene.description}
+							className="h-full w-full object-contain rounded-md"
+						/>
+						<Button
+							onClick={handleRegenerate}
+							className="absolute top-2 right-2 opacity-0 group-hover/image:opacity-100 transition-opacity"
+							aria-label="Click to regenerate scene image"
+							title="Click to regenerate scene image"
+							disabled={regenerating}
+							size="sm"
+						>
+							{regenerating ? (
+								<Loader2Icon className="animate-spin" />
+							) : (
+								<RefreshCcwIcon />
+							)}
+						</Button>
+					</div>
+				)}
+			</div>
+		</ToolCallContainer>
 	)
 }

@@ -36,29 +36,24 @@ export const ClockWheel: React.FC<ClockWheelProps> = ({
 		const startRad = (startAngle * Math.PI) / 180
 		const endRad = (endAngle * Math.PI) / 180
 
-		// Calculate points on the circle (radius 40, center 50,50)
+		// Calculate points on the circle (center 50,50)
 		const outerRadius = 45
-		const innerRadius = 8 // Center circle radius
+		const centerX = 50
+		const centerY = 50
 
-		const x1 = 50 + innerRadius * Math.cos(startRad)
-		const y1 = 50 + innerRadius * Math.sin(startRad)
-		const x2 = 50 + outerRadius * Math.cos(startRad)
-		const y2 = 50 + outerRadius * Math.sin(startRad)
-		const x3 = 50 + outerRadius * Math.cos(endRad)
-		const y3 = 50 + outerRadius * Math.sin(endRad)
-		const x4 = 50 + innerRadius * Math.cos(endRad)
-		const y4 = 50 + innerRadius * Math.sin(endRad)
+		const x1 = centerX + outerRadius * Math.cos(startRad)
+		const y1 = centerY + outerRadius * Math.sin(startRad)
+		const x2 = centerX + outerRadius * Math.cos(endRad)
+		const y2 = centerY + outerRadius * Math.sin(endRad)
 
 		// Large arc flag for arcs > 180 degrees
 		const largeArcFlag = anglePerSegment > 180 ? 1 : 0
 
-		// Create path: move to inner start, line to outer start, arc to outer end, line to inner end, arc back
+		// Create path: move to center, line to start point, arc to end point, line back to center, close
 		return `
-			M ${x1} ${y1}
-			L ${x2} ${y2}
-			A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${x3} ${y3}
-			L ${x4} ${y4}
-			A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${x1} ${y1}
+			M ${centerX} ${centerY}
+			L ${x1} ${y1}
+			A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}
 			Z
 		`
 	}
@@ -119,16 +114,6 @@ export const ClockWheel: React.FC<ClockWheelProps> = ({
 						}
 					/>
 				))}
-
-				{/* Center circle */}
-				<circle
-					cx="50"
-					cy="50"
-					r="8"
-					fill={filledColor}
-					stroke={strokeColor}
-					strokeWidth="1.5"
-				/>
 			</svg>
 		</div>
 	)

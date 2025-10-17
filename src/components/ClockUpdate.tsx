@@ -1,6 +1,5 @@
-import { ClockIcon } from "lucide-react"
 import type React from "react"
-import { cn } from "../lib/utils"
+import { ToolCallContainer } from "./ToolCallContainer"
 import { ClockWheel } from "./ui/clock-wheel"
 
 type Props = {
@@ -11,51 +10,42 @@ type Props = {
 		previous_ticks?: number
 		hint?: string
 	}
+	className?: string
 }
 
-export const ClockUpdate: React.FC<Props> = ({ parameters }) => {
+export const ClockUpdate: React.FC<Props> = ({ parameters, className }) => {
 	const isFull = parameters.current_ticks >= parameters.max_ticks
 	const isNew = parameters.current_ticks === 0
 
+	const title = isNew
+		? `New clock: ${parameters.name}`
+		: isFull
+			? `Clock completed: ${parameters.name}`
+			: `Clock updated: ${parameters.name}`
+
 	return (
-		<div
-			className={cn(
-				"p-3 border rounded-md text-sm",
-				isFull
-					? "bg-red-50 border-red-200 text-red-800"
-					: "bg-blue-50 border-blue-200 text-blue-800",
-			)}
+		<ToolCallContainer
+			iconSlot={
+				<ClockWheel
+					currentTicks={parameters.current_ticks}
+					maxTicks={parameters.max_ticks}
+					size="sm"
+					isFull={isFull}
+					previousTicks={parameters.previous_ticks}
+				/>
+			}
+			title={title}
+			className={className}
 		>
 			<div className="flex flex-col gap-2">
-				<div className="flex items-center gap-2">
-					<ClockIcon className="h-4 w-4" />
-					<span className="font-bold">
-						{isNew
-							? "New clock:"
-							: isFull
-								? "Clock completed!"
-								: "Clock updated:"}
-					</span>
-					<span className="font-bold">{parameters.name}</span>
+				<div className="text-sm">
+					Progress: {parameters.current_ticks}/{parameters.max_ticks}
 				</div>
 
-				<div className="flex items-center gap-2">
-					<div className="text-xs">
-						Progress: {parameters.current_ticks}/{parameters.max_ticks}
-					</div>
-
-					{/* Mini clock wheel visualization */}
-					<ClockWheel
-						currentTicks={parameters.current_ticks}
-						maxTicks={parameters.max_ticks}
-						size="sm"
-						isFull={isFull}
-						previousTicks={parameters.previous_ticks}
-					/>
-				</div>
-
-				{parameters.hint && <p className="text-xs italic">{parameters.hint}</p>}
+				{parameters.hint && (
+					<p className="text-sm italic text-gray-500">{parameters.hint}</p>
+				)}
 			</div>
-		</div>
+		</ToolCallContainer>
 	)
 }

@@ -1,4 +1,6 @@
+import { Sparkles } from "lucide-react"
 import type React from "react"
+import { ToolCallContainer } from "./ToolCallContainer"
 
 type Props = {
 	parameters: {
@@ -6,21 +8,28 @@ type Props = {
 		description: string
 		imagePrompt: string
 	}
+	className?: string
 }
 
-export const SetCampaignInfo: React.FC<Props> = ({ parameters }) => {
+export const SetCampaignInfo: React.FC<Props> = ({ parameters, className }) => {
 	return (
-		<div className="flex flex-col p-3 bg-teal-50 border border-teal-200 rounded-md text-teal-800 text-sm">
-			<h2 className="text-lg font-bold mb-4">Campaign begins!</h2>
-
-			<div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
-				<strong>Name:</strong>
-				<span>{parameters.name}</span>
-				<strong>Description:</strong>
-				<span>{parameters.description}</span>
-				<strong>Image Prompt:</strong>
-				<span>{parameters.imagePrompt}</span>
+		<ToolCallContainer
+			icon={Sparkles}
+			title={`Campaign begins: ${parameters.name}`}
+			className={className}
+		>
+			<div className="flex flex-col gap-2">
+				<div>
+					<strong className="text-sm">Description:</strong>
+					<p className="text-sm mt-1">{parameters.description}</p>
+				</div>
+				<div>
+					<strong className="text-sm">Image Prompt:</strong>
+					<p className="text-sm mt-1 italic text-gray-500">
+						{parameters.imagePrompt}
+					</p>
+				</div>
 			</div>
-		</div>
+		</ToolCallContainer>
 	)
 }
