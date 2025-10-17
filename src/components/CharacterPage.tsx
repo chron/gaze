@@ -52,7 +52,7 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
 				<img
 					src={character.imageUrl}
 					alt={character.name}
-					className="w-16 h-16 object-cover rounded-full border border-gray-300 bg-gray-100"
+					className="w-16 h-16 object-cover object-top rounded-full border border-gray-300 bg-blue-100 "
 				/>
 			)}
 			<div className="flex flex-col gap-1 flex-1 min-w-0">

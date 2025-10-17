@@ -6,7 +6,6 @@ import type { Id } from "../../convex/_generated/dataModel"
 import { CharacterPage } from "../components/CharacterPage"
 import { CharacterSheet } from "../components/CharacterSheet"
 import { ChatInterface } from "../components/ChatInterface"
-import { MemoriesPage } from "../components/MemoriesPage"
 import { ReferenceSidebar } from "../components/ReferenceSidebar"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
@@ -25,6 +24,9 @@ function ChatPage() {
 	})
 
 	if (!campaign) return null
+
+	const isCharacterSheetEnabled =
+		campaign.enabledTools?.update_character_sheet !== false
 
 	return (
 		<>
@@ -53,7 +55,11 @@ function ChatPage() {
 
 						<TabsList className={cn(campaign.gameSystemId && "me-10")}>
 							<TabsTrigger value="chat">Chat</TabsTrigger>
-							<TabsTrigger value="character_sheet">Character sheet</TabsTrigger>
+							{isCharacterSheetEnabled && (
+								<TabsTrigger value="character_sheet">
+									Character sheet
+								</TabsTrigger>
+							)}
 							<TabsTrigger value="characters">Characters</TabsTrigger>
 							{/* <TabsTrigger value="memories">Memories</TabsTrigger> */}
 						</TabsList>
@@ -62,15 +68,17 @@ function ChatPage() {
 					<TabsContent value="chat">
 						<ChatInterface campaignId={campaignId as Id<"campaigns">} />
 					</TabsContent>
-					<TabsContent value="character_sheet">
-						<CharacterSheet campaignId={campaignId as Id<"campaigns">} />
-					</TabsContent>
+					{isCharacterSheetEnabled && (
+						<TabsContent value="character_sheet">
+							<CharacterSheet campaignId={campaignId as Id<"campaigns">} />
+						</TabsContent>
+					)}
 					<TabsContent value="characters">
 						<CharacterPage campaignId={campaignId as Id<"campaigns">} />
 					</TabsContent>
-					<TabsContent value="memories">
+					{/* <TabsContent value="memories">
 						<MemoriesPage campaignId={campaignId as Id<"campaigns">} />
-					</TabsContent>
+					</TabsContent> */}
 				</Tabs>
 			</div>
 

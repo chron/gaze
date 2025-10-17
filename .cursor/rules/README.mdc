@@ -12,12 +12,17 @@ alwaysApply: true
 ## Core Features
 
 - **State Management**: Persistent character sheets, campaigns, and game state
-- **AI Integration**: Multiple AI providers (OpenAI, Anthropic, Google) for different use cases
+- **AI Integration**: Multiple AI providers (OpenAI, Anthropic, Google, Groq, OpenRouter) for different use cases
+- **Authentication**: User authentication and management via Clerk
 - **Game Systems**: Support for different RPG rulesets with custom system prompts
-- **Character Management**: Character creation, sheets, and inventory tracking
+- **Character Management**: Character creation, sheets, inventory tracking, and NPC introduction
 - **Memory System**: Vector database for storing and retrieving relevant game memories
+- **Campaign Management**: Quest logs, progress clocks, planning notes, and scene tracking
 - **Interactive Tools**: Dice rolling, tool calls, and other game mechanics
 - **File Upload**: Support for rulebooks and reference materials
+- **Voice & Audio**: AI-generated voice narration with sequential audio playback
+- **Smart Summaries**: Automatic campaign history summarization with background job tracking
+- **Scene System**: Dynamic scene changes with AI-generated images and active character tracking
 - **Real-time Updates**: Live synchronization across all game elements
 
 ## Technology Stack
@@ -30,19 +35,29 @@ alwaysApply: true
 - **Tailwind CSS v4** - Utility-first styling with latest features
 - **Radix UI** - Accessible, unstyled component primitives
 - **Shadcn/ui** - Pre-built component library built on Radix
+- **Motion** (Framer Motion v12) - Advanced animations and transitions
+- **Vaul** - Drawer component library
+- **React Markdown** - Markdown rendering with remark plugins
 
 ### Backend
 - **Convex** - Real-time database with serverless functions
+- **Clerk** - User authentication and management
 - **Vector Search** - Embedded memories with semantic search (3072 dimensions)
 - **File Storage** - Built-in file storage for images and documents
+- **HTTP Endpoints** - Custom HTTP routes for external integrations
+- **Background Jobs** - Long-running operations with progress tracking
 - **Migrations** - Database schema versioning and migrations
+- **Text Streaming** - Persistent text streaming for AI responses
 
 ### AI & Integrations
 - **AI SDK** - Vercel AI SDK for LLM integration
-- **OpenAI** - Primary AI provider for conversations
-- **Anthropic** - Alternative AI provider
-- **Google AI** - Additional AI capabilities
-- **Vector Embeddings** - For memory storage and retrieval
+- **OpenAI** - Primary AI provider for conversations and embeddings
+- **Anthropic** - Claude models for advanced reasoning
+- **Google AI** - Gemini models for multi-modal capabilities
+- **Groq** - Fast inference for select models
+- **OpenRouter** - Access to diverse model options
+- **Hume AI** - Voice synthesis and emotion-aware audio generation
+- **Vector Embeddings** - For memory storage and semantic retrieval
 
 ### Development Tools
 - **Biome** - Fast linting and formatting
@@ -56,39 +71,101 @@ alwaysApply: true
 src/
 ├── components/          # React components
 │   ├── ui/             # Reusable UI components (Shadcn/ui)
-│   ├── ChatInterface.tsx
-│   ├── CharacterSheet.tsx
-│   ├── DiceRoll.tsx
+│   │   ├── button.tsx, dialog.tsx, input.tsx, etc.
+│   │   ├── clock-wheel.tsx        # Progress clock visualization
+│   │   ├── file-upload.tsx        # File upload component
+│   │   ├── sidebar.tsx            # Sidebar navigation
+│   │   └── auto-resize-textarea.tsx
+│   ├── CampaignForm.tsx           # Campaign creation/editing
+│   ├── ChatInterface.tsx          # Main chat UI
+│   ├── CharacterSheet.tsx         # Character sheet display
+│   ├── CharacterSheetUpdate.tsx   # Sheet update tool result
+│   ├── CharacterList.tsx          # Character selection
+│   ├── CharacterPage.tsx          # Character detail page
+│   ├── CharacterIntroduction.tsx  # NPC introduction tool result
+│   ├── ClockDisplay.tsx           # Progress clocks display
+│   ├── ClockUpdate.tsx            # Clock update tool result
+│   ├── DiceRoll.tsx               # Dice rolling interface
+│   ├── DiceRollResult.tsx         # Dice roll tool result
+│   ├── QuestLog.tsx               # Quest tracking display
+│   ├── QuestUpdate.tsx            # Quest update tool result
+│   ├── PlanModal.tsx              # Campaign planning UI
+│   ├── PlanUpdate.tsx             # Plan update tool result
+│   ├── SceneChange.tsx            # Scene change tool result
+│   ├── Message.tsx                # Individual message component
+│   ├── MessageList.tsx            # Chat message list
+│   ├── MessageMarkdown.tsx        # Markdown rendering
+│   ├── MemoriesPage.tsx           # Memory browser
+│   ├── GameSystemModal.tsx        # Game system management
+│   ├── ProgressModal.tsx          # Background job progress
+│   ├── PromptAnalysisModal.tsx    # Prompt debugging
+│   ├── SequentialAudioPlayer.tsx  # Audio playback
+│   ├── ReasoningLozenges.tsx      # AI reasoning display
+│   ├── ReferenceSidebar.tsx       # Reference materials
+│   ├── MainSidebar.tsx            # Main navigation
+│   ├── ToolCallContainer.tsx      # Tool call wrapper
+│   ├── DisplayToolCallBlock.tsx   # Tool call display
+│   ├── ErrorBoundary.tsx          # Error handling
 │   └── ...
 ├── routes/             # File-based routing
-│   ├── __root.tsx
-│   ├── index.tsx
-│   ├── campaigns.$campaignId.tsx
-│   └── systems.tsx
+│   ├── __root.tsx                 # Root layout
+│   ├── index.tsx                  # Home page
+│   ├── campaigns.new.tsx          # Create campaign
+│   ├── campaigns.$campaignId.tsx  # Campaign page
+│   ├── campaigns_.$campaignId.edit.tsx  # Edit campaign
+│   ├── campaigns.$campaignId.characters.$characterId.tsx  # Character detail
+│   └── systems.tsx                # Game systems management
 ├── hooks/              # Custom React hooks
+│   ├── use-mobile.ts              # Mobile detection
+│   └── useStructuredStream.ts     # Structured streaming
 ├── lib/                # Utility functions
-└── types.ts           # TypeScript type definitions
+│   └── utils.ts                   # Helper functions
+├── utils/              # Additional utilities
+│   └── compact.ts                 # Array compaction
+├── types.ts            # TypeScript type definitions
+└── models.json         # AI model configurations
 
 convex/
+├── auth.config.ts      # Clerk authentication config
 ├── campaigns.ts        # Campaign management functions
 ├── characters.ts       # Character management
 ├── characterSheets.ts  # Character sheet operations
 ├── gameSystems.ts      # Game system management
 ├── messages.ts         # Chat and AI interactions
 ├── memories.ts         # Memory storage and retrieval
-├── prompts/           # AI system prompts
-├── schema.ts          # Database schema
-└── tools/             # Custom tools for AI
+├── summaries.ts        # Campaign history summarization
+├── jobProgress.ts      # Background job tracking
+├── speech.ts           # Voice/audio generation
+├── http.ts             # HTTP endpoints
+├── migrations.ts       # Database migrations
+├── utils.ts            # Utility functions
+├── prompts/            # AI system prompts
+│   ├── core.ts                    # Core prompts
+│   ├── system.ts                  # System prompt builder
+│   └── extractMemories.ts         # Memory extraction
+├── schema.ts           # Database schema
+└── tools/              # Custom tools for AI
+    ├── requestDiceRoll.ts         # Dice rolling
+    ├── updateCharacterSheet.ts    # Sheet updates
+    ├── introduceCharacter.ts      # NPC introduction
+    ├── nameCharacter.ts           # Character naming
+    ├── changeScene.ts             # Scene changes
+    ├── setCampaignInfo.ts         # Campaign metadata
+    ├── updateQuestLog.ts          # Quest management
+    ├── updateClock.ts             # Progress clocks
+    └── updatePlan.ts              # Planning notes
 ```
 
 ## Key Data Models
 
-- **Campaigns**: Game sessions with descriptions and associated game systems
-- **Characters**: Player characters with names, descriptions, and images
-- **Character Sheets**: Detailed character data, inventory, and stats
-- **Messages**: Chat history with AI, including tool calls and results
-- **Memories**: Vector-embedded game memories for context retrieval
-- **Game Systems**: RPG rulesets with custom prompts and reference files
+- **Campaigns**: Game sessions with descriptions, game systems, quest logs, progress clocks, planning notes, active characters, and summaries
+- **Characters**: Player characters and NPCs with names, descriptions, images, voice IDs, and active status
+- **Character Sheets**: Detailed character data, inventory, stats, and custom game system fields
+- **Messages**: Chat history with AI, including tool calls, results, reasoning, scene data, and audio
+- **Memories**: Vector-embedded game memories with semantic search for context retrieval (3072 dimensions)
+- **Summaries**: Campaign history summaries for managing long conversations and context
+- **Game Systems**: RPG rulesets with custom prompts, default character data, and reference files
+- **Job Progress**: Background operation tracking with step-by-step progress and status
 
 ## Development Guidelines
 
@@ -138,10 +215,52 @@ convex/
 4. Add UI components for tool results
 
 ### Working with AI
-- System prompts are in `convex/prompts/`
+- System prompts are in `convex/prompts/` (core, system, extractMemories)
 - Memory extraction and storage in `convex/memories.ts`
 - Tool calls handled in `convex/messages.ts`
+- Available AI tools:
+  - `requestDiceRoll` - Request dice rolls from the player
+  - `updateCharacterSheet` - Update character stats and inventory
+  - `introduceCharacter` - Introduce new NPCs with images
+  - `nameCharacter` - Suggest character names
+  - `changeScene` - Change scenes with descriptions and images
+  - `setCampaignInfo` - Update campaign metadata
+  - `updateQuestLog` - Manage quest objectives and status
+  - `updateClock` - Track progress with Forged in the Dark style clocks
+  - `updatePlan` - Manage campaign planning notes
 - UI components for tool results in `src/components/`
+- Voice generation with Hume AI in `convex/speech.ts`
+- Campaign summarization for context management in `convex/summaries.ts`
+
+## Key Architectural Patterns
+
+### Context Management
+- **Vector Memories**: Semantic search retrieves relevant past events (3072-dim embeddings)
+- **Campaign Summaries**: Automatic summarization when message count grows
+- **Active Characters**: Track which characters are currently in the scene
+- **Scene State**: Current scene description, background, and active characters
+
+### Tool System
+- Tools are defined in `convex/tools/` with Zod schemas
+- Each tool has a corresponding React component for displaying results
+- Tools can trigger side effects (update sheets, create characters, generate images)
+- Tool results are stored in messages and can be rendered inline
+
+### Image Generation
+- Scene changes and character introductions can generate AI images
+- Images are stored in Convex storage and referenced by ID
+- Image prompts can be customized per campaign
+
+### Audio/Voice
+- Hume AI generates emotion-aware voice narration
+- Sequential audio playback for multiple audio segments
+- Voice IDs can be assigned to characters for consistent voices
+
+### Background Jobs
+- Long-running operations (summarization) use job progress tracking
+- Real-time progress updates shown in modal UI
+- Job status: running, completed, failed
+- Step-by-step progress tracking with descriptions
 
 ## Testing & Deployment
 
@@ -149,11 +268,21 @@ convex/
 - `pnpm build` for production builds
 - Convex handles backend deployment
 - Frontend can be deployed to any static host
+- Authentication requires Clerk configuration
 
 ## Important Notes
 
-- This is a real-time application - expect live updates
-- AI responses include tool calls that users can interact with
-- Memory system uses vector embeddings for context
-- File uploads are stored in Convex storage
-- Multiple AI providers are supported for different use cases
+- This is a real-time application - expect live updates via Convex subscriptions
+- AI responses include tool calls that users can interact with (dice rolls, sheet updates, etc.)
+- Memory system uses vector embeddings (3072 dimensions) for semantic context retrieval
+- File uploads are stored in Convex storage (rulebooks, character images, scene images)
+- Multiple AI providers are supported for different use cases and models
+- Campaign history is automatically summarized to manage context window limits
+- Background jobs (like summarization) show real-time progress via job tracking
+- Scene changes can trigger AI-generated images and manage active character lists
+- Progress clocks follow Forged in the Dark design pattern (segments/ticks)
+- Voice narration uses Hume AI for emotion-aware voice synthesis
+- Authentication is handled by Clerk for secure user management
+- All AI interactions support streaming responses with tool calls
+- Character sheets support flexible, game-system-specific data structures
+- Quest logs track multiple objectives with active/completed/failed states
