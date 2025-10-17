@@ -79,7 +79,7 @@ const ChatInput: React.FC<{
 			} else {
 				localStorage.removeItem(storageKey)
 			}
-		}, 3000) // 2 second debounce
+		}, 2000) // 2 second debounce
 
 		return () => clearTimeout(timeoutId)
 	}, [input, campaignId])

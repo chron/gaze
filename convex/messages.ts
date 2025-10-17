@@ -725,7 +725,13 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 			})
 		},
 		onFinish: async ({ finishReason, response, usage }) => {
-			console.log("onFinish", finishReason, usage, response)
+			if (finishReason === "unknown") {
+				await ctx.runMutation(internal.messages.addError, {
+					messageId: message._id,
+					error: "Content filter blocked the request",
+				})
+				return
+			}
 
 			// Process all messages from all steps and combine their content
 			const allContent: Extract<
@@ -824,10 +830,8 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						})}\n`,
 					)
 				} else if (chunk.type === "finish") {
-					console.log("addUsageToMessage", chunk.totalUsage)
-
 					await ctx.scheduler.runAfter(
-						1000,
+						300,
 						internal.messages.addUsageToMessage,
 						{
 							messageId: message._id,

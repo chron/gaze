@@ -80,6 +80,7 @@ export const Message: React.FC<Props> = ({
 
 	// Once the content of the message begins streaming, collapse the reasoning section
 	const startedStreamingContent = steps.filter((s) => s.text).length > 0
+
 	useEffect(() => {
 		if (startedStreamingContent) {
 			setShowReasoning(false)
@@ -87,22 +88,27 @@ export const Message: React.FC<Props> = ({
 	}, [startedStreamingContent])
 
 	useEffect(() => {
-		if (!noDatabaseContent && !noStreamingContent) {
+		if ((!noDatabaseContent && !noStreamingContent) || !!message.error) {
 			setStreamId(null)
 		}
-	}, [noDatabaseContent, noStreamingContent, setStreamId])
+	}, [noDatabaseContent, noStreamingContent, message.error, setStreamId])
 
 	if (message.error) {
 		return (
-			<pre className="text-sm bg-red-200 p-4 overflow-x-auto relative group">
-				{message.error}
+			<div
+				data-message-id={message._id}
+				className="rounded-md self-start bg-gray-100 text-gray-800 overflow-hidden"
+			>
+				<pre className="text-sm bg-red-200 p-4 overflow-x-auto relative group">
+					{message.error}
 
-				<MessageActions
-					message={message}
-					isLastMessage={isLastMessage}
-					setStreamId={setStreamId}
-				/>
-			</pre>
+					<MessageActions
+						message={message}
+						isLastMessage={isLastMessage}
+						setStreamId={setStreamId}
+					/>
+				</pre>
+			</div>
 		)
 	}
 

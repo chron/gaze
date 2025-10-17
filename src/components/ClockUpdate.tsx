@@ -15,10 +15,11 @@ type Props = {
 
 export const ClockUpdate: React.FC<Props> = ({ parameters, className }) => {
 	const isFull = parameters.current_ticks >= parameters.max_ticks
-	const isNew = parameters.current_ticks === 0
+	const isNew =
+		parameters.previous_ticks === undefined || parameters.previous_ticks === 0
 
 	const title = isNew
-		? `New clock: ${parameters.name}`
+		? `Clock started: ${parameters.name}`
 		: isFull
 			? `Clock completed: ${parameters.name}`
 			: `Clock updated: ${parameters.name}`

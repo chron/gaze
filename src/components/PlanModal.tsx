@@ -36,11 +36,11 @@ export const PlanModal: React.FC<Props> = ({ campaignId, onClose }) => {
 					{plans.map(([part, plan]) => (
 						<div
 							key={part}
-							className="flex flex-col gap-2 bg-gray-50 p-4 rounded-lg"
+							className="flex flex-col gap-2 bg-gray-50 p-4  rounded-lg"
 						>
 							<h3 className="text-lg font-bold">{part}</h3>
 							<div
-								className={cn(isSaving && "animate-pulse")}
+								className={cn("min-h-[100px]", isSaving && "animate-pulse")}
 								onDoubleClick={() => {
 									if (editingPart !== part) {
 										setEditingPart(part)

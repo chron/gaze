@@ -27,7 +27,7 @@ export const generateImageForModel = async (
 			providerOptions: {
 				openai: { quality: "medium" },
 			},
-			aspectRatio: "1:1",
+			size: "1024x1024",
 			prompt,
 		})
 
