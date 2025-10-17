@@ -28,9 +28,8 @@ OTHER STUFF
   - Also: for dice pool thresholds show number of successes instead of total somehow?
 - <Wiggly /> animation resets as new text streams in (negative offsets probably?)
 - Character sheet JSON doesn't maintain the original order
-- Editing previous messages (UI is done, but need to actually save the changes)
-- "End of session" tool that adds a summary to the UI somewhere?
 - Two scene changes in one message end up with the same image
+- Use tanstack-query + Convex integration so local navigation is snappier
 
 DONE
 
@@ -83,3 +82,4 @@ DONE
 - when tool message is the last message it prevents the usage info from showing
 - It's not that reliable at introducing characters (always works when you ask if specifically though)
 - Sometimes a tool call (like updating character sheet) comes at the natural end of a message, and then the new message after kind of doubles things up
+- Editing previous messages (UI is done, but need to actually save the changes)

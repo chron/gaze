@@ -34,7 +34,8 @@ export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
 			className={cn(
 				"tool-call-container relative bg-white",
 				// First item: top, left, right borders + top radius (NO bottom border)
-				isFirst && "border-t border-l border-r border-gray-200 rounded-t-lg",
+				isFirst &&
+					"border-t border-l border-r border-gray-200 rounded-t-lg mt-2",
 				// Middle items: left and right borders only
 				!isFirst && !isLast && "border-l border-r border-gray-200",
 				// Last item: left, right, bottom borders + bottom radius
@@ -64,7 +65,7 @@ export const ToolCallContainer: React.FC<ToolCallContainerProps> = ({
 						<div className="absolute left-[calc(0.75rem+1rem)] top-10 bottom-0 w-[1.5px] bg-gray-200" />
 					)}
 
-					<AccordionTrigger className="px-3 py-2.5 hover:no-underline hover:bg-gray-50 transition-colors [&>svg]:hidden">
+					<AccordionTrigger className="px-3 py-2.5 hover:no-underline hover:bg-gray-50 transition-colors [&>svg]:hidden cursor-pointer">
 						<div className="flex items-center gap-2.5 text-sm font-medium">
 							{/* Icon with circular background */}
 							<div className="flex items-center justify-center w-8 h-8 rounded-full bg-white border border-gray-400 flex-shrink-0 relative z-10">

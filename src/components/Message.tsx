@@ -1,6 +1,6 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { useAction, useMutation } from "convex/react"
-import { Brain, Loader2, RefreshCcwIcon, Speech } from "lucide-react"
+import { Loader2, RefreshCcwIcon, Speech } from "lucide-react"
 import React, { useEffect, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
@@ -9,14 +9,10 @@ import { cn } from "../lib/utils"
 import { DiceRollResult } from "./DiceRollResult"
 import { DisplayToolCallBlock } from "./DisplayToolCallBlock"
 import { MessageMarkdown } from "./MessageMarkdown"
+import { ReasoningLozenges } from "./ReasoningLozenges"
 import { SequentialAudioPlayer } from "./SequentialAudioPlayer"
 import { AutoResizeTextarea } from "./ui/auto-resize-textarea"
 import { Button } from "./ui/button"
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "./ui/collapsible"
 
 type Props = {
 	message: Omit<Doc<"messages">, "audio"> & {
@@ -26,7 +22,7 @@ type Props = {
 		}
 	}
 	isLastMessage: boolean
-	setStreamId: (streamId: StreamId) => void
+	setStreamId: (streamId: StreamId | null) => void
 	isStreaming: boolean
 }
 
@@ -36,7 +32,7 @@ export const Message: React.FC<Props> = ({
 	setStreamId,
 	isStreaming,
 }) => {
-	const { steps, reasoningText } = useStructuredStream(
+	const { steps, reasoningText, reasoningChunks } = useStructuredStream(
 		isStreaming,
 		message.streamId as StreamId,
 	)
@@ -46,7 +42,7 @@ export const Message: React.FC<Props> = ({
 	const [editingIndex, setEditingIndex] = useState<number | null>(null)
 	const [editingText, setEditingText] = useState("")
 	const [isSaving, setIsSaving] = useState(false)
-	const [showReasoning, setShowReasoning] = useState(false)
+	const [showReasoning, setShowReasoning] = useState(true)
 
 	const noDatabaseContent =
 		message.content.length === 0 ||
@@ -71,12 +67,30 @@ export const Message: React.FC<Props> = ({
 				return acc
 			}, "")
 
-	// Once the message is fully streamed, collapse the reasoning section
+	// Get reasoning chunks for display - count headings for lozenge display
+	const displayChunks = noDatabaseContent
+		? reasoningChunks
+		: (() => {
+				if (!combinedReasoning) return []
+				// Count bold headings in persisted reasoning text
+				const headingMatches = combinedReasoning.match(/^\*\*.+\*\*$/gm)
+				const count = headingMatches ? headingMatches.length : 0
+				return count > 0 ? Array(count).fill(combinedReasoning) : []
+			})()
+
+	// Once the content of the message begins streaming, collapse the reasoning section
+	const startedStreamingContent = steps.filter((s) => s.text).length > 0
 	useEffect(() => {
-		if (!noDatabaseContent) {
+		if (startedStreamingContent) {
 			setShowReasoning(false)
 		}
-	}, [noDatabaseContent])
+	}, [startedStreamingContent])
+
+	useEffect(() => {
+		if (!noDatabaseContent && !noStreamingContent) {
+			setStreamId(null)
+		}
+	}, [noDatabaseContent, noStreamingContent, setStreamId])
 
 	if (message.error) {
 		return (
@@ -135,7 +149,7 @@ export const Message: React.FC<Props> = ({
 		<div
 			data-message-id={message._id}
 			className={cn(
-				"flex flex-col gap-2 p-2 rounded-md w-full max-w-[95%] sm:max-w-[80%]",
+				"flex flex-col gap-2 p-3 rounded-md w-full max-w-[95%] sm:max-w-[80%]",
 				isSaving && "animate-pulse",
 				message.role === "user"
 					? "self-end bg-blue-100 text-blue-800"
@@ -143,20 +157,24 @@ export const Message: React.FC<Props> = ({
 			)}
 		>
 			<div className="flex flex-col font-serif relative group gap-2">
-				{combinedReasoning && (
-					<Collapsible open={showReasoning} onOpenChange={setShowReasoning}>
-						<CollapsibleTrigger asChild>
-							<Button variant="outline" size="sm">
-								<Brain className="h-4 w-4 mr-2" />
-								Reasoning
-							</Button>
-						</CollapsibleTrigger>
-						<CollapsibleContent>
-							<div className="p-3 bg-gray-50 rounded-md text-sm">
+				{displayChunks.length > 0 && (
+					<div className="flex flex-col gap-2">
+						<ReasoningLozenges
+							chunkCount={displayChunks.length}
+							isStreaming={!startedStreamingContent} // Collapse as soon as the reasoning has finished flowing in
+							isExpanded={showReasoning}
+							onClick={() => setShowReasoning(!showReasoning)}
+						/>
+
+						{showReasoning && (
+							<div className="text-sm text-gray-600">
 								<MessageMarkdown>{combinedReasoning}</MessageMarkdown>
+								{startedStreamingContent && (
+									<hr className="text-gray-400 mt-4 mb-2" />
+								)}
 							</div>
-						</CollapsibleContent>
-					</Collapsible>
+						)}
+					</div>
 				)}
 
 				{!noDatabaseContent ? (

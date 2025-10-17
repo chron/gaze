@@ -10,7 +10,7 @@ type Props = {
 	campaignId: Id<"campaigns">
 	messagePanelRef: React.RefObject<HTMLDivElement | null>
 	streamId: StreamId | null
-	setStreamId: (streamId: StreamId) => void
+	setStreamId: (streamId: StreamId | null) => void
 }
 
 export const MessageList: React.FC<Props> = ({
@@ -203,7 +203,7 @@ export const MessageList: React.FC<Props> = ({
 				})}
 
 				{/* Dynamic spacer to keep last assistant message at top */}
-				{spacerHeight > 0 && (
+				{spacerHeight > 0 && streamId !== null && (
 					<div style={{ height: `${spacerHeight}px` }} data-spacer="true" />
 				)}
 			</div>

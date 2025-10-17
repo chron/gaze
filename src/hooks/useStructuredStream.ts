@@ -27,6 +27,7 @@ type ToolCall = {
 type Step = {
 	stepId: string
 	reasoningText: string
+	reasoningChunks: string[] // Track individual reasoning chunks/paragraphs
 	text: string
 	toolCalls: ToolCall[]
 	isFinished: boolean
@@ -35,6 +36,7 @@ type Step = {
 
 type StructuredStreamContent = {
 	steps: Step[]
+	reasoningChunks: string[] // Flattened array of all reasoning chunks
 }
 
 function parseStreamContent(rawText: string): StructuredStreamContent & {
@@ -44,6 +46,7 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 		return {
 			steps: [],
 			reasoningText: "",
+			reasoningChunks: [],
 		}
 	}
 
@@ -62,6 +65,7 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 					steps.push({
 						stepId: chunk.messageId,
 						reasoningText: "",
+						reasoningChunks: [],
 						text: "",
 						toolCalls: [],
 						isFinished: false,
@@ -87,6 +91,7 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 						steps.push({
 							stepId: "default",
 							reasoningText: "",
+							reasoningChunks: [],
 							text: "",
 							toolCalls: [],
 							isFinished: false,
@@ -96,6 +101,19 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 					// Add to current step
 					const currentStep = steps[steps.length - 1]
 					currentStep.reasoningText += chunk.delta
+
+					// Track reasoning chunks - count bold headings to determine chunks
+					// Match bold headings like "**Heading**"
+					const headingMatches =
+						currentStep.reasoningText.match(/^\*\*.+\*\*$/gm)
+					const chunkCount = headingMatches ? headingMatches.length : 0
+
+					// Store chunk count as repeated entries for compatibility
+					// (We'll show one lozenge per heading)
+					currentStep.reasoningChunks =
+						chunkCount > 0
+							? Array(chunkCount).fill(currentStep.reasoningText)
+							: []
 					break
 				}
 
@@ -105,6 +123,7 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 						steps.push({
 							stepId: "default",
 							reasoningText: "",
+							reasoningChunks: [],
 							text: "",
 							toolCalls: [],
 							isFinished: false,
@@ -123,6 +142,7 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 						steps.push({
 							stepId: "default",
 							reasoningText: "",
+							reasoningChunks: [],
 							text: "",
 							toolCalls: [],
 							isFinished: false,
@@ -179,9 +199,16 @@ function parseStreamContent(rawText: string): StructuredStreamContent & {
 		"",
 	)
 
+	// Flatten all reasoning chunks across all steps
+	const flattenedChunks: string[] = []
+	for (const step of steps) {
+		flattenedChunks.push(...step.reasoningChunks)
+	}
+
 	return {
 		steps,
 		reasoningText: flattenedReasoning,
+		reasoningChunks: flattenedChunks,
 	}
 }
 
