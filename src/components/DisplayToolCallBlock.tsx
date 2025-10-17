@@ -54,6 +54,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 				messageId={message._id}
 				scene={message.scene}
 				description={params.description as string}
+				className={positionClass}
 			/>
 		)
 	}
@@ -73,6 +74,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 				}
 				toolResult={toolResult ?? null}
 				setStreamId={setStreamId}
+				className={positionClass}
 			/>
 		)
 	}
@@ -90,6 +92,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 					}
 				}
 				toolResult={toolResult ?? null}
+				className={positionClass}
 			/>
 		)
 	}

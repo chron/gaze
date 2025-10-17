@@ -16,6 +16,7 @@ type ChooseNameProps = {
 		suggestedNames: string[]
 	}
 	toolResult: NonNullable<Doc<"messages">["toolResults"]>[number] | null
+	className?: string
 }
 
 export const ChooseName: React.FC<ChooseNameProps> = ({
@@ -23,6 +24,7 @@ export const ChooseName: React.FC<ChooseNameProps> = ({
 	toolCallIndex,
 	parameters,
 	toolResult,
+	className,
 }) => {
 	const [isPending, setIsPending] = useState(false)
 	const [chosenName, setChosenName] = useState<string>("")
@@ -61,7 +63,12 @@ export const ChooseName: React.FC<ChooseNameProps> = ({
 	}
 
 	return (
-		<ToolCallContainer icon={Type} title={parameters.description} defaultOpen>
+		<ToolCallContainer
+			icon={Type}
+			title={parameters.description}
+			defaultOpen
+			className={className}
+		>
 			<div className="flex flex-col gap-3">
 				<div className="flex items-center gap-2">
 					<Input

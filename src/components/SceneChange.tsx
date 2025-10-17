@@ -11,6 +11,7 @@ export const SceneChange = ({
 	messageId,
 	scene,
 	description,
+	className,
 }: {
 	messageId: Id<"messages">
 	description: string
@@ -20,6 +21,7 @@ export const SceneChange = ({
 		image?: string
 		imageUrl?: string | null
 	}
+	className?: string
 }) => {
 	const regenerateImage = useAction(api.messages.regenerateSceneImage)
 	const [regenerating, setRegenerating] = useState(false)
@@ -31,7 +33,12 @@ export const SceneChange = ({
 	}
 
 	return (
-		<ToolCallContainer icon={Image} title="Scene Change" defaultOpen>
+		<ToolCallContainer
+			icon={Image}
+			title="Scene Change"
+			defaultOpen
+			className={className}
+		>
 			<div className="flex flex-col gap-2">
 				<div className="text-sm">
 					<MessageMarkdown>

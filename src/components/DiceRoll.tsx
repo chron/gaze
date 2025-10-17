@@ -17,6 +17,7 @@ type DiceRollProps = {
 	}
 	setStreamId: (streamId: StreamId) => void
 	toolResult: NonNullable<Doc<"messages">["toolResults"]>[number] | null
+	className?: string
 }
 
 export const DiceRoll: React.FC<DiceRollProps> = ({
@@ -25,6 +26,7 @@ export const DiceRoll: React.FC<DiceRollProps> = ({
 	parameters,
 	setStreamId,
 	toolResult,
+	className,
 }) => {
 	const [isRolling, setIsRolling] = useState(false)
 	const performUserDiceRoll = useMutation(api.messages.performUserDiceRoll)
@@ -65,7 +67,12 @@ export const DiceRoll: React.FC<DiceRollProps> = ({
 	}
 
 	return (
-		<ToolCallContainer icon={Dices} title={`Roll ${rollText}`} defaultOpen>
+		<ToolCallContainer
+			icon={Dices}
+			title={`Roll ${rollText}`}
+			defaultOpen
+			className={className}
+		>
 			<div className="flex flex-col gap-3">
 				<div className="flex flex-wrap gap-2">
 					{Array.from({ length: parameters.number }, (_, index) => (
