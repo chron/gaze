@@ -685,7 +685,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 	const { fullStream } = streamText({
 		system: prompt,
-		temperature: 1.2, //0.7,
+		temperature: 1.2,
 		model: campaign.model.startsWith("google")
 			? google(campaign.model.split("/")[1])
 			: campaign.model.startsWith("anthropic")
@@ -1219,6 +1219,25 @@ export const analyzePrompt = action({
 			const messagesTotal =
 				otherSummaries.charCount + recent.charCount + introTokens
 
+			// Build the full prompt text
+			const fullPromptText = `SYSTEM PROMPT:\n${systemPromptData.prompt}\n\n---\n\nMESSAGES:\n\n${[
+				...otherSummaries.messages,
+				...recent.messages,
+				{ role: "user", content: [{ type: "text", text: introInstruction }] },
+			]
+				.map((msg, idx) => {
+					const contentText =
+						typeof msg.content === "string"
+							? msg.content
+							: msg.content
+									.map((block) =>
+										block.type === "text" ? block.text : "[non-text content]",
+									)
+									.join("\n")
+					return `[${idx}] ${msg.role.toUpperCase()}:\n${contentText}`
+				})
+				.join("\n\n")}`
+
 			return {
 				systemPrompt: systemPromptData.breakdown,
 				messages: {
@@ -1233,12 +1252,13 @@ export const analyzePrompt = action({
 						activeClocks: 0,
 						characters: 0,
 						characterSheet: 0,
-						missingCharacters: 0,
+						notices: 0,
 						total: 0,
 					},
 					total: messagesTotal,
 				},
 				grandTotal: systemPromptData.breakdown.total + messagesTotal,
+				fullPromptText,
 			}
 		}
 
@@ -1254,6 +1274,26 @@ export const analyzePrompt = action({
 			recent.charCount +
 			context.breakdown.total
 
+		// Build the full prompt text
+		const fullPromptText = `SYSTEM PROMPT:\n${systemPromptData.prompt}\n\n---\n\nMESSAGES:\n\n${[
+			...uploaded.messages,
+			...summaries.messages,
+			...recent.messages,
+			...context.messages,
+		]
+			.map((msg, idx) => {
+				const contentText =
+					typeof msg.content === "string"
+						? msg.content
+						: msg.content
+								.map((block) =>
+									block.type === "text" ? block.text : "[non-text content]",
+								)
+								.join("\n")
+				return `[${idx}] ${msg.role.toUpperCase()}:\n${contentText}`
+			})
+			.join("\n\n")}`
+
 		return {
 			systemPrompt: systemPromptData.breakdown,
 			messages: {
@@ -1266,6 +1306,7 @@ export const analyzePrompt = action({
 				total: messagesTotal,
 			},
 			grandTotal: systemPromptData.breakdown.total + messagesTotal,
+			fullPromptText,
 		}
 	},
 })

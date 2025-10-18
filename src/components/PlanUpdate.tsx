@@ -1,5 +1,6 @@
 import { ListChecks } from "lucide-react"
 import type React from "react"
+import ReactMarkdown from "react-markdown"
 import { ToolCallContainer } from "./ToolCallContainer"
 
 type Props = {
@@ -10,6 +11,7 @@ type Props = {
 			| "future_events"
 			| "player_requests"
 			| "overall_story"
+			| "key_details"
 	}
 	className?: string
 }
@@ -19,6 +21,7 @@ const partLabels = {
 	future_events: "Future Events",
 	player_requests: "Player Requests",
 	overall_story: "Overall Story",
+	key_details: "Key Details",
 }
 
 export const PlanUpdate: React.FC<Props> = ({ parameters, className }) => {
@@ -28,7 +31,7 @@ export const PlanUpdate: React.FC<Props> = ({ parameters, className }) => {
 
 	return (
 		<ToolCallContainer icon={ListChecks} title={title} className={className}>
-			<p className="text-sm whitespace-pre-wrap">{parameters.plan}</p>
+			<ReactMarkdown>{parameters.plan}</ReactMarkdown>
 		</ToolCallContainer>
 	)
 }

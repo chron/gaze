@@ -7,6 +7,10 @@ import type { ActionCtx } from "../_generated/server"
 import { isToolEnabled } from "../utils"
 import systemPrompt from "./system"
 
+// Constants for context window management
+export const CONTEXT_WARNING_TOKEN_THRESHOLD = 40000
+export const MESSAGES_TO_KEEP_AFTER_COLLAPSE = 40
+
 // Helper to count tokens using Google's API
 const countTokens = async (
 	content: string | ModelMessage[],
@@ -55,7 +59,7 @@ export type PromptBreakdown = {
 			activeClocks: number
 			characters: number
 			characterSheet: number
-			missingCharacters: number
+			notices: number
 			total: number
 		}
 		total: number
@@ -579,13 +583,41 @@ export const currentGameContext = async (
 		)}`
 	}
 
+	// Build notices section - warnings and important messages for the LLM
+	const notices: string[] = []
+
+	// Check for missing characters that need introduction
 	const missingCharacters = campaign.activeCharacters?.filter(
 		(activeCharacterName) =>
 			!characters.find((c) => c.name === activeCharacterName),
 	)
-	let missingCharactersText = ""
 	if (missingCharacters && missingCharacters.length > 0) {
-		missingCharactersText = `\n\nIMPORTANT: There are active characters in the scene that haven't been introduced yet. Use the \`introduce_character\` tool to introduce them: ${missingCharacters.join(", ")}`
+		notices.push(
+			`There are active characters in the scene that haven't been introduced yet. Use the \`introduce_character\` tool to introduce them: ${missingCharacters.join(", ")}`,
+		)
+	}
+
+	// Check if we need to warn about context window getting full
+	// We'll get the last assistant message to check token usage
+	const allMessages = await ctx.runQuery(internal.messages.listInternal, {
+		campaignId: campaign._id,
+	})
+	const lastAssistantMessage = allMessages
+		.filter((m) => m.role === "assistant" && m.usage)
+		.pop()
+
+	if (
+		lastAssistantMessage?.usage &&
+		lastAssistantMessage.usage.inputTokens > CONTEXT_WARNING_TOKEN_THRESHOLD
+	) {
+		notices.push(
+			`The context window is getting full (${lastAssistantMessage.usage.inputTokens} input tokens used in the last message). Soon, older messages will be collapsed into summaries, keeping only the last ${MESSAGES_TO_KEEP_AFTER_COLLAPSE} messages in full. Before this happens, review older messages for any important facts, requests, or details that might not be captured by automatic summaries, and use the \`update_plan\` tool to store them for future reference.`,
+		)
+	}
+
+	let noticesText = ""
+	if (notices.length > 0) {
+		noticesText = `\n\n<important_notices>\n${notices.map((notice) => `- ${notice}`).join("\n")}\n</important_notices>`
 	}
 
 	const currentContext =
@@ -594,7 +626,7 @@ export const currentGameContext = async (
 		activeClocksText +
 		charactersText +
 		characterSheetText +
-		missingCharactersText
+		noticesText
 
 	if (!countTokensFlag) {
 		return {
@@ -615,7 +647,7 @@ export const currentGameContext = async (
 				activeClocks: 0,
 				characters: 0,
 				characterSheet: 0,
-				missingCharacters: 0,
+				notices: 0,
 				total: 0,
 			},
 		}
@@ -641,7 +673,7 @@ export const currentGameContext = async (
 			activeClocks: await countTokens(activeClocksText, model),
 			characters: await countTokens(charactersText, model),
 			characterSheet: await countTokens(characterSheetText, model),
-			missingCharacters: await countTokens(missingCharactersText, model),
+			notices: await countTokens(noticesText, model),
 			total: await countTokens(currentContext, model),
 		},
 	}

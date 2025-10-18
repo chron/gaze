@@ -266,6 +266,7 @@ convex/
 
 - Use `pnpm dev` for development
 - `pnpm build` for production builds
+- Use `pnpm tsc -p tsconfig.app.json` to check types
 - Convex handles backend deployment
 - Frontend can be deployed to any static host
 - Authentication requires Clerk configuration

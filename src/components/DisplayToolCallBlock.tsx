@@ -135,6 +135,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 							| "future_events"
 							| "player_requests"
 							| "overall_story"
+							| "key_details"
 					}
 				}
 				className={positionClass}

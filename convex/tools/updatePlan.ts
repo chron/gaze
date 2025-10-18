@@ -20,6 +20,7 @@ export const updatePlan = (
 					"future_events",
 					"player_requests",
 					"overall_story",
+					"key_details",
 				])
 				.optional()
 				.describe("The part of the plan you'd like to update"),

@@ -1,10 +1,11 @@
 import { useAction } from "convex/react"
-import { BarChart3, Loader2 } from "lucide-react"
+import { BarChart3, FileText, Loader2 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import type { PromptBreakdown } from "../../convex/prompts/core"
 import { Dialog, DialogContent, DialogTitle } from "./ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import {
 	Tooltip,
 	TooltipContent,
@@ -30,7 +31,9 @@ export const PromptAnalysisModal: React.FC<Props> = ({
 	campaignId,
 	onClose,
 }) => {
-	const [data, setData] = useState<PromptBreakdown | null>(null)
+	const [data, setData] = useState<
+		(PromptBreakdown & { fullPromptText: string }) | null
+	>(null)
 	const [isLoading, setIsLoading] = useState(true)
 	const analyzePrompt = useAction(api.messages.analyzePrompt)
 
@@ -136,8 +139,8 @@ export const PromptAnalysisModal: React.FC<Props> = ({
 					category: "Current Context",
 				},
 				{
-					label: "Missing Characters",
-					count: data.messages.currentContext.missingCharacters,
+					label: "Notices",
+					count: data.messages.currentContext.notices,
 					color: "bg-green-50",
 					category: "Current Context",
 				},
@@ -157,71 +160,107 @@ export const PromptAnalysisModal: React.FC<Props> = ({
 						<Loader2 className="animate-spin" />
 					</div>
 				) : data ? (
-					<div className="flex flex-col gap-4">
-						<div className="text-sm text-gray-600">
-							<span className="font-bold text-lg text-black">
-								{data.grandTotal.toLocaleString()}
-							</span>{" "}
-							/ {MAX_TOKENS.toLocaleString()} tokens
-							<span className="ml-2 text-xs">
-								{((data.grandTotal / MAX_TOKENS) * 100).toFixed(1)}% of limit
-							</span>
-						</div>
+					<Tabs defaultValue="breakdown" className="w-full">
+						<TabsList>
+							<TabsTrigger value="breakdown">
+								<BarChart3 className="size-4" />
+								Token Breakdown
+							</TabsTrigger>
+							<TabsTrigger value="fulltext">
+								<FileText className="size-4" />
+								Full Prompt Text
+							</TabsTrigger>
+						</TabsList>
 
-						{/* Single Stacked Bar */}
-						<TooltipProvider>
-							<div className="w-full bg-gray-200 rounded-full h-8 flex overflow-hidden">
-								{segments.map((segment) => {
-									const widthPercent = (segment.count / MAX_TOKENS) * 100
-									return (
-										<Tooltip key={segment.label}>
-											<TooltipTrigger asChild>
-												<div
-													className={`${segment.color} h-8 cursor-help transition-all hover:opacity-80`}
-													style={{
-														width: `${widthPercent}%`,
-													}}
-												/>
-											</TooltipTrigger>
-											<TooltipContent>
-												<div className="text-sm">
-													<div className="font-semibold">{segment.label}</div>
-													<div className="text-xs text-gray-400">
-														{segment.category}
-													</div>
-													<div className="mt-1">
-														{segment.count.toLocaleString()} tokens (
-														{((segment.count / data.grandTotal) * 100).toFixed(
-															1,
-														)}
-														% of total)
-													</div>
-												</div>
-											</TooltipContent>
-										</Tooltip>
-									)
-								})}
-							</div>
-						</TooltipProvider>
-
-						{/* Legend */}
-						<div className="grid grid-cols-2 gap-2 text-sm mt-2">
-							{segments.map((segment) => (
-								<div key={segment.label} className="flex items-center gap-2">
-									<div className={`w-3 h-3 rounded ${segment.color}`} />
-									<span className="text-gray-700">{segment.label}</span>
-									<span className="text-gray-500 text-xs ml-auto">
-										{segment.count.toLocaleString()}
+						<TabsContent value="breakdown">
+							<div className="flex flex-col gap-4">
+								<div className="text-sm text-gray-600">
+									<span className="font-bold text-lg text-black">
+										{data.grandTotal.toLocaleString()}
+									</span>{" "}
+									/ {MAX_TOKENS.toLocaleString()} tokens
+									<span className="ml-2 text-xs">
+										{((data.grandTotal / MAX_TOKENS) * 100).toFixed(1)}% of
+										limit
 									</span>
 								</div>
-							))}
-						</div>
 
-						<div className="text-xs text-gray-500 mt-2 pt-2 border-t">
-							Note: Token counts are calculated using Google's Gemini tokenizer
-							API.
-						</div>
-					</div>
+								{/* Single Stacked Bar */}
+								<TooltipProvider>
+									<div className="w-full bg-gray-200 rounded-full h-8 flex overflow-hidden">
+										{segments.map((segment) => {
+											const widthPercent = (segment.count / MAX_TOKENS) * 100
+											return (
+												<Tooltip key={segment.label}>
+													<TooltipTrigger asChild>
+														<div
+															className={`${segment.color} h-8 cursor-help transition-all hover:opacity-80`}
+															style={{
+																width: `${widthPercent}%`,
+															}}
+														/>
+													</TooltipTrigger>
+													<TooltipContent>
+														<div className="text-sm">
+															<div className="font-semibold">
+																{segment.label}
+															</div>
+															<div className="text-xs text-gray-400">
+																{segment.category}
+															</div>
+															<div className="mt-1">
+																{segment.count.toLocaleString()} tokens (
+																{(
+																	(segment.count / data.grandTotal) *
+																	100
+																).toFixed(1)}
+																% of total)
+															</div>
+														</div>
+													</TooltipContent>
+												</Tooltip>
+											)
+										})}
+									</div>
+								</TooltipProvider>
+
+								{/* Legend */}
+								<div className="grid grid-cols-2 gap-2 text-sm mt-2">
+									{segments.map((segment) => (
+										<div
+											key={segment.label}
+											className="flex items-center gap-2"
+										>
+											<div className={`w-3 h-3 rounded ${segment.color}`} />
+											<span className="text-gray-700">{segment.label}</span>
+											<span className="text-gray-500 text-xs ml-auto">
+												{segment.count.toLocaleString()}
+											</span>
+										</div>
+									))}
+								</div>
+
+								<div className="text-xs text-gray-500 mt-2 pt-2 border-t">
+									Note: Token counts are calculated using Google's Gemini
+									tokenizer API.
+								</div>
+							</div>
+						</TabsContent>
+
+						<TabsContent value="fulltext">
+							<div className="flex flex-col gap-4">
+								<div className="text-sm text-gray-600 mb-2">
+									This is the exact text that will be sent to the LLM (excluding
+									any uploaded files or non-text content).
+								</div>
+								<div className="relative">
+									<pre className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-xs overflow-x-auto max-h-[50vh] overflow-y-auto whitespace-pre-wrap break-words font-mono">
+										{data.fullPromptText}
+									</pre>
+								</div>
+							</div>
+						</TabsContent>
+					</Tabs>
 				) : (
 					<div className="text-center p-8 text-gray-600">
 						Failed to load analysis

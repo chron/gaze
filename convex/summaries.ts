@@ -5,6 +5,7 @@ import { z } from "zod"
 import { api, internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
 import { action, internalMutation, internalQuery } from "./_generated/server"
+import { MESSAGES_TO_KEEP_AFTER_COLLAPSE } from "./prompts/core"
 
 export const list = internalQuery({
 	args: {
@@ -116,7 +117,7 @@ export const collapseHistory = action({
 					}
 				})
 				.filter((message): message is FormattedMessage => message !== null)
-				.slice(0, -30) // Keep the last 40 messages so we have full access to the recent content
+				.slice(0, -MESSAGES_TO_KEEP_AFTER_COLLAPSE) // Keep the last N messages so we have full access to the recent content
 				.map((message, index) => {
 					return {
 						...message,
