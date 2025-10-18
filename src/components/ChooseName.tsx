@@ -54,6 +54,7 @@ export const ChooseName: React.FC<ChooseNameProps> = ({
 			<ToolCallContainer
 				icon={Type}
 				title={`Name chosen: ${toolResult.result.name}`}
+				className={className}
 			>
 				{toolResult.result.otherDetails && (
 					<p className="text-sm">{toolResult.result.otherDetails}</p>

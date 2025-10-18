@@ -189,7 +189,7 @@ export const quickAddCampaign = mutation({
 			description: "",
 			imagePrompt: "",
 			model: "google/gemini-2.5-pro",
-			imageModel: "gpt-image-1",
+			imageModel: "gpt-image-1-mini",
 			archived: false,
 			messageCount: 0,
 			messageCountAtLastSummary: 0,

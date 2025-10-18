@@ -225,6 +225,7 @@ export const CampaignForm: React.FC<Props> = ({ campaignId = null }) => {
 					</SelectTrigger>
 					<SelectContent>
 						<SelectItem value="gpt-image-1">GPT Image 1</SelectItem>
+						<SelectItem value="gpt-image-1-mini">GPT Image 1 Mini</SelectItem>
 						<SelectItem value="gemini-2.5-flash-image">
 							Gemini 2.5 Flash Image
 						</SelectItem>

@@ -21,7 +21,7 @@ export const generateImageForModel = async (
 	prompt: string,
 	modelString: string,
 ) => {
-	if (modelString === "gpt-image-1") {
+	if (modelString.startsWith("gpt-image")) {
 		const result = await generateImage({
 			model: openai.image(modelString),
 			providerOptions: {
