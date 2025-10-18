@@ -33,7 +33,7 @@ export const updateTemporal = (
 				.string()
 				.optional()
 				.describe(
-					"Optional notes about time-sensitive events or countdowns (e.g., '2 days until the festival', 'The ritual must be completed by dawn')",
+					"Optional notes about time-sensitive events or countdowns (e.g., '2 days until the festival', 'The ritual must be completed by dawn'). Try to keep it under 30 characters.",
 				),
 		}),
 		execute: async ({ date, time_of_day, notes }) => {

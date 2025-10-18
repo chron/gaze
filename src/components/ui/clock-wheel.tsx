@@ -7,6 +7,7 @@ type ClockWheelProps = {
 	isFull?: boolean
 	className?: string
 	previousTicks?: number // For animating newly added segments
+	strokeColor?: string
 }
 
 /**
@@ -19,6 +20,7 @@ export const ClockWheel: React.FC<ClockWheelProps> = ({
 	isFull = false,
 	className,
 	previousTicks,
+	strokeColor = "#ffffff",
 }) => {
 	const sizeClasses = {
 		sm: "w-8 h-8",
@@ -60,7 +62,6 @@ export const ClockWheel: React.FC<ClockWheelProps> = ({
 
 	const filledColor = isFull ? "#dc2626" : "#3b82f6" // red or blue
 	const emptyColor = "#e5e7eb" // gray
-	const strokeColor = "#ffffff" // white borders between segments
 
 	// Generate segments with stable identifiers
 	const segments = Array.from({ length: maxTicks }, (_, i) => {
