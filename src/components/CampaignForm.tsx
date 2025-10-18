@@ -59,6 +59,11 @@ export const AVAILABLE_TOOLS = [
 		description: "Allow AI to update progress clocks",
 	},
 	{
+		id: "update_temporal",
+		name: "Update Temporal",
+		description: "Allow AI to update the in-game date and time",
+	},
+	{
 		id: "choose_name",
 		name: "Choose Name",
 		description: "Allow AI to request name choices from the player",

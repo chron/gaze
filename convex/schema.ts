@@ -46,6 +46,22 @@ export default defineSchema(
 					}),
 				),
 			),
+			temporal: v.optional(
+				v.object({
+					date: v.string(),
+					timeOfDay: v.union(
+						v.literal("dawn"),
+						v.literal("morning"),
+						v.literal("midday"),
+						v.literal("afternoon"),
+						v.literal("dusk"),
+						v.literal("evening"),
+						v.literal("night"),
+						v.literal("midnight"),
+					),
+					notes: v.optional(v.string()),
+				}),
+			),
 			archived: v.boolean(),
 			activeCharacters: v.optional(v.array(v.string())),
 			lastInteractionAt: v.optional(v.number()),

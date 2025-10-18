@@ -629,3 +629,45 @@ export const setMessageCountAtLastSummary = mutation({
 		})
 	},
 })
+
+export const updateTemporalInternal = internalMutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		date: v.string(),
+		timeOfDay: v.union(
+			v.literal("dawn"),
+			v.literal("morning"),
+			v.literal("midday"),
+			v.literal("afternoon"),
+			v.literal("dusk"),
+			v.literal("evening"),
+			v.literal("night"),
+			v.literal("midnight"),
+		),
+		notes: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		const campaign = await ctx.db.get(args.campaignId)
+
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		// Store previous values for return
+		const previousDate = campaign.temporal?.date
+		const previousTimeOfDay = campaign.temporal?.timeOfDay
+
+		await ctx.db.patch(args.campaignId, {
+			temporal: {
+				date: args.date,
+				timeOfDay: args.timeOfDay,
+				notes: args.notes,
+			},
+		})
+
+		return {
+			previousDate,
+			previousTimeOfDay,
+		}
+	},
+})

@@ -34,6 +34,7 @@ type ToolName =
 	| "update_plan"
 	| "update_quest_log"
 	| "update_clock"
+	| "update_temporal"
 	| "choose_name"
 	| "set_campaign_info"
 

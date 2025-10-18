@@ -37,6 +37,7 @@ import { updateCharacterSheet } from "./tools/updateCharacterSheet"
 import { updateClock } from "./tools/updateClock"
 import { updatePlan } from "./tools/updatePlan"
 import { updateQuestLog } from "./tools/updateQuestLog"
+import { updateTemporal } from "./tools/updateTemporal"
 import { googleSafetySettings, isToolEnabled } from "./utils"
 
 type ArrayElement<ArrayType extends readonly unknown[]> =
@@ -672,6 +673,9 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 			: {}),
 		...(isToolEnabled("update_clock", campaign)
 			? { update_clock: updateClock(ctx, campaign._id) }
+			: {}),
+		...(isToolEnabled("update_temporal", campaign)
+			? { update_temporal: updateTemporal(ctx, campaign._id) }
 			: {}),
 		...(isToolEnabled("choose_name", campaign)
 			? { choose_name: chooseName() }

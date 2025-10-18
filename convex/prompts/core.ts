@@ -57,6 +57,7 @@ export type PromptBreakdown = {
 			plan: number
 			questLog: number
 			activeClocks: number
+			temporal: number
 			characters: number
 			characterSheet: number
 			notices: number
@@ -571,6 +572,19 @@ export const currentGameContext = async (
 		}
 	}
 
+	let temporalText = ""
+	if (isToolEnabled("update_temporal", campaign)) {
+		if (campaign.temporal) {
+			temporalText = `\n\nCurrent in-game time: ${campaign.temporal.date} (${campaign.temporal.timeOfDay})`
+			if (campaign.temporal.notes) {
+				temporalText += `\n${campaign.temporal.notes}`
+			}
+		} else {
+			temporalText =
+				"\n\nNo in-game time has been set yet. You can use the `update_temporal` tool to set the current date and time of day in the game world."
+		}
+	}
+
 	let charactersText = ""
 	if (serializedCharacters.length > 0) {
 		charactersText = `\n\nHere are the existing characters: ${serializedCharacters.join("\n")}`
@@ -624,6 +638,7 @@ export const currentGameContext = async (
 		planText +
 		questLogText +
 		activeClocksText +
+		temporalText +
 		charactersText +
 		characterSheetText +
 		noticesText
@@ -645,6 +660,7 @@ export const currentGameContext = async (
 				plan: 0,
 				questLog: 0,
 				activeClocks: 0,
+				temporal: 0,
 				characters: 0,
 				characterSheet: 0,
 				notices: 0,
@@ -671,6 +687,7 @@ export const currentGameContext = async (
 			plan: await countTokens(planText, model),
 			questLog: await countTokens(questLogText, model),
 			activeClocks: await countTokens(activeClocksText, model),
+			temporal: await countTokens(temporalText, model),
 			characters: await countTokens(charactersText, model),
 			characterSheet: await countTokens(characterSheetText, model),
 			notices: await countTokens(noticesText, model),

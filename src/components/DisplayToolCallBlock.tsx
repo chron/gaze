@@ -9,6 +9,7 @@ import { PlanUpdate } from "./PlanUpdate"
 import { QuestUpdate } from "./QuestUpdate"
 import { SceneChange } from "./SceneChange"
 import { SetCampaignInfo } from "./SetCampaignInfo"
+import { TemporalUpdate } from "./TemporalUpdate"
 import { UnknownToolCall } from "./UnknownToolCall"
 
 type Props = {
@@ -184,6 +185,45 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 			<ClockUpdate
 				key={`clock-update-${block.toolCallId}`}
 				parameters={clockParams}
+				className={positionClass}
+			/>
+		)
+	}
+
+	if (block.toolName === "update_temporal") {
+		// If tool result is available and structured, use it (includes previous values)
+		// Otherwise fall back to params (tool call arguments)
+		type TimeOfDay =
+			| "dawn"
+			| "morning"
+			| "midday"
+			| "afternoon"
+			| "dusk"
+			| "evening"
+			| "night"
+			| "midnight"
+
+		const temporalParams =
+			toolResult?.result &&
+			typeof toolResult.result === "object" &&
+			"date" in toolResult.result
+				? (toolResult.result as {
+						date: string
+						time_of_day: TimeOfDay
+						notes?: string
+						previous_date?: string
+						previous_time_of_day?: TimeOfDay
+					})
+				: (params as {
+						date: string
+						time_of_day: TimeOfDay
+						notes?: string
+					})
+
+		return (
+			<TemporalUpdate
+				key={`temporal-update-${block.toolCallId}`}
+				parameters={temporalParams}
 				className={positionClass}
 			/>
 		)
