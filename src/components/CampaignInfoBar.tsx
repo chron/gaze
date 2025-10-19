@@ -8,9 +8,11 @@ import {
 	Sunset,
 	Trash2Icon,
 } from "lucide-react"
+import { motion } from "motion/react"
 import type React from "react"
+import { useEffect, useRef, useState } from "react"
 import { api } from "../../convex/_generated/api"
-import type { Doc, Id } from "../../convex/_generated/dataModel"
+import type { Doc } from "../../convex/_generated/dataModel"
 import { cn } from "../lib/utils"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
@@ -60,6 +62,25 @@ function formatTimeOfDay(timeOfDay: TimeOfDay): string {
 
 export const CampaignInfoBar: React.FC<Props> = ({ campaign }) => {
 	const deleteClock = useMutation(api.campaigns.deleteClock)
+	const [temporalKey, setTemporalKey] = useState(0)
+	const prevTemporalRef = useRef(campaign.temporal)
+
+	// Track changes to temporal data to trigger animation
+	useEffect(() => {
+		const prev = prevTemporalRef.current
+		const current = campaign.temporal
+
+		// Only trigger animation if temporal actually changed (not on initial render)
+		if (
+			current &&
+			prev &&
+			(prev.date !== current.date || prev.timeOfDay !== current.timeOfDay)
+		) {
+			setTemporalKey((prev) => prev + 1)
+		}
+
+		prevTemporalRef.current = current
+	}, [campaign.temporal])
 
 	const handleDeleteClock = (name: string) => {
 		deleteClock({ campaignId: campaign._id, name })
@@ -84,24 +105,44 @@ export const CampaignInfoBar: React.FC<Props> = ({ campaign }) => {
 			{/* Temporal info */}
 			{campaign.temporal && (
 				<>
-					<Badge
-						variant="secondary"
-						className="flex items-center gap-1.5 text-xs bg-white/20 hover:bg-white/30 text-white border-white/30"
+					<motion.div
+						key={`temporal-date-${temporalKey}`}
+						initial={{ scale: 1 }}
+						animate={{ scale: [1, 1.1, 1] }}
+						transition={{ duration: 0.5, ease: "easeOut" }}
 					>
-						<Calendar className="h-3.5 w-3.5" />
-						<span>{campaign.temporal.date}</span>
-					</Badge>
-					<Badge
-						variant="secondary"
-						className="flex items-center gap-1.5 text-xs bg-white/20 hover:bg-white/30 text-white border-white/30"
+						<Badge
+							variant="secondary"
+							className="flex items-center gap-1.5 text-xs bg-white/20 hover:bg-white/30 text-white border-white/30"
+						>
+							<Calendar className="h-3.5 w-3.5" />
+							<span>{campaign.temporal.date}</span>
+						</Badge>
+					</motion.div>
+					<motion.div
+						key={`temporal-time-${temporalKey}`}
+						initial={{ scale: 1 }}
+						animate={{ scale: [1, 1.1, 1] }}
+						transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
 					>
-						{getTimeIcon(campaign.temporal.timeOfDay)}
-						<span>{formatTimeOfDay(campaign.temporal.timeOfDay)}</span>
-					</Badge>
+						<Badge
+							variant="secondary"
+							className="flex items-center gap-1.5 text-xs bg-white/20 hover:bg-white/30 text-white border-white/30"
+						>
+							{getTimeIcon(campaign.temporal.timeOfDay)}
+							<span>{formatTimeOfDay(campaign.temporal.timeOfDay)}</span>
+						</Badge>
+					</motion.div>
 					{campaign.temporal.notes && (
-						<span className="text-xs text-white/80 italic hidden sm:block">
+						<motion.span
+							key={`temporal-notes-${temporalKey}`}
+							initial={{ opacity: 0.5 }}
+							animate={{ opacity: [0.5, 1, 0.8] }}
+							transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
+							className="text-xs text-white/80 italic hidden sm:block"
+						>
 							{campaign.temporal.notes}
-						</span>
+						</motion.span>
 					)}
 				</>
 			)}

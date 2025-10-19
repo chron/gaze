@@ -127,6 +127,12 @@ export const PromptAnalysisModal: React.FC<Props> = ({
 					category: "Current Context",
 				},
 				{
+					label: "Temporal",
+					count: data.messages.currentContext.temporal,
+					color: "bg-teal-300",
+					category: "Current Context",
+				},
+				{
 					label: "Character Sheet",
 					count: data.messages.currentContext.characterSheet,
 					color: "bg-green-200",
