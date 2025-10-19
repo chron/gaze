@@ -36,6 +36,7 @@
     "@tailwindcss/vite": "^4.1.14",
     "@tanstack/react-router": "^1.133.13",
     "@tanstack/react-router-devtools": "^1.133.13",
+    "@tanstack/react-table": "^8.21.3",
     "@uidotdev/usehooks": "^2.4.1",
     "ai": "^5.0.76",
     "class-variance-authority": "^0.7.1",

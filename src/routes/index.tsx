@@ -1,16 +1,239 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
+import type { ColumnDef } from "@tanstack/react-table"
 import { useQuery } from "convex/react"
-import { Plus } from "lucide-react"
+import { ArrowUpDown, Plus } from "lucide-react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
 import { Button } from "../components/ui/button"
+import { DataTable } from "../components/ui/data-table"
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "../components/ui/tooltip"
 
 export const Route = createFileRoute("/")({
 	component: HomePage,
 })
 
+type CampaignWithDetails = Doc<"campaigns"> & {
+	gameSystemName: string | null | undefined
+	primaryCharacterImageUrl: string | null
+}
+
+function formatNumber(num: number): string {
+	return new Intl.NumberFormat().format(num)
+}
+
+function formatDate(timestamp: number): string {
+	const date = new Date(timestamp)
+	const now = new Date()
+	const diffMs = now.getTime() - date.getTime()
+	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+	const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+	const diffMinutes = Math.floor(diffMs / (1000 * 60))
+
+	if (diffMinutes < 1) return "Just now"
+	if (diffMinutes < 60) return `${diffMinutes}m ago`
+	if (diffHours < 24) return `${diffHours}h ago`
+	if (diffDays < 7) return `${diffDays}d ago`
+	if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
+	if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`
+	return `${Math.floor(diffDays / 365)}y ago`
+}
+
+function truncateText(text: string, maxLength = 60): string {
+	if (text.length <= maxLength) return text
+	return `${text.slice(0, maxLength)}...`
+}
+
+const columns: ColumnDef<CampaignWithDetails>[] = [
+	{
+		accessorKey: "primaryCharacterImageUrl",
+		header: "",
+		cell: ({ row }) => {
+			const imageUrl = row.getValue("primaryCharacterImageUrl") as string | null
+			const campaignName = row.original.name
+
+			return (
+				<div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+					{imageUrl ? (
+						<img
+							src={imageUrl}
+							alt={campaignName}
+							className="w-full h-full object-cover object-top"
+						/>
+					) : (
+						<div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-semibold">
+							{campaignName[0]?.toUpperCase() || "?"}
+						</div>
+					)}
+				</div>
+			)
+		},
+	},
+	{
+		accessorKey: "name",
+		header: ({ column }) => {
+			return (
+				<Button
+					variant="ghost"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+					className="hover:bg-transparent !px-0 py-0 font-semibold"
+				>
+					Campaign
+					<ArrowUpDown className="ml-2 h-4 w-4" />
+				</Button>
+			)
+		},
+		cell: ({ row }) => {
+			const campaign = row.original
+			return (
+				<Link
+					to="/campaigns/$campaignId"
+					params={{ campaignId: campaign._id }}
+					className="font-medium text-blue-600 hover:text-blue-800 hover:underline whitespace-nowrap"
+				>
+					{campaign.name}
+				</Link>
+			)
+		},
+	},
+	{
+		accessorKey: "gameSystemName",
+		header: ({ column }) => {
+			return (
+				<Button
+					variant="ghost"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+					className="hover:bg-transparent !px-0 py-0 font-semibold hidden md:flex"
+				>
+					System
+					<ArrowUpDown className="ml-2 h-4 w-4" />
+				</Button>
+			)
+		},
+		cell: ({ row }) => {
+			const systemName = row.getValue("gameSystemName") as string | null
+			return (
+				<div className="hidden md:block text-gray-700 whitespace-nowrap">
+					{systemName || "Freeform"}
+				</div>
+			)
+		},
+	},
+	{
+		accessorKey: "messageCount",
+		header: ({ column }) => {
+			return (
+				<Button
+					variant="ghost"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+					className="hover:bg-transparent !px-0 py-0 font-semibold"
+				>
+					Messages
+					<ArrowUpDown className="ml-2 h-4 w-4" />
+				</Button>
+			)
+		},
+		cell: ({ row }) => {
+			const count = row.getValue("messageCount") as number
+			return (
+				<div className="text-gray-700 whitespace-nowrap">
+					{formatNumber(count)}
+				</div>
+			)
+		},
+	},
+	{
+		accessorKey: "_creationTime",
+		header: ({ column }) => {
+			return (
+				<Button
+					variant="ghost"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+					className="hover:bg-transparent !px-0 py-0 font-semibold hidden md:flex"
+				>
+					Created
+					<ArrowUpDown className="ml-2 h-4 w-4" />
+				</Button>
+			)
+		},
+		cell: ({ row }) => {
+			const creationTime = row.getValue("_creationTime") as number
+			return (
+				<div className="hidden md:block text-gray-600 text-sm whitespace-nowrap">
+					{formatDate(creationTime)}
+				</div>
+			)
+		},
+	},
+	{
+		accessorKey: "lastInteractionAt",
+		header: ({ column }) => {
+			return (
+				<Button
+					variant="ghost"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+					className="hover:bg-transparent !px-0 py-0 font-semibold hidden md:flex"
+				>
+					Last Played
+					<ArrowUpDown className="ml-2 h-4 w-4" />
+				</Button>
+			)
+		},
+		cell: ({ row }) => {
+			const lastInteraction = row.getValue("lastInteractionAt") as
+				| number
+				| undefined
+			const creationTime = row.original._creationTime
+			const timestamp = lastInteraction || creationTime
+			return (
+				<div className="hidden md:block text-gray-600 text-sm whitespace-nowrap">
+					{formatDate(timestamp)}
+				</div>
+			)
+		},
+	},
+	{
+		accessorKey: "description",
+		header: () => (
+			<div className="hidden xl:block font-semibold">Description</div>
+		),
+		cell: ({ row }) => {
+			const description = row.getValue("description") as string
+			const truncated = truncateText(description)
+			const isTruncated = description.length > 60
+
+			if (!isTruncated) {
+				return (
+					<div className="hidden xl:block text-gray-600 text-sm">
+						{description}
+					</div>
+				)
+			}
+
+			return (
+				<TooltipProvider>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<div className="hidden xl:block text-gray-600 text-sm cursor-help">
+								{truncated}
+							</div>
+						</TooltipTrigger>
+						<TooltipContent className="max-w-sm">
+							<p>{description}</p>
+						</TooltipContent>
+					</Tooltip>
+				</TooltipProvider>
+			)
+		},
+	},
+]
+
 function HomePage() {
-	const campaigns = useQuery(api.campaigns.list, {})
+	const campaigns = useQuery(api.campaigns.listWithDetails, {})
 
 	if (campaigns === undefined) {
 		return (
@@ -23,99 +246,43 @@ function HomePage() {
 	}
 
 	return (
-		<div className="p-4 w-full h-full bg-blue-500 overflow-y-auto">
-			<div className="flex items-center justify-between mb-8">
-				<div>
-					<h1 className="text-4xl font-title text-white mb-2 ms-10">
-						Gaze Into The Abyss
-					</h1>
-				</div>
-				<Button className="gap-2" asChild>
-					<Link to="/campaigns/new">
-						<Plus size={16} />
-						New Campaign
-					</Link>
-				</Button>
-			</div>
-
-			{campaigns.length === 0 ? (
-				<div className="text-center py-12">
-					<p className="text-lg text-muted-foreground mb-4">
-						No campaigns yet. Create your first campaign to get started!
-					</p>
+		<div className="p-4 md:p-6 lg:p-8 w-full h-full bg-blue-500 overflow-y-auto">
+			<div className="max-w-7xl mx-auto">
+				<div className="flex items-center justify-between mb-6">
+					<div>
+						<h1 className="text-3xl md:text-4xl font-title text-white mb-2">
+							Gaze Into The Abyss
+						</h1>
+						<p className="text-blue-100 text-sm">
+							{campaigns.length}{" "}
+							{campaigns.length === 1 ? "campaign" : "campaigns"}
+						</p>
+					</div>
 					<Button className="gap-2" asChild>
 						<Link to="/campaigns/new">
 							<Plus size={16} />
-							Create Your First Campaign
+							<span className="hidden sm:inline">New Campaign</span>
+							<span className="sm:hidden">New</span>
 						</Link>
 					</Button>
 				</div>
-			) : (
-				<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-					{campaigns.map((campaign) => (
-						<CampaignCard key={campaign._id} campaign={campaign} />
-					))}
-				</div>
-			)}
-		</div>
-	)
-}
 
-function CampaignCard({ campaign }: { campaign: Doc<"campaigns"> }) {
-	const campaignDetails = useQuery(api.campaigns.get, { id: campaign._id })
-	const tokenUsage = useQuery(api.campaigns.sumTokens, {
-		campaignId: campaign._id,
-	})
-
-	return (
-		<Link
-			to="/campaigns/$campaignId"
-			params={{ campaignId: campaign._id }}
-			className="group"
-		>
-			<div className="bg-white rounded-lg shadow border border-gray-200 hover:shadow-md transition-shadow p-6 h-full flex flex-col">
-				<div className="flex-1">
-					<h3 className="text-xl font-bold mb-2 group-hover:text-blue-600 transition-colors">
-						{campaign.name}
-					</h3>
-					<p className="text-sm text-gray-600 mb-4 line-clamp-2">
-						{campaign.description}
-					</p>
-
-					<div className="space-y-3">
-						<div className="flex items-center justify-between">
-							<span className="text-sm font-medium text-gray-500">Model:</span>
-							<span className="text-sm text-gray-900 font-mono truncate">
-								{campaign.model.split("/")[1]}
-							</span>
-						</div>
-
-						<div className="flex items-center justify-between">
-							<span className="text-sm font-medium text-gray-500">
-								Game System:
-							</span>
-							<span className="text-sm text-gray-900 truncate">
-								{campaignDetails?.gameSystemName || "Freeform"}
-							</span>
-						</div>
-
-						<div className="flex items-center justify-between">
-							<span className="text-sm font-medium text-gray-500">
-								Token Usage:
-							</span>
-							<div className="text-sm text-gray-900">
-								{tokenUsage ? (
-									<span className="font-mono">
-										{tokenUsage.inputTokens + tokenUsage.outputTokens}
-									</span>
-								) : (
-									<span className="text-gray-400">Loading...</span>
-								)}
-							</div>
-						</div>
+				{campaigns.length === 0 ? (
+					<div className="bg-white rounded-lg shadow p-12 text-center">
+						<p className="text-lg text-gray-600 mb-6">
+							No campaigns yet. Create your first campaign to get started!
+						</p>
+						<Button className="gap-2" size="lg" asChild>
+							<Link to="/campaigns/new">
+								<Plus size={16} />
+								Create Your First Campaign
+							</Link>
+						</Button>
 					</div>
-				</div>
+				) : (
+					<DataTable columns={columns} data={campaigns} />
+				)}
 			</div>
-		</Link>
+		</div>
 	)
 }

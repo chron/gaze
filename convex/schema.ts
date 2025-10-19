@@ -69,6 +69,7 @@ export default defineSchema(
 			enabledTools: v.optional(v.record(v.string(), v.boolean())),
 			messageCount: v.number(),
 			messageCountAtLastSummary: v.number(),
+			primaryCharacterId: v.optional(v.id("characters")),
 		})
 			.index("by_archived", ["archived"])
 			.index("by_lastInteractionAt", ["lastInteractionAt"]),
@@ -79,7 +80,9 @@ export default defineSchema(
 			data: v.optional(v.record(v.string(), v.any())),
 			inventory: v.optional(v.array(v.string())), // TODO: remove
 			xp: v.optional(v.number()), // TODO: remove
-		}).index("by_campaignId", ["campaignId"]),
+		})
+			.index("by_campaignId", ["campaignId"])
+			.index("by_campaignId_and_name", ["campaignId", "name"]),
 		messages: defineTable({
 			campaignId: v.id("campaigns"),
 			streamId: v.optional(v.string()),
@@ -181,7 +184,9 @@ export default defineSchema(
 			image: v.optional(v.id("_storage")),
 			humeVoiceId: v.optional(v.string()),
 			active: v.boolean(),
-		}),
+		})
+			.index("by_campaignId", ["campaignId"])
+			.index("by_campaignId_and_name", ["campaignId", "name"]),
 		jobProgress: defineTable({
 			campaignId: v.id("campaigns"),
 			type: v.string(), // e.g., "collapseHistory", "generateSummary"
@@ -207,7 +212,9 @@ export default defineSchema(
 			error: v.optional(v.string()),
 			startedAt: v.number(),
 			completedAt: v.optional(v.number()),
-		}).index("by_campaign", ["campaignId"]),
+		})
+			.index("by_campaign", ["campaignId"])
+			.index("by_campaign_and_type", ["campaignId", "type"]),
 	},
 	// For doing migrations and whatnot
 	{

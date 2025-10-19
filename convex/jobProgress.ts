@@ -152,8 +152,9 @@ export const getLatestByType = query({
 
 		const jobs = await ctx.db
 			.query("jobProgress")
-			.withIndex("by_campaign", (q) => q.eq("campaignId", args.campaignId))
-			.filter((q) => q.eq(q.field("type"), args.type))
+			.withIndex("by_campaign_and_type", (q) =>
+				q.eq("campaignId", args.campaignId).eq("type", args.type),
+			)
 			.order("desc")
 			.take(1)
 

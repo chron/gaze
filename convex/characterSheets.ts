@@ -18,7 +18,7 @@ export const get = query({
 
 		return ctx.db
 			.query("characterSheets")
-			.filter((q) => q.eq(q.field("campaignId"), args.campaignId))
+			.withIndex("by_campaignId", (q) => q.eq("campaignId", args.campaignId))
 			.first()
 	},
 })
@@ -30,7 +30,7 @@ export const getInternal = internalQuery({
 	handler: async (ctx, args) => {
 		return ctx.db
 			.query("characterSheets")
-			.filter((q) => q.eq(q.field("campaignId"), args.campaignId))
+			.withIndex("by_campaignId", (q) => q.eq("campaignId", args.campaignId))
 			.first()
 	},
 })
@@ -104,10 +104,32 @@ export const updateInternal = internalMutation({
 		data: v.record(v.string(), v.any()),
 	},
 	handler: async (ctx, args) => {
-		return ctx.db.patch(args.characterSheetId, {
+		const sheet = await ctx.db.get(args.characterSheetId)
+		if (!sheet) throw new Error("Character sheet not found")
+
+		await ctx.db.patch(args.characterSheetId, {
 			name: args.name,
 			description: args.description,
 			data: args.data,
 		})
+
+		// Check if there's a matching character with this name
+		const character = await ctx.db
+			.query("characters")
+			.withIndex("by_campaignId_and_name", (q) =>
+				q.eq("campaignId", sheet.campaignId).eq("name", args.name),
+			)
+			.first()
+
+		// If there's a matching character and the campaign doesn't have a primary character,
+		// set this character as the primary
+		if (character) {
+			const campaign = await ctx.db.get(sheet.campaignId)
+			if (campaign && !campaign.primaryCharacterId) {
+				await ctx.db.patch(sheet.campaignId, {
+					primaryCharacterId: character._id,
+				})
+			}
+		}
 	},
 })

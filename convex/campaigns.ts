@@ -42,6 +42,63 @@ export const list = query({
 	},
 })
 
+export const listWithDetails = query({
+	args: {
+		limit: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const campaigns = await ctx.db
+			.query("campaigns")
+			.withIndex("by_archived", (q) => q.eq("archived", false))
+			.collect()
+
+		// Sort by lastInteractionAt descending (most recent first), then by creation time
+		const sortedCampaigns = campaigns.sort((a, b) => {
+			const aTime = a.lastInteractionAt ?? a._creationTime
+			const bTime = b.lastInteractionAt ?? b._creationTime
+			return bTime - aTime
+		})
+
+		// Apply limit if specified
+		const limitedCampaigns =
+			args.limit !== undefined
+				? sortedCampaigns.slice(0, args.limit)
+				: sortedCampaigns
+
+		// Fetch additional details for each campaign
+		const campaignsWithDetails = await Promise.all(
+			limitedCampaigns.map(async (campaign) => {
+				// Get game system name
+				const gameSystemName = campaign.gameSystemId
+					? (await ctx.db.get(campaign.gameSystemId))?.name
+					: null
+
+				// Get primary character image if set
+				let primaryCharacterImageUrl: string | null = null
+				if (campaign.primaryCharacterId) {
+					const character = await ctx.db.get(campaign.primaryCharacterId)
+					if (character?.image) {
+						primaryCharacterImageUrl = await ctx.storage.getUrl(character.image)
+					}
+				}
+
+				return {
+					...campaign,
+					gameSystemName,
+					primaryCharacterImageUrl,
+				}
+			}),
+		)
+
+		return campaignsWithDetails
+	},
+})
+
 export const listInternal = internalQuery({
 	args: {
 		limit: v.optional(v.number()),

@@ -45,7 +45,7 @@ export const count = internalQuery({
 		return (
 			await ctx.db
 				.query("memories")
-				.filter((q) => q.eq(q.field("campaignId"), args.campaignId))
+				.withIndex("by_campaignId", (q) => q.eq("campaignId", args.campaignId))
 				.collect()
 		).length
 	},
