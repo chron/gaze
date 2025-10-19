@@ -1,4 +1,4 @@
-import { Calendar, Clock, Moon, Sun, Sunrise, Sunset } from "lucide-react"
+import { Calendar, Moon, Sun, Sunrise, Sunset } from "lucide-react"
 import type React from "react"
 import { ToolCallContainer } from "./ToolCallContainer"
 

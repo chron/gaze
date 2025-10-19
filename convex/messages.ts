@@ -728,7 +728,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 				error: JSON.stringify(error, null, 2),
 			})
 		},
-		onFinish: async ({ finishReason, response, usage }) => {
+		onFinish: async ({ finishReason, response }) => {
 			if (finishReason === "unknown") {
 				await ctx.runMutation(internal.messages.addError, {
 					messageId: message._id,
@@ -1256,6 +1256,7 @@ export const analyzePrompt = action({
 						activeClocks: 0,
 						characters: 0,
 						characterSheet: 0,
+						temporal: 0,
 						notices: 0,
 						total: 0,
 					},
