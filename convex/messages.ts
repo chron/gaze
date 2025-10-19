@@ -926,8 +926,6 @@ export const summarizeChatHistory = action({
 			],
 		})
 
-		console.log("Summarized chat history", response)
-
 		await ctx.runMutation(api.campaigns.updateCampaignSummary, {
 			campaignId: args.campaignId,
 			summary: text,
@@ -938,7 +936,12 @@ export const summarizeChatHistory = action({
 			campaignId: args.campaignId,
 		})
 
-		return `${text}\n\nTotal messages: ${messages.length}`
+		// After summarizing, generate tags for the campaign
+		const tags = await ctx.runAction(api.campaigns.generateTags, {
+			campaignId: args.campaignId,
+		})
+
+		return `${text}\n\nTotal messages: ${messages.length}\nTags: ${tags.join(", ")}`
 	},
 })
 
