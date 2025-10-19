@@ -4,7 +4,7 @@ import { compact } from "../../src/utils/compact"
 import { api, internal } from "../_generated/api"
 import type { Doc, Id } from "../_generated/dataModel"
 import type { ActionCtx } from "../_generated/server"
-import { isToolEnabled } from "../utils"
+import { RECENT_CAMPAIGNS_CONTEXT_COUNT, isToolEnabled } from "../utils"
 import systemPrompt from "./system"
 
 // Constants for context window management
@@ -796,7 +796,7 @@ export const otherCampaignSummaries = async (
 			}
 		})
 		.filter((m) => m !== null)
-		.slice(-20) // Max last 20 campaigns to keep token count down
+		.slice(-RECENT_CAMPAIGNS_CONTEXT_COUNT) // Max last N campaigns to keep token count down
 
 	const messages = compact(formattedMessages)
 

@@ -5,6 +5,7 @@ import { ArrowUpDown, Plus, X } from "lucide-react"
 import { useMemo, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
+import { RECENT_CAMPAIGNS_CONTEXT_COUNT } from "../../convex/utils"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { DataTable } from "../components/ui/data-table"
@@ -359,7 +360,24 @@ function HomePage() {
 					</div>
 				) : (
 					filteredCampaigns && (
-						<DataTable columns={columns} data={filteredCampaigns} />
+						<DataTable
+							columns={columns}
+							data={filteredCampaigns}
+							getRowClassName={(row) => {
+								// Highlight the most recent campaigns that are included as context for new campaign creation
+								// Only show highlight when viewing all campaigns (no tag filter)
+								// and using default sort (by last interaction/creation time)
+								const rowIndex = row.index
+								const isInContextGroup =
+									rowIndex < RECENT_CAMPAIGNS_CONTEXT_COUNT
+								const isDefaultView = !selectedTag
+
+								if (isInContextGroup && isDefaultView) {
+									return "bg-blue-50"
+								}
+								return ""
+							}}
+						/>
 					)
 				)}
 			</div>

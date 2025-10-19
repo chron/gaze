@@ -1,5 +1,8 @@
 import type { Doc } from "./_generated/dataModel"
 
+// Number of recent campaigns to include as context for new campaign creation
+export const RECENT_CAMPAIGNS_CONTEXT_COUNT = 30
+
 export const googleSafetySettings = {
 	safetySettings: [
 		{
