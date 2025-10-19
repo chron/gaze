@@ -102,29 +102,7 @@ const columns: ColumnDef<CampaignWithDetails>[] = [
 				</Link>
 			)
 		},
-	},
-	{
-		accessorKey: "gameSystemName",
-		header: ({ column }) => {
-			return (
-				<Button
-					variant="ghost"
-					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-					className="hover:bg-transparent !px-0 py-0 font-semibold hidden md:flex"
-				>
-					System
-					<ArrowUpDown className="ml-2 h-4 w-4" />
-				</Button>
-			)
-		},
-		cell: ({ row }) => {
-			const systemName = row.getValue("gameSystemName") as string | null
-			return (
-				<div className="hidden md:block text-gray-700 whitespace-nowrap">
-					{systemName || "Freeform"}
-				</div>
-			)
-		},
+		size: 180,
 	},
 	{
 		accessorKey: "messageCount",
@@ -135,19 +113,48 @@ const columns: ColumnDef<CampaignWithDetails>[] = [
 					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 					className="hover:bg-transparent !px-0 py-0 font-semibold"
 				>
-					Messages
+					Msgs
 					<ArrowUpDown className="ml-2 h-4 w-4" />
 				</Button>
 			)
 		},
 		cell: ({ row }) => {
 			const count = row.getValue("messageCount") as number
+			const messageCountAtLastSummary = row.original.messageCountAtLastSummary
+			const messagesSinceLastSummary = count - messageCountAtLastSummary
+			const needsSummary = messagesSinceLastSummary > 100
+
+			if (needsSummary) {
+				return (
+					<TooltipProvider>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<div className="text-red-600 font-semibold whitespace-nowrap cursor-help">
+									{formatNumber(count)}
+								</div>
+							</TooltipTrigger>
+							<TooltipContent>
+								<p>
+									Over 100 messages since last summary (
+									{messagesSinceLastSummary} new messages)
+								</p>
+								<p className="text-xs text-gray-400 mt-1">
+									Last summary at: {formatNumber(messageCountAtLastSummary)}{" "}
+									messages
+								</p>
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
+				)
+			}
+
 			return (
 				<div className="text-gray-700 whitespace-nowrap">
 					{formatNumber(count)}
 				</div>
 			)
 		},
+		size: 80,
 	},
 	{
 		accessorKey: "_creationTime",
@@ -206,8 +213,8 @@ const columns: ColumnDef<CampaignWithDetails>[] = [
 		),
 		cell: ({ row }) => {
 			const description = row.getValue("description") as string
-			const truncated = truncateText(description)
-			const isTruncated = description.length > 60
+			const truncated = truncateText(description, 50)
+			const isTruncated = description.length > 50
 
 			if (!isTruncated) {
 				return (
@@ -232,6 +239,7 @@ const columns: ColumnDef<CampaignWithDetails>[] = [
 				</TooltipProvider>
 			)
 		},
+		size: 250,
 	},
 	{
 		accessorKey: "tags",
@@ -240,21 +248,20 @@ const columns: ColumnDef<CampaignWithDetails>[] = [
 			const tags = (row.getValue("tags") as string[] | undefined) || []
 
 			if (tags.length === 0) {
-				return (
-					<div className="hidden lg:block text-gray-400 text-xs">No tags</div>
-				)
+				return <div className="hidden lg:block text-gray-400 text-xs">—</div>
 			}
 
 			return (
-				<div className="hidden lg:flex gap-1 flex-wrap max-w-48">
+				<div className="hidden lg:flex gap-1 flex-wrap">
 					{tags.map((tag) => (
-						<Badge key={tag} variant="secondary" className="text-xs">
+						<Badge key={tag} className="text-[10px] px-1.5 py-0 h-5 leading-5">
 							{tag}
 						</Badge>
 					))}
 				</div>
 			)
 		},
+		size: 200,
 	},
 ]
 

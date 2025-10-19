@@ -689,11 +689,11 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 
 	const { fullStream } = streamText({
 		system: prompt,
-		temperature: 1.2,
+		temperature: campaign.model.startsWith("openai") ? undefined : 1.2, // TODO: this works for Gemini but not for OpenAI (not sure about others)
 		model: campaign.model.startsWith("google")
 			? google(campaign.model.split("/")[1])
 			: campaign.model.startsWith("anthropic")
-				? anthropic("claude-sonnet-4-20250514") // Temporarily hardcoded for testing
+				? anthropic(campaign.model.split("/")[1])
 				: campaign.model.startsWith("moonshotai")
 					? groq(campaign.model)
 					: campaign.model.startsWith("openai")
@@ -714,7 +714,10 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 				// thinking: { type: "enabled", budgetTokens: 1024 },
 			},
 			openai: {
-				reasoningEffort: "minimal",
+				reasoningEffort: "minimal", // can be low, medium or high
+				parallelToolCalls: true,
+				maxToolCalls: 8,
+				textVerbosity: "medium", // can be low or high
 			},
 		},
 		messages: formattedMessages,
@@ -729,6 +732,8 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 			})
 		},
 		onFinish: async ({ finishReason, response }) => {
+			console.log("onFinish", finishReason, response)
+
 			if (finishReason === "unknown") {
 				await ctx.runMutation(internal.messages.addError, {
 					messageId: message._id,
@@ -909,7 +914,7 @@ export const summarizeChatHistory = action({
 			})
 			.filter((m) => m !== null) as ModelMessage[]
 
-		const { text, response } = await generateText({
+		const { text } = await generateText({
 			system: prompt,
 			model: google("gemini-2.5-flash"),
 			messages: [
@@ -937,9 +942,15 @@ export const summarizeChatHistory = action({
 		})
 
 		// After summarizing, generate tags for the campaign
-		const tags = await ctx.runAction(api.campaigns.generateTags, {
-			campaignId: args.campaignId,
-		})
+		let tags: string[] = []
+		try {
+			tags = await ctx.runAction(api.campaigns.generateTags, {
+				campaignId: args.campaignId,
+			})
+		} catch (error) {
+			tags = ["Error generating tags"]
+			console.error("Error generating tags", error)
+		}
 
 		return `${text}\n\nTotal messages: ${messages.length}\nTags: ${tags.join(", ")}`
 	},

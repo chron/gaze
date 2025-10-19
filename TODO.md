@@ -24,3 +24,4 @@ LATER
 - [POLISH] <Wiggly /> animation resets as new text streams in (negative offsets probably?)
 - [POLISH] Character sheet JSON doesn't maintain the original order
 - [OTHER] Use tanstack-query + Convex integration so local navigation is snappier
+- [BUG] Date badges pulse on page load, should only happen when it changes

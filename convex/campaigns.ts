@@ -779,6 +779,7 @@ ${campaign.lastCampaignSummary ? `\n\nCampaign Summary:\n${campaign.lastCampaign
 			}),
 			system: systemPrompt,
 			prompt: userMessage,
+			mode: "json",
 			providerOptions: {
 				google: googleSafetySettings,
 			},
