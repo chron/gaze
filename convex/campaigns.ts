@@ -1,6 +1,12 @@
 import { google } from "@ai-sdk/google"
-import { type LanguageModelUsage, type ModelMessage, generateText } from "ai"
+import {
+	type LanguageModelUsage,
+	type ModelMessage,
+	generateObject,
+	generateText,
+} from "ai"
 import { v } from "convex/values"
+import z from "zod"
 import { api } from "./_generated/api"
 import {
 	action,
@@ -726,5 +732,81 @@ export const updateTemporalInternal = internalMutation({
 			previousDate,
 			previousTimeOfDay,
 		}
+	},
+})
+
+export const generateTags = action({
+	args: {
+		campaignId: v.id("campaigns"),
+	},
+	handler: async (ctx, args): Promise<string[]> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const campaign = await ctx.runQuery(api.campaigns.get, {
+			id: args.campaignId,
+		})
+
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		const systemPrompt = `You are a campaign tagging system. Analyze this campaign and suggest 3-5 relevant tags that describe its themes, genre, setting, or tone.
+
+Examples:
+	- fantasy
+	- mystery
+	- urban
+	- high stakes
+	- investigation
+	- cozy
+	- isekai
+	- sci-fi
+	- romance`
+
+		const userMessage = `Campaign Name: ${campaign.name}
+Description: ${campaign.description}
+${campaign.lastCampaignSummary ? `\n\nCampaign Summary:\n${campaign.lastCampaignSummary}` : ""}`
+
+		const {
+			object: { tags = [] },
+		} = await generateObject({
+			model: google("gemini-2.5-flash"),
+			schema: z.object({
+				tags: z.array(z.string()),
+			}),
+			system: systemPrompt,
+			prompt: userMessage,
+			providerOptions: {
+				google: googleSafetySettings,
+			},
+		})
+
+		// Update the campaign with the generated tags
+		await ctx.runMutation(api.campaigns.updateTags, {
+			campaignId: args.campaignId,
+			tags,
+		})
+
+		return tags
+	},
+})
+
+export const updateTags = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		tags: v.array(v.string()),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		await ctx.db.patch(args.campaignId, {
+			tags: args.tags,
+		})
 	},
 })

@@ -1,9 +1,11 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 import type { ColumnDef } from "@tanstack/react-table"
 import { useQuery } from "convex/react"
-import { ArrowUpDown, Plus } from "lucide-react"
+import { ArrowUpDown, Plus, X } from "lucide-react"
+import { useMemo, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
+import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { DataTable } from "../components/ui/data-table"
 import {
@@ -230,10 +232,55 @@ const columns: ColumnDef<CampaignWithDetails>[] = [
 			)
 		},
 	},
+	{
+		accessorKey: "tags",
+		header: () => <div className="hidden lg:block font-semibold">Tags</div>,
+		cell: ({ row }) => {
+			const tags = (row.getValue("tags") as string[] | undefined) || []
+
+			if (tags.length === 0) {
+				return (
+					<div className="hidden lg:block text-gray-400 text-xs">No tags</div>
+				)
+			}
+
+			return (
+				<div className="hidden lg:flex gap-1 flex-wrap max-w-48">
+					{tags.map((tag) => (
+						<Badge key={tag} variant="secondary" className="text-xs">
+							{tag}
+						</Badge>
+					))}
+				</div>
+			)
+		},
+	},
 ]
 
 function HomePage() {
 	const campaigns = useQuery(api.campaigns.listWithDetails, {})
+	const [selectedTag, setSelectedTag] = useState<string | null>(null)
+
+	// Get all unique tags from campaigns
+	const allTags = useMemo(() => {
+		if (!campaigns) return []
+		const tagSet = new Set<string>()
+		for (const campaign of campaigns) {
+			if (campaign.tags) {
+				for (const tag of campaign.tags) {
+					tagSet.add(tag)
+				}
+			}
+		}
+		return Array.from(tagSet).sort()
+	}, [campaigns])
+
+	// Filter campaigns by selected tag
+	const filteredCampaigns = useMemo(() => {
+		if (!campaigns) return undefined
+		if (!selectedTag) return campaigns
+		return campaigns.filter((campaign) => campaign.tags?.includes(selectedTag))
+	}, [campaigns, selectedTag])
 
 	if (campaigns === undefined) {
 		return (
@@ -254,8 +301,11 @@ function HomePage() {
 							Gaze Into The Abyss
 						</h1>
 						<p className="text-blue-100 text-sm">
-							{campaigns.length}{" "}
-							{campaigns.length === 1 ? "campaign" : "campaigns"}
+							{filteredCampaigns?.length || 0}{" "}
+							{(filteredCampaigns?.length || 0) === 1
+								? "campaign"
+								: "campaigns"}
+							{selectedTag && " · filtered by tag"}
 						</p>
 					</div>
 					<Button className="gap-2" asChild>
@@ -267,7 +317,35 @@ function HomePage() {
 					</Button>
 				</div>
 
-				{campaigns.length === 0 ? (
+				{/* Tag Filter */}
+				{allTags.length > 0 && (
+					<div className="mb-4 flex flex-wrap gap-2 items-center">
+						<span className="text-white text-sm font-medium">Filter:</span>
+						{allTags.map((tag) => (
+							<Badge
+								key={tag}
+								variant={selectedTag === tag ? "default" : "secondary"}
+								className="cursor-pointer hover:opacity-80 transition-opacity"
+								onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+							>
+								{tag}
+								{selectedTag === tag && <X className="ml-1 h-3 w-3" />}
+							</Badge>
+						))}
+						{selectedTag && (
+							<Button
+								variant="ghost"
+								size="sm"
+								className="text-white hover:bg-white/20 h-7"
+								onClick={() => setSelectedTag(null)}
+							>
+								Clear filter
+							</Button>
+						)}
+					</div>
+				)}
+
+				{filteredCampaigns && filteredCampaigns.length === 0 ? (
 					<div className="bg-white rounded-lg shadow p-12 text-center">
 						<p className="text-lg text-gray-600 mb-6">
 							No campaigns yet. Create your first campaign to get started!
@@ -280,7 +358,9 @@ function HomePage() {
 						</Button>
 					</div>
 				) : (
-					<DataTable columns={columns} data={campaigns} />
+					filteredCampaigns && (
+						<DataTable columns={columns} data={filteredCampaigns} />
+					)
 				)}
 			</div>
 		</div>

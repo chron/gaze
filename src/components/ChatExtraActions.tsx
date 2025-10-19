@@ -7,6 +7,7 @@ import {
 	Brain,
 	Command,
 	Landmark,
+	Tag,
 	Trash,
 } from "lucide-react"
 import { useState } from "react"
@@ -43,6 +44,7 @@ export const ChatExtraActions: React.FC = () => {
 	const collapseHistory = useAction(api.summaries.collapseHistory)
 	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
 	const chatWithHistory = useAction(api.messages.chatWithHistory)
+	const generateTags = useAction(api.campaigns.generateTags)
 	const deleteJob = useMutation(api.jobProgress.deleteJob)
 
 	const updatePlan = useMutation(api.campaigns.updatePlan)
@@ -72,6 +74,23 @@ export const ChatExtraActions: React.FC = () => {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
+					<DropdownMenuItem
+						onClick={async () => {
+							setIsLoading(true)
+							try {
+								const tags = await generateTags({
+									campaignId: campaignId as Id<"campaigns">,
+								})
+								setResult(`Generated tags: ${tags.join(", ")}`)
+							} finally {
+								setIsLoading(false)
+							}
+						}}
+					>
+						<Tag />
+						Generate tags
+					</DropdownMenuItem>
+
 					<DropdownMenuItem
 						onClick={async () => {
 							setIsLoading(true)

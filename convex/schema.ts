@@ -70,6 +70,7 @@ export default defineSchema(
 			messageCount: v.number(),
 			messageCountAtLastSummary: v.number(),
 			primaryCharacterId: v.optional(v.id("characters")),
+			tags: v.optional(v.array(v.string())),
 		})
 			.index("by_archived", ["archived"])
 			.index("by_lastInteractionAt", ["lastInteractionAt"]),
