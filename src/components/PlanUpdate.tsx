@@ -12,6 +12,7 @@ type Props = {
 			| "player_requests"
 			| "overall_story"
 			| "key_details"
+			| "feelings_and_reflections"
 	}
 	className?: string
 }
@@ -22,6 +23,7 @@ const partLabels = {
 	player_requests: "Player Requests",
 	overall_story: "Overall Story",
 	key_details: "Key Details",
+	feelings_and_reflections: "Feelings and Reflections",
 }
 
 export const PlanUpdate: React.FC<Props> = ({ parameters, className }) => {

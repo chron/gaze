@@ -1,5 +1,6 @@
 NEXT
 - [AUTH] make campaigns owned by a user id, enforce it in backend - users table?
+- A way to replay a story easily — paginated, from the start, different UI affordances?
 
 LATER
 - [SPEECH] Different prompt for user messages that gets char info from the character sheet
@@ -25,3 +26,5 @@ LATER
 - [POLISH] Character sheet JSON doesn't maintain the original order
 - [OTHER] Use tanstack-query + Convex integration so local navigation is snappier
 - [BUG] Date badges pulse on page load, should only happen when it changes
+- [UI] Handle `error` message finishReason better, when messages get cut off part way
+- [UI] Colors for clocks. Either get AI to choose, or just hash the name or something?

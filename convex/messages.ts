@@ -853,6 +853,8 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 							},
 						},
 					)
+				} else {
+					// console.log("unknown chunk type", chunk)
 				}
 			}
 

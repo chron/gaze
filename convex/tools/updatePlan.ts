@@ -21,6 +21,7 @@ export const updatePlan = (
 					"player_requests",
 					"overall_story",
 					"key_details",
+					"feelings_and_reflections",
 				])
 				.optional()
 				.describe("The part of the plan you'd like to update"),

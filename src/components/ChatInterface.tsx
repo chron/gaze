@@ -100,7 +100,7 @@ const ChatInput: React.FC<{
 				value={input}
 				onChange={(e) => setInput(e.target.value)}
 				placeholder="Enter your message"
-				className="flex-grow py-[7px]"
+				className="flex-grow py-[7px] max-h-[400px]"
 				onKeyDown={(e) => {
 					if (
 						e.key === "Enter" &&

@@ -137,6 +137,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 							| "player_requests"
 							| "overall_story"
 							| "key_details"
+							| "feelings_and_reflections"
 					}
 				}
 				className={positionClass}
