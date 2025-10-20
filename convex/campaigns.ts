@@ -811,3 +811,19 @@ export const updateTags = mutation({
 		})
 	},
 })
+
+export const archive = mutation({
+	args: {
+		id: v.id("campaigns"),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		await ctx.db.patch(args.id, {
+			archived: true,
+		})
+	},
+})

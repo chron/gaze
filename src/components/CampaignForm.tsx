@@ -85,6 +85,7 @@ export const CampaignForm: React.FC<Props> = ({ campaignId = null }) => {
 
 	const addCampaign = useMutation(api.campaigns.addCampaign)
 	const updateCampaign = useMutation(api.campaigns.update)
+	const archiveCampaign = useMutation(api.campaigns.archive)
 
 	// Initialize enabled tools state - all enabled by default
 	const [enabledTools, setEnabledTools] = useState<Record<string, boolean>>(
@@ -147,6 +148,19 @@ export const CampaignForm: React.FC<Props> = ({ campaignId = null }) => {
 				enabledTools,
 			})
 			navigate({ to: "/campaigns/$campaignId", params: { campaignId: newId } })
+		}
+	}
+
+	const handleArchive = async () => {
+		if (!campaignId) return
+
+		if (
+			confirm(
+				"Are you sure you want to archive this campaign? It will no longer appear in your campaign list.",
+			)
+		) {
+			await archiveCampaign({ id: campaignId })
+			navigate({ to: "/" })
 		}
 	}
 
@@ -282,6 +296,25 @@ export const CampaignForm: React.FC<Props> = ({ campaignId = null }) => {
 					</Link>
 				</Button>
 			</div>
+
+			{campaignId && (
+				<div className="mt-8 pt-6 border-t border-slate-200">
+					<div className="flex items-start gap-3">
+						<div className="flex-1">
+							<h3 className="text-sm font-semibold text-slate-900">
+								Archive Campaign
+							</h3>
+							<p className="text-sm text-slate-600 mt-1">
+								Archive this campaign to remove it from your campaign list. You
+								can still access archived campaigns later if needed.
+							</p>
+						</div>
+						<Button type="button" variant="destructive" onClick={handleArchive}>
+							Archive
+						</Button>
+					</div>
+				</div>
+			)}
 		</form>
 	)
 }

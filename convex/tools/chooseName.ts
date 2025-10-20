@@ -11,6 +11,8 @@ export const chooseName = () =>
 				.describe("A description of the thing we're choosing a name for"),
 			suggestedNames: z
 				.array(z.string())
-				.describe("Some names that might be suitable"),
+				.describe(
+					"Some names that might be suitable. Try to include some interesting and unusual choices.",
+				),
 		}),
 	})

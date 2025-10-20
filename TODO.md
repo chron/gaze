@@ -1,4 +1,5 @@
 NEXT
+- [LLM] Replace introduce_character tool with update_character to allow edits (or have both?)
 - [AUTH] make campaigns owned by a user id, enforce it in backend - users table?
 - A way to replay a story easily — paginated, from the start, different UI affordances?
 
