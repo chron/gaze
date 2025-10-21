@@ -510,7 +510,8 @@ export const currentGameContext = async (
 
 	const serializedCharacters = activeCharacters.map(
 		(character) =>
-			`<character_name>${character.name}</character_name>\n<character_description>${character.description}</character_description>\n<character_image_prompt>${character.imagePrompt}</character_image_prompt>`,
+			`<character_name>${character.name}</character_name>\n<character_description>${character.description}</character_description>\n`,
+		// <character_image_prompt>${character.imagePrompt}</character_image_prompt>
 	)
 
 	const formattedCharacterSheet = characterSheet
