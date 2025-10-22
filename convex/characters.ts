@@ -402,6 +402,45 @@ export const createInternal = internalMutation({
 	},
 })
 
+export const updateInternal = internalMutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		name: v.string(),
+		description: v.optional(v.string()),
+		notes: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		// Find the character by name and campaign
+		const character = await ctx.db
+			.query("characters")
+			.withIndex("by_campaignId_and_name", (q) =>
+				q.eq("campaignId", args.campaignId).eq("name", args.name),
+			)
+			.first()
+
+		if (!character) {
+			throw new Error(`Character "${args.name}" not found in this campaign`)
+		}
+
+		// Build update object with only provided fields
+		const updates: Partial<{
+			description: string
+			notes: string
+		}> = {}
+
+		if (args.description !== undefined) {
+			updates.description = args.description
+		}
+		if (args.notes !== undefined) {
+			updates.notes = args.notes
+		}
+
+		await ctx.db.patch(character._id, updates)
+
+		return character._id
+	},
+})
+
 export const storeImageForCharacterInternal = internalMutation({
 	args: {
 		characterId: v.id("characters"),

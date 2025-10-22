@@ -27,6 +27,7 @@ import type * as tools_chooseName from "../tools/chooseName.js";
 import type * as tools_introduceCharacter from "../tools/introduceCharacter.js";
 import type * as tools_requestDiceRoll from "../tools/requestDiceRoll.js";
 import type * as tools_setCampaignInfo from "../tools/setCampaignInfo.js";
+import type * as tools_updateCharacter from "../tools/updateCharacter.js";
 import type * as tools_updateCharacterOutfit from "../tools/updateCharacterOutfit.js";
 import type * as tools_updateCharacterSheet from "../tools/updateCharacterSheet.js";
 import type * as tools_updateClock from "../tools/updateClock.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   "tools/introduceCharacter": typeof tools_introduceCharacter;
   "tools/requestDiceRoll": typeof tools_requestDiceRoll;
   "tools/setCampaignInfo": typeof tools_setCampaignInfo;
+  "tools/updateCharacter": typeof tools_updateCharacter;
   "tools/updateCharacterOutfit": typeof tools_updateCharacterOutfit;
   "tools/updateCharacterSheet": typeof tools_updateCharacterSheet;
   "tools/updateClock": typeof tools_updateClock;

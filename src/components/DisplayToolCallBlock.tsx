@@ -3,6 +3,7 @@ import type { Doc } from "../../convex/_generated/dataModel"
 import { CharacterIntroduction } from "./CharacterIntroduction"
 import { CharacterOutfitUpdate } from "./CharacterOutfitUpdate"
 import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
+import { CharacterUpdate } from "./CharacterUpdate"
 import { ChooseName } from "./ChooseName"
 import { ClockUpdate } from "./ClockUpdate"
 import { DiceRoll } from "./DiceRoll"
@@ -120,6 +121,22 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 			<CharacterIntroduction
 				key={`character-introduction-${block.toolCallId}`}
 				parameters={params as { name: string; description: string }}
+				className={positionClass}
+			/>
+		)
+	}
+
+	if (block.toolName === "update_character") {
+		return (
+			<CharacterUpdate
+				key={`character-update-${block.toolCallId}`}
+				parameters={
+					params as {
+						name: string
+						description?: string
+						notes?: string
+					}
+				}
 				className={positionClass}
 			/>
 		)

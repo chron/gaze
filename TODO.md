@@ -1,6 +1,7 @@
 NEXT
 - [LLM] Replace introduce_character tool with update_character to allow edits (or have both?)
 - [AUTH] make campaigns owned by a user id, enforce it in backend - users table?
+- [IMAGES] Use an image edit LLM for outfits so the characters stay more consistent. Fal.ai?
 - A way to replay a story easily — paginated, from the start, different UI affordances?
 
 LATER

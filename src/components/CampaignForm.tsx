@@ -39,6 +39,11 @@ export const AVAILABLE_TOOLS = [
 		description: "Allow AI to introduce new characters",
 	},
 	{
+		id: "update_character",
+		name: "Update Character",
+		description: "Allow AI to update existing character descriptions and notes",
+	},
+	{
 		id: "update_character_outfit",
 		name: "Update Character Outfit",
 		description:

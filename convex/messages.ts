@@ -33,6 +33,7 @@ import { chooseName } from "./tools/chooseName"
 import { introduceCharacter } from "./tools/introduceCharacter"
 import { requestDiceRoll } from "./tools/requestDiceRoll"
 import { setCampaignInfo } from "./tools/setCampaignInfo"
+import { updateCharacter } from "./tools/updateCharacter"
 import { updateCharacterOutfit } from "./tools/updateCharacterOutfit"
 import { updateCharacterSheet } from "./tools/updateCharacterSheet"
 import { updateClock } from "./tools/updateClock"
@@ -663,6 +664,9 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		// 	: {}),
 		// We need at least one always-on tool or the types break (cool)
 		introduce_character: introduceCharacter(ctx, message._id, campaign._id),
+		...(isToolEnabled("update_character", campaign)
+			? { update_character: updateCharacter(ctx, message._id, campaign._id) }
+			: {}),
 		...(isToolEnabled("update_character_outfit", campaign)
 			? {
 					update_character_outfit: updateCharacterOutfit(

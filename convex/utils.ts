@@ -33,6 +33,7 @@ type ToolName =
 	| "update_character_sheet"
 	| "change_scene"
 	| "introduce_character"
+	| "update_character"
 	| "request_dice_roll"
 	| "update_plan"
 	| "update_quest_log"
