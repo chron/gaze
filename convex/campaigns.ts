@@ -480,6 +480,55 @@ export const updatePlanInternal = internalMutation({
 	},
 })
 
+export const updateQuest = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		oldTitle: v.string(),
+		title: v.string(),
+		objective: v.string(),
+		status: v.union(
+			v.literal("active"),
+			v.literal("completed"),
+			v.literal("failed"),
+		),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const campaign = await ctx.db.get(args.campaignId)
+
+		if (!campaign) {
+			throw new Error("Campaign not found")
+		}
+
+		const existingQuest = campaign.questLog?.find(
+			(quest) => quest.title === args.oldTitle,
+		)
+
+		if (!existingQuest) {
+			throw new Error("Quest not found")
+		}
+
+		const newQuestLog = (campaign.questLog ?? []).map((quest) => {
+			if (quest.title === args.oldTitle) {
+				return {
+					title: args.title,
+					objective: args.objective,
+					status: args.status,
+				}
+			}
+			return quest
+		})
+
+		await ctx.db.patch(args.campaignId, {
+			questLog: newQuestLog,
+		})
+	},
+})
+
 export const updateQuestInternal = internalMutation({
 	args: {
 		campaignId: v.id("campaigns"),

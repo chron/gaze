@@ -14,6 +14,7 @@ import { useEffect, useRef, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
 import { cn } from "../lib/utils"
+import { AutoResizeTextarea } from "./ui/auto-resize-textarea"
 import { Badge } from "./ui/badge"
 import { Button } from "./ui/button"
 import { ClockWheel } from "./ui/clock-wheel"
@@ -22,6 +23,7 @@ import {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "./ui/collapsible"
+import { Input } from "./ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 
@@ -62,8 +64,15 @@ function formatTimeOfDay(timeOfDay: TimeOfDay): string {
 
 export const CampaignInfoBar: React.FC<Props> = ({ campaign }) => {
 	const deleteClock = useMutation(api.campaigns.deleteClock)
+	const updateQuest = useMutation(api.campaigns.updateQuest)
 	const [temporalKey, setTemporalKey] = useState(0)
 	const prevTemporalRef = useRef(campaign.temporal)
+	const [editingQuestTitle, setEditingQuestTitle] = useState<string | null>(
+		null,
+	)
+	const [editingTitle, setEditingTitle] = useState("")
+	const [editingObjective, setEditingObjective] = useState("")
+	const [isSavingQuest, setIsSavingQuest] = useState(false)
 
 	// Track changes to temporal data to trigger animation
 	useEffect(() => {
@@ -218,15 +227,66 @@ export const CampaignInfoBar: React.FC<Props> = ({ campaign }) => {
 									<p className="text-xs font-semibold text-gray-500 uppercase">
 										Active
 									</p>
-									{activeQuests.map((quest) => (
-										<div
-											key={quest.title}
-											className="flex flex-col gap-1 pb-2 border-b last:border-b-0"
-										>
-											<p className="text-sm font-semibold">{quest.title}</p>
-											<p className="text-xs text-gray-600">{quest.objective}</p>
-										</div>
-									))}
+									{activeQuests.map((quest) => {
+										const isEditing = editingQuestTitle === quest.title
+
+										if (isEditing) {
+											return (
+												<div
+													key={quest.title}
+													className={cn(
+														"flex flex-col gap-2 pb-2 border-b last:border-b-0",
+														isSavingQuest && "animate-pulse",
+													)}
+												>
+													<Input
+														autoFocus
+														value={editingTitle}
+														onChange={(e) => setEditingTitle(e.target.value)}
+														placeholder="Quest title"
+														className="font-semibold"
+													/>
+													<AutoResizeTextarea
+														value={editingObjective}
+														onChange={(e) =>
+															setEditingObjective(e.target.value)
+														}
+														placeholder="Quest objective"
+														onSave={async (objective) => {
+															setIsSavingQuest(true)
+															await updateQuest({
+																campaignId: campaign._id,
+																oldTitle: quest.title,
+																title: editingTitle,
+																objective,
+																status: quest.status,
+															})
+															setIsSavingQuest(false)
+															setEditingQuestTitle(null)
+														}}
+														onCancel={() => setEditingQuestTitle(null)}
+													/>
+												</div>
+											)
+										}
+
+										return (
+											<div
+												key={quest.title}
+												className="flex flex-col gap-1 pb-2 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 px-1 -mx-1 rounded"
+												onDoubleClick={() => {
+													setEditingQuestTitle(quest.title)
+													setEditingTitle(quest.title)
+													setEditingObjective(quest.objective)
+												}}
+											>
+												<p className="text-sm font-semibold">{quest.title}</p>
+												<p className="text-xs text-gray-600">
+													{quest.objective}
+												</p>
+											</div>
+										)
+									})}
 								</div>
 							)}
 
@@ -243,25 +303,77 @@ export const CampaignInfoBar: React.FC<Props> = ({ campaign }) => {
 									</CollapsibleTrigger>
 									<CollapsibleContent>
 										<div className="flex flex-col gap-2 mt-2">
-											{inactiveQuests.map((quest) => (
-												<div
-													key={quest.title}
-													className="flex flex-col gap-1 pb-2 border-b last:border-b-0"
-												>
-													<p
-														className={cn(
-															"text-sm font-semibold",
-															quest.status === "completed" && "text-green-700",
-															quest.status === "failed" && "text-red-700",
-														)}
+											{inactiveQuests.map((quest) => {
+												const isEditing = editingQuestTitle === quest.title
+
+												if (isEditing) {
+													return (
+														<div
+															key={quest.title}
+															className={cn(
+																"flex flex-col gap-2 pb-2 border-b last:border-b-0",
+																isSavingQuest && "animate-pulse",
+															)}
+														>
+															<Input
+																autoFocus
+																value={editingTitle}
+																onChange={(e) =>
+																	setEditingTitle(e.target.value)
+																}
+																placeholder="Quest title"
+																className="font-semibold"
+															/>
+															<AutoResizeTextarea
+																value={editingObjective}
+																onChange={(e) =>
+																	setEditingObjective(e.target.value)
+																}
+																placeholder="Quest objective"
+																onSave={async (objective) => {
+																	setIsSavingQuest(true)
+																	await updateQuest({
+																		campaignId: campaign._id,
+																		oldTitle: quest.title,
+																		title: editingTitle,
+																		objective,
+																		status: quest.status,
+																	})
+																	setIsSavingQuest(false)
+																	setEditingQuestTitle(null)
+																}}
+																onCancel={() => setEditingQuestTitle(null)}
+															/>
+														</div>
+													)
+												}
+
+												return (
+													<div
+														key={quest.title}
+														className="flex flex-col gap-1 pb-2 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 px-1 -mx-1 rounded"
+														onDoubleClick={() => {
+															setEditingQuestTitle(quest.title)
+															setEditingTitle(quest.title)
+															setEditingObjective(quest.objective)
+														}}
 													>
-														{quest.title}
-													</p>
-													<p className="text-xs text-gray-600">
-														{quest.objective}
-													</p>
-												</div>
-											))}
+														<p
+															className={cn(
+																"text-sm font-semibold",
+																quest.status === "completed" &&
+																	"text-green-700",
+																quest.status === "failed" && "text-red-700",
+															)}
+														>
+															{quest.title}
+														</p>
+														<p className="text-xs text-gray-600">
+															{quest.objective}
+														</p>
+													</div>
+												)
+											})}
 										</div>
 									</CollapsibleContent>
 								</Collapsible>
