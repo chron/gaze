@@ -139,6 +139,7 @@ export const update = mutation({
 		name: v.string(),
 		description: v.string(),
 		imagePrompt: v.string(),
+		notes: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
 		const identity = await ctx.auth.getUserIdentity()
@@ -146,8 +147,8 @@ export const update = mutation({
 			throw new Error("Not authenticated")
 		}
 
-		const { characterId, name, description, imagePrompt } = args
-		await ctx.db.patch(characterId, { name, description, imagePrompt })
+		const { characterId, name, description, imagePrompt, notes } = args
+		await ctx.db.patch(characterId, { name, description, imagePrompt, notes })
 	},
 })
 
@@ -274,6 +275,7 @@ export const createInternal = internalMutation({
 		description: v.string(),
 		campaignId: v.id("campaigns"),
 		imagePrompt: v.string(),
+		notes: v.optional(v.string()),
 	},
 	handler: async (ctx, args) => {
 		const characterId = await ctx.db.insert("characters", {
@@ -281,6 +283,7 @@ export const createInternal = internalMutation({
 			description: args.description,
 			campaignId: args.campaignId,
 			imagePrompt: args.imagePrompt,
+			notes: args.notes,
 			active: true,
 		})
 

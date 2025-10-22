@@ -508,11 +508,13 @@ export const currentGameContext = async (
 	// Only send active characters to the LLM
 	const activeCharacters = characters.filter((c) => c.active)
 
-	const serializedCharacters = activeCharacters.map(
-		(character) =>
-			`<character_name>${character.name}</character_name>\n<character_description>${character.description}</character_description>\n`,
-		// <character_image_prompt>${character.imagePrompt}</character_image_prompt>
-	)
+	const serializedCharacters = activeCharacters.map((character) => {
+		let result = `<character_name>${character.name}</character_name>\n<character_description>${character.description}</character_description>`
+		if (character.notes) {
+			result += `\n<character_notes>${character.notes}</character_notes>`
+		}
+		return `${result}\n`
+	})
 
 	const formattedCharacterSheet = characterSheet
 		? {

@@ -27,6 +27,7 @@ function CharacterDetailsPage() {
 	const [name, setName] = useState("")
 	const [description, setDescription] = useState("")
 	const [imagePrompt, setImagePrompt] = useState("")
+	const [notes, setNotes] = useState("")
 	const [isSaving, setIsSaving] = useState(false)
 
 	useEffect(() => {
@@ -34,6 +35,7 @@ function CharacterDetailsPage() {
 			setName(character.name)
 			setDescription(character.description)
 			setImagePrompt(character.imagePrompt)
+			setNotes(character.notes ?? "")
 		}
 	}, [character])
 
@@ -47,6 +49,7 @@ function CharacterDetailsPage() {
 				name,
 				description,
 				imagePrompt,
+				notes,
 			})
 			navigate({
 				to: "/campaigns/$campaignId",
@@ -91,6 +94,16 @@ function CharacterDetailsPage() {
 							id="char-description"
 							value={description}
 							onChange={(e) => setDescription(e.target.value)}
+							className="min-h-[120px]"
+						/>
+					</div>
+
+					<div className="flex flex-col gap-2">
+						<Label htmlFor="char-notes">Notes</Label>
+						<Textarea
+							id="char-notes"
+							value={notes}
+							onChange={(e) => setNotes(e.target.value)}
 							className="min-h-[120px]"
 						/>
 					</div>

@@ -185,6 +185,7 @@ export default defineSchema(
 			image: v.optional(v.id("_storage")),
 			humeVoiceId: v.optional(v.string()),
 			active: v.boolean(),
+			notes: v.optional(v.string()),
 		})
 			.index("by_campaignId", ["campaignId"])
 			.index("by_campaignId_and_name", ["campaignId", "name"]),

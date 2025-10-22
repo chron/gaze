@@ -48,3 +48,16 @@ export const setDefaultActive = migrations.define({
 export const runActiveMigration = migrations.runner(
 	internal.migrations.setDefaultActive,
 )
+
+export const setDefaultNotes = migrations.define({
+	table: "characters",
+	migrateOne: async (ctx, doc) => {
+		await ctx.db.patch(doc._id, {
+			notes: "",
+		})
+	},
+})
+
+export const runNotesMigration = migrations.runner(
+	internal.migrations.setDefaultNotes,
+)

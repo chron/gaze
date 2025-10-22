@@ -696,7 +696,7 @@ export const setMessageCountAtLastSummary = mutation({
 export const updateTemporalInternal = internalMutation({
 	args: {
 		campaignId: v.id("campaigns"),
-		date: v.string(),
+		date: v.optional(v.string()),
 		timeOfDay: v.union(
 			v.literal("dawn"),
 			v.literal("morning"),
@@ -722,9 +722,9 @@ export const updateTemporalInternal = internalMutation({
 
 		await ctx.db.patch(args.campaignId, {
 			temporal: {
-				date: args.date,
+				date: args.date ?? campaign.temporal?.date ?? "Unknown",
 				timeOfDay: args.timeOfDay,
-				notes: args.notes,
+				notes: args.notes ?? campaign.temporal?.notes,
 			},
 		})
 

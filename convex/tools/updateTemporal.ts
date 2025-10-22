@@ -12,11 +12,13 @@ export const updateTemporal = (
 		description:
 			"Updates the current in-game date and time for the campaign. Use this to track the passage of time in the story. Update it when significant time passes (hours, days, weeks, etc.) or when the time of day meaningfully changes. The notes field can be used to add context like countdowns to important events.",
 		inputSchema: z.object({
-			date: z
-				.string()
-				.describe(
-					"The current in-game date (e.g., 'Day 3', 'March 15, 1923', 'Year 2, Month of the Raven'). Use any format that fits the campaign setting.",
-				),
+			date: z.optional(
+				z
+					.string()
+					.describe(
+						"The current in-game date (e.g., 'Day 3', 'March 15, 1923', 'Year 2, Month of the Raven'). Use any format that fits the campaign setting.",
+					),
+			),
 			time_of_day: z
 				.enum([
 					"dawn",
