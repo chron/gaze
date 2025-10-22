@@ -513,6 +513,13 @@ export const currentGameContext = async (
 		if (character.notes) {
 			result += `\n<character_notes>${character.notes}</character_notes>`
 		}
+		if (character.currentOutfit) {
+			result += `\n<current_outfit>${character.currentOutfit}</current_outfit>`
+		}
+		if (character.outfits && Object.keys(character.outfits).length > 0) {
+			const outfitNames = Object.keys(character.outfits).join(", ")
+			result += `\n<available_outfits>${outfitNames}</available_outfits>`
+		}
 		return `${result}\n`
 	})
 

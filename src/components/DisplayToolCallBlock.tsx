@@ -1,6 +1,7 @@
 import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import type { Doc } from "../../convex/_generated/dataModel"
 import { CharacterIntroduction } from "./CharacterIntroduction"
+import { CharacterOutfitUpdate } from "./CharacterOutfitUpdate"
 import { CharacterSheetUpdate } from "./CharacterSheetUpdate"
 import { ChooseName } from "./ChooseName"
 import { ClockUpdate } from "./ClockUpdate"
@@ -119,6 +120,22 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 			<CharacterIntroduction
 				key={`character-introduction-${block.toolCallId}`}
 				parameters={params as { name: string; description: string }}
+				className={positionClass}
+			/>
+		)
+	}
+
+	if (block.toolName === "update_character_outfit") {
+		return (
+			<CharacterOutfitUpdate
+				key={`character-outfit-${block.toolCallId}`}
+				parameters={
+					params as {
+						characterName: string
+						outfitName: string
+						outfitDescription: string
+					}
+				}
 				className={positionClass}
 			/>
 		)

@@ -40,6 +40,7 @@ type ToolName =
 	| "update_temporal"
 	| "choose_name"
 	| "set_campaign_info"
+	| "update_character_outfit"
 
 export const isToolEnabled = (
 	toolName: ToolName,

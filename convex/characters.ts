@@ -20,7 +20,9 @@ import { googleSafetySettings } from "./utils"
 export const generateImageForModel = async (
 	prompt: string,
 	modelString: string,
+	_referenceImage: string | null = null,
 ) => {
+	// TODO: support reference image
 	if (modelString.startsWith("gpt-image")) {
 		const result = await generateImage({
 			model: openai.image(modelString),
@@ -77,11 +79,41 @@ export const list = query({
 
 		return Promise.all(
 			characters.map(async (character) => {
+				// Determine which image to use based on currentOutfit
+				let imageUrl: string | null = null
+				if (
+					character.currentOutfit &&
+					character.outfits &&
+					character.outfits[character.currentOutfit]
+				) {
+					imageUrl = await ctx.storage.getUrl(
+						character.outfits[character.currentOutfit].image,
+					)
+				} else if (character.image) {
+					imageUrl = await ctx.storage.getUrl(character.image)
+				}
+
+				// Always provide base image URL separately
+				const baseImageUrl = character.image
+					? await ctx.storage.getUrl(character.image)
+					: null
+
+				// Build allOutfits array
+				const allOutfits = character.outfits
+					? await Promise.all(
+							Object.entries(character.outfits).map(async ([name, outfit]) => ({
+								name,
+								description: outfit.description,
+								imageUrl: await ctx.storage.getUrl(outfit.image),
+							})),
+						)
+					: []
+
 				return {
 					...character,
-					imageUrl: character.image
-						? await ctx.storage.getUrl(character.image)
-						: null,
+					imageUrl,
+					baseImageUrl,
+					allOutfits,
 				}
 			}),
 		)
@@ -100,11 +132,41 @@ export const listInternal = internalQuery({
 
 		return Promise.all(
 			characters.map(async (character) => {
+				// Determine which image to use based on currentOutfit
+				let imageUrl: string | null = null
+				if (
+					character.currentOutfit &&
+					character.outfits &&
+					character.outfits[character.currentOutfit]
+				) {
+					imageUrl = await ctx.storage.getUrl(
+						character.outfits[character.currentOutfit].image,
+					)
+				} else if (character.image) {
+					imageUrl = await ctx.storage.getUrl(character.image)
+				}
+
+				// Always provide base image URL separately
+				const baseImageUrl = character.image
+					? await ctx.storage.getUrl(character.image)
+					: null
+
+				// Build allOutfits array
+				const allOutfits = character.outfits
+					? await Promise.all(
+							Object.entries(character.outfits).map(async ([name, outfit]) => ({
+								name,
+								description: outfit.description,
+								imageUrl: await ctx.storage.getUrl(outfit.image),
+							})),
+						)
+					: []
+
 				return {
 					...character,
-					imageUrl: character.image
-						? await ctx.storage.getUrl(character.image)
-						: null,
+					imageUrl,
+					baseImageUrl,
+					allOutfits,
 				}
 			}),
 		)
@@ -124,11 +186,41 @@ export const get = query({
 		const character = await ctx.db.get(args.characterId)
 		if (!character) throw new Error("Character not found")
 
+		// Determine which image to use based on currentOutfit
+		let imageUrl: string | null = null
+		if (
+			character.currentOutfit &&
+			character.outfits &&
+			character.outfits[character.currentOutfit]
+		) {
+			imageUrl = await ctx.storage.getUrl(
+				character.outfits[character.currentOutfit].image,
+			)
+		} else if (character.image) {
+			imageUrl = await ctx.storage.getUrl(character.image)
+		}
+
+		// Always provide base image URL separately
+		const baseImageUrl = character.image
+			? await ctx.storage.getUrl(character.image)
+			: null
+
+		// Build allOutfits array
+		const allOutfits = character.outfits
+			? await Promise.all(
+					Object.entries(character.outfits).map(async ([name, outfit]) => ({
+						name,
+						description: outfit.description,
+						imageUrl: await ctx.storage.getUrl(outfit.image),
+					})),
+				)
+			: []
+
 		return {
 			...character,
-			imageUrl: character.image
-				? await ctx.storage.getUrl(character.image)
-				: null,
+			imageUrl,
+			baseImageUrl,
+			allOutfits,
 		}
 	},
 })
@@ -381,5 +473,166 @@ export const generateImageForCharacterInternal = internalAction({
 			campaignId: character.campaignId,
 			activeCharacter: character.name,
 		})
+	},
+})
+
+// Outfit management mutations and actions
+export const storeOutfitForCharacterInternal = internalMutation({
+	args: {
+		characterId: v.id("characters"),
+		outfitName: v.string(),
+		outfitDescription: v.string(),
+		storageId: v.id("_storage"),
+	},
+	handler: async (ctx, args) => {
+		const character = await ctx.db.get(args.characterId)
+		if (!character) throw new Error("Character not found")
+
+		const updatedOutfits = {
+			...(character.outfits ?? {}),
+			[args.outfitName]: {
+				description: args.outfitDescription,
+				image: args.storageId,
+			},
+		}
+
+		await ctx.db.patch(args.characterId, {
+			outfits: updatedOutfits,
+		})
+	},
+})
+
+export const setCurrentOutfitInternal = internalMutation({
+	args: {
+		characterId: v.id("characters"),
+		outfitName: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		await ctx.db.patch(args.characterId, {
+			currentOutfit: args.outfitName,
+		})
+	},
+})
+
+export const generateOutfitForCharacterInternal = internalAction({
+	args: {
+		characterId: v.id("characters"),
+		outfitName: v.string(),
+		outfitDescription: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const character = await ctx.runQuery(internal.characters.getInternal, {
+			characterId: args.characterId,
+		})
+
+		if (!character) throw new Error("Character not found")
+
+		const campaign = await ctx.runQuery(internal.campaigns.getInternal, {
+			id: character.campaignId,
+		})
+
+		if (!campaign) throw new Error("Campaign not found")
+
+		const prompt = `
+      Generate a portrait of ${character.name}: ${character.imagePrompt}.
+      ${character.name} is now wearing: ${args.outfitDescription}.
+
+      The portrait should be from the waist up. It should be a square. Don't include any text.
+
+      The style of the image should be ${campaign.imagePrompt}. The background must be transparent.
+    `
+
+		const images = await generateImageForModel(
+			prompt,
+			campaign.imageModel,
+			character.image,
+		)
+
+		for (const file of images) {
+			if (file.mediaType.startsWith("image/")) {
+				const blob = new Blob([file.uint8Array as BlobPart], {
+					type: file.mediaType,
+				})
+				const storageId = await ctx.storage.store(blob)
+				await ctx.runMutation(
+					internal.characters.storeOutfitForCharacterInternal,
+					{
+						characterId: args.characterId,
+						outfitName: args.outfitName,
+						outfitDescription: args.outfitDescription,
+						storageId,
+					},
+				)
+
+				// Set this outfit as the current outfit
+				await ctx.runMutation(internal.characters.setCurrentOutfitInternal, {
+					characterId: args.characterId,
+					outfitName: args.outfitName,
+				})
+			}
+		}
+	},
+})
+
+export const regenerateOutfitForCharacter = action({
+	args: {
+		characterId: v.id("characters"),
+		outfitName: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const character = await ctx.runQuery(internal.characters.getInternal, {
+			characterId: args.characterId,
+		})
+
+		if (!character) throw new Error("Character not found")
+		if (!character.outfits || !character.outfits[args.outfitName]) {
+			throw new Error("Outfit not found")
+		}
+
+		const outfit = character.outfits[args.outfitName]
+
+		// Delete old image from storage
+		await ctx.storage.delete(outfit.image)
+
+		// Generate new image with same description
+		const campaign = await ctx.runQuery(internal.campaigns.getInternal, {
+			id: character.campaignId,
+		})
+
+		if (!campaign) throw new Error("Campaign not found")
+
+		const prompt = `
+      Generate a portrait of ${character.name}: ${character.imagePrompt}.
+      ${character.name} is now wearing: ${outfit.description}.
+
+      The portrait should be from the waist up. It should be a square. Don't include any text.
+
+      The style of the image should be ${campaign.imagePrompt}. The background must be transparent.
+    `
+
+		const images = await generateImageForModel(prompt, campaign.imageModel)
+
+		for (const file of images) {
+			if (file.mediaType.startsWith("image/")) {
+				const blob = new Blob([file.uint8Array as BlobPart], {
+					type: file.mediaType,
+				})
+				const storageId = await ctx.storage.store(blob)
+				await ctx.runMutation(
+					internal.characters.storeOutfitForCharacterInternal,
+					{
+						characterId: args.characterId,
+						outfitName: args.outfitName,
+						outfitDescription: outfit.description,
+						storageId,
+					},
+				)
+			}
+		}
 	},
 })

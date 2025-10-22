@@ -33,6 +33,7 @@ import { chooseName } from "./tools/chooseName"
 import { introduceCharacter } from "./tools/introduceCharacter"
 import { requestDiceRoll } from "./tools/requestDiceRoll"
 import { setCampaignInfo } from "./tools/setCampaignInfo"
+import { updateCharacterOutfit } from "./tools/updateCharacterOutfit"
 import { updateCharacterSheet } from "./tools/updateCharacterSheet"
 import { updateClock } from "./tools/updateClock"
 import { updatePlan } from "./tools/updatePlan"
@@ -662,6 +663,15 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 		// 	: {}),
 		// We need at least one always-on tool or the types break (cool)
 		introduce_character: introduceCharacter(ctx, message._id, campaign._id),
+		...(isToolEnabled("update_character_outfit", campaign)
+			? {
+					update_character_outfit: updateCharacterOutfit(
+						ctx,
+						message._id,
+						campaign._id,
+					),
+				}
+			: {}),
 		...(isToolEnabled("request_dice_roll", campaign)
 			? { request_dice_roll: requestDiceRoll(ctx, message._id) }
 			: {}),
@@ -701,7 +711,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						: openrouter(campaign.model),
 		providerOptions: {
 			google: {
-				thinkingConfig: { thinkingBudget: -1, includeThoughts: true },
+				//thinkingConfig: { thinkingBudget: -1, includeThoughts: true },
 				...googleSafetySettings,
 				responseModalities: ["TEXT"],
 			} satisfies GoogleGenerativeAIProviderOptions,

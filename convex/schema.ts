@@ -186,6 +186,16 @@ export default defineSchema(
 			humeVoiceId: v.optional(v.string()),
 			active: v.boolean(),
 			notes: v.optional(v.string()),
+			outfits: v.optional(
+				v.record(
+					v.string(),
+					v.object({
+						description: v.string(),
+						image: v.id("_storage"),
+					}),
+				),
+			),
+			currentOutfit: v.optional(v.string()),
 		})
 			.index("by_campaignId", ["campaignId"])
 			.index("by_campaignId_and_name", ["campaignId", "name"]),

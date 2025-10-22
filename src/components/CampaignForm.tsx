@@ -39,6 +39,12 @@ export const AVAILABLE_TOOLS = [
 		description: "Allow AI to introduce new characters",
 	},
 	{
+		id: "update_character_outfit",
+		name: "Update Character Outfit",
+		description:
+			"Allow AI to change character outfits and create new outfit variations",
+	},
+	{
 		id: "request_dice_roll",
 		name: "Request Dice Roll",
 		description: "Allow AI to request dice rolls from the player",
