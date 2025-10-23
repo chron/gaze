@@ -48,34 +48,43 @@ export const changeScene = (
 				activeCharacters: activeCharacters ?? [],
 			})
 
-			// Update character outfits if specified
-			if (characterOutfits && characterOutfits.length > 0) {
-				const characters = await ctx.runQuery(
-					internal.characters.listInternal,
-					{ campaignId },
+			// Get all characters in the campaign
+			const characters = await ctx.runQuery(internal.characters.listInternal, {
+				campaignId,
+			})
+
+			// Build a set of character names that have outfit specifications
+			const charactersWithOutfits = new Set(
+				characterOutfits?.map((co) => co.character) ?? [],
+			)
+
+			// Update character outfits
+			for (const character of characters) {
+				const outfitSpec = characterOutfits?.find(
+					(co) => co.character === character.name,
 				)
 
-				for (const {
-					character: characterName,
-					outfit: outfitName,
-				} of characterOutfits) {
-					const character = characters.find((c) => c.name === characterName)
-					if (character) {
-						// Check if outfit exists
-						if (character.outfits?.[outfitName]) {
-							await ctx.runMutation(
-								internal.characters.setCurrentOutfitInternal,
-								{
-									characterId: character._id,
-									outfitName,
-								},
-							)
-						} else {
-							console.warn(
-								`Outfit "${outfitName}" not found for character "${characterName}"`,
-							)
-						}
+				if (outfitSpec) {
+					// Character has an outfit specified - set it
+					if (character.outfits?.[outfitSpec.outfit]) {
+						await ctx.runMutation(
+							internal.characters.setCurrentOutfitInternal,
+							{
+								characterId: character._id,
+								outfitName: outfitSpec.outfit,
+							},
+						)
+					} else {
+						console.warn(
+							`Outfit "${outfitSpec.outfit}" not found for character "${character.name}"`,
+						)
 					}
+				} else if (character.currentOutfit) {
+					// Character doesn't have an outfit specified - reset to base
+					await ctx.runMutation(internal.characters.setCurrentOutfitInternal, {
+						characterId: character._id,
+						outfitName: undefined,
+					})
 				}
 			}
 
