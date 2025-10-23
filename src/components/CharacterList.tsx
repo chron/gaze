@@ -43,6 +43,11 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 						<TooltipContent className="max-w-[300px] p-4">
 							<h3 className="text-lg font-bold mb-2">{character.name}</h3>
 							<p className="text-sm">{character.description}</p>
+							{character.currentOutfit && (
+								<p className="text-xs text-gray-400 mt-2 italic">
+									Wearing: {character.currentOutfit}
+								</p>
+							)}
 						</TooltipContent>
 						<TooltipTrigger>
 							<div className="w-[56px] sm:w-[80px] aspect-square -mx-2 sm:-mx-3">

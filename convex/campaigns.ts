@@ -819,28 +819,33 @@ Examples:
 Description: ${campaign.description}
 ${campaign.lastCampaignSummary ? `\n\nCampaign Summary:\n${campaign.lastCampaignSummary}` : ""}`
 
-		const {
-			object: { tags = [] },
-		} = await generateObject({
-			model: google("gemini-2.5-flash"),
-			schema: z.object({
-				tags: z.array(z.string()),
-			}),
-			system: systemPrompt,
-			prompt: userMessage,
-			mode: "json",
-			providerOptions: {
-				google: googleSafetySettings,
-			},
-		})
+		try {
+			const {
+				object: { tags = [] },
+			} = await generateObject({
+				model: google("gemini-2.5-flash"),
+				schema: z.object({
+					tags: z.array(z.string()),
+				}),
+				system: systemPrompt,
+				prompt: userMessage,
+				mode: "json",
+				providerOptions: {
+					google: googleSafetySettings,
+				},
+			})
 
-		// Update the campaign with the generated tags
-		await ctx.runMutation(api.campaigns.updateTags, {
-			campaignId: args.campaignId,
-			tags,
-		})
+			// Update the campaign with the generated tags
+			await ctx.runMutation(api.campaigns.updateTags, {
+				campaignId: args.campaignId,
+				tags,
+			})
 
-		return tags
+			return tags
+		} catch (error) {
+			console.error("Error generating tags", error)
+			return ["Error generating tags"]
+		}
 	},
 })
 

@@ -39,11 +39,19 @@ export const updateTemporal = (
 				),
 		}),
 		execute: async ({ date, time_of_day, notes }) => {
+			const campaign = await ctx.runQuery(internal.campaigns.getInternal, {
+				id: campaignId,
+			})
+
+			if (!campaign) {
+				throw new Error("Campaign not found")
+			}
+
 			const result = await ctx.runMutation(
 				internal.campaigns.updateTemporalInternal,
 				{
 					campaignId,
-					date,
+					date: date ?? campaign.temporal?.date ?? "Unknown",
 					timeOfDay: time_of_day,
 					notes,
 				},
@@ -51,8 +59,8 @@ export const updateTemporal = (
 
 			// Return structured data including previous values for UI
 			return {
-				message: `Time updated to ${date} (${time_of_day})${notes ? `. ${notes}` : ""}`,
-				date,
+				message: `Time updated to ${date ?? campaign.temporal?.date ?? "Unknown"} (${time_of_day})${notes ? `. ${notes}` : ""}`,
+				date: date ?? campaign.temporal?.date ?? "Unknown",
 				time_of_day,
 				notes,
 				previous_date: result?.previousDate,
