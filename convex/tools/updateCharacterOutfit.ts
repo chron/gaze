@@ -24,7 +24,7 @@ export const updateCharacterOutfit = (
 			outfitDescription: z
 				.string()
 				.describe(
-					"A detailed physical description of the outfit for image generation. Focus on clothing, accessories, and style. Be specific about colors, materials, and details.",
+					"A detailed physical description of the outfit for image generation. Focus on clothing, accessories, and style. Be specific about colors, materials, and details. You can also include a description of pose, expression, and other similar details.",
 				),
 		}),
 		execute: async ({ characterName, outfitName, outfitDescription }) => {

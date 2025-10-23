@@ -86,9 +86,10 @@ export const list = query({
 					character.outfits &&
 					character.outfits[character.currentOutfit]
 				) {
-					imageUrl = await ctx.storage.getUrl(
-						character.outfits[character.currentOutfit].image,
-					)
+					const outfitImage = character.outfits[character.currentOutfit].image
+					if (outfitImage) {
+						imageUrl = await ctx.storage.getUrl(outfitImage)
+					}
 				} else if (character.image) {
 					imageUrl = await ctx.storage.getUrl(character.image)
 				}
@@ -104,7 +105,9 @@ export const list = query({
 							Object.entries(character.outfits).map(async ([name, outfit]) => ({
 								name,
 								description: outfit.description,
-								imageUrl: await ctx.storage.getUrl(outfit.image),
+								imageUrl: outfit.image
+									? await ctx.storage.getUrl(outfit.image)
+									: null,
 							})),
 						)
 					: []
@@ -139,9 +142,10 @@ export const listInternal = internalQuery({
 					character.outfits &&
 					character.outfits[character.currentOutfit]
 				) {
-					imageUrl = await ctx.storage.getUrl(
-						character.outfits[character.currentOutfit].image,
-					)
+					const outfitImage = character.outfits[character.currentOutfit].image
+					if (outfitImage) {
+						imageUrl = await ctx.storage.getUrl(outfitImage)
+					}
 				} else if (character.image) {
 					imageUrl = await ctx.storage.getUrl(character.image)
 				}
@@ -157,7 +161,9 @@ export const listInternal = internalQuery({
 							Object.entries(character.outfits).map(async ([name, outfit]) => ({
 								name,
 								description: outfit.description,
-								imageUrl: await ctx.storage.getUrl(outfit.image),
+								imageUrl: outfit.image
+									? await ctx.storage.getUrl(outfit.image)
+									: null,
 							})),
 						)
 					: []
@@ -193,9 +199,10 @@ export const get = query({
 			character.outfits &&
 			character.outfits[character.currentOutfit]
 		) {
-			imageUrl = await ctx.storage.getUrl(
-				character.outfits[character.currentOutfit].image,
-			)
+			const outfitImage = character.outfits[character.currentOutfit].image
+			if (outfitImage) {
+				imageUrl = await ctx.storage.getUrl(outfitImage)
+			}
 		} else if (character.image) {
 			imageUrl = await ctx.storage.getUrl(character.image)
 		}
@@ -211,7 +218,9 @@ export const get = query({
 					Object.entries(character.outfits).map(async ([name, outfit]) => ({
 						name,
 						description: outfit.description,
-						imageUrl: await ctx.storage.getUrl(outfit.image),
+						imageUrl: outfit.image
+							? await ctx.storage.getUrl(outfit.image)
+							: null,
 					})),
 				)
 			: []
@@ -521,7 +530,7 @@ export const storeOutfitForCharacterInternal = internalMutation({
 		characterId: v.id("characters"),
 		outfitName: v.string(),
 		outfitDescription: v.string(),
-		storageId: v.id("_storage"),
+		storageId: v.optional(v.id("_storage")),
 	},
 	handler: async (ctx, args) => {
 		const character = await ctx.db.get(args.characterId)
@@ -572,7 +581,8 @@ export const generateOutfitForCharacterInternal = internalAction({
 
 		if (!campaign) throw new Error("Campaign not found")
 
-		const prompt = `
+		try {
+			const prompt = `
       Generate a portrait of ${character.name}: ${character.imagePrompt}.
       ${character.name} is now wearing: ${args.outfitDescription}.
 
@@ -581,34 +591,72 @@ export const generateOutfitForCharacterInternal = internalAction({
       The style of the image should be ${campaign.imagePrompt}. The background must be transparent.
     `
 
-		const images = await generateImageForModel(
-			prompt,
-			campaign.imageModel,
-			character.image,
-		)
+			const images = await generateImageForModel(
+				prompt,
+				campaign.imageModel,
+				character.image,
+			)
 
-		for (const file of images) {
-			if (file.mediaType.startsWith("image/")) {
-				const blob = new Blob([file.uint8Array as BlobPart], {
-					type: file.mediaType,
-				})
-				const storageId = await ctx.storage.store(blob)
-				await ctx.runMutation(
-					internal.characters.storeOutfitForCharacterInternal,
-					{
+			for (const file of images) {
+				if (file.mediaType.startsWith("image/")) {
+					const blob = new Blob([file.uint8Array as BlobPart], {
+						type: file.mediaType,
+					})
+					const storageId = await ctx.storage.store(blob)
+					await ctx.runMutation(
+						internal.characters.storeOutfitForCharacterInternal,
+						{
+							characterId: args.characterId,
+							outfitName: args.outfitName,
+							outfitDescription: args.outfitDescription,
+							storageId,
+						},
+					)
+
+					// Set this outfit as the current outfit
+					await ctx.runMutation(internal.characters.setCurrentOutfitInternal, {
 						characterId: args.characterId,
 						outfitName: args.outfitName,
-						outfitDescription: args.outfitDescription,
-						storageId,
-					},
-				)
+					})
+					return
+				}
+			}
 
-				// Set this outfit as the current outfit
-				await ctx.runMutation(internal.characters.setCurrentOutfitInternal, {
+			// If no images were generated, store outfit without image
+			await ctx.runMutation(
+				internal.characters.storeOutfitForCharacterInternal,
+				{
 					characterId: args.characterId,
 					outfitName: args.outfitName,
-				})
-			}
+					outfitDescription: args.outfitDescription,
+					storageId: undefined,
+				},
+			)
+
+			// Set this outfit as the current outfit
+			await ctx.runMutation(internal.characters.setCurrentOutfitInternal, {
+				characterId: args.characterId,
+				outfitName: args.outfitName,
+			})
+		} catch (error) {
+			// If image generation fails, still store the outfit but without an image
+			// This allows the user to retry via the UI
+			console.error("Failed to generate outfit image:", error)
+			await ctx.runMutation(
+				internal.characters.storeOutfitForCharacterInternal,
+				{
+					characterId: args.characterId,
+					outfitName: args.outfitName,
+					outfitDescription: args.outfitDescription,
+					storageId: undefined,
+				},
+			)
+
+			// Set this outfit as the current outfit
+			await ctx.runMutation(internal.characters.setCurrentOutfitInternal, {
+				characterId: args.characterId,
+				outfitName: args.outfitName,
+			})
 		}
 	},
 })
@@ -635,8 +683,10 @@ export const regenerateOutfitForCharacter = action({
 
 		const outfit = character.outfits[args.outfitName]
 
-		// Delete old image from storage
-		await ctx.storage.delete(outfit.image)
+		// Delete old image from storage if it exists
+		if (outfit.image) {
+			await ctx.storage.delete(outfit.image)
+		}
 
 		// Generate new image with same description
 		const campaign = await ctx.runQuery(internal.campaigns.getInternal, {
@@ -645,7 +695,8 @@ export const regenerateOutfitForCharacter = action({
 
 		if (!campaign) throw new Error("Campaign not found")
 
-		const prompt = `
+		try {
+			const prompt = `
       Generate a portrait of ${character.name}: ${character.imagePrompt}.
       ${character.name} is now wearing: ${outfit.description}.
 
@@ -654,24 +705,163 @@ export const regenerateOutfitForCharacter = action({
       The style of the image should be ${campaign.imagePrompt}. The background must be transparent.
     `
 
-		const images = await generateImageForModel(prompt, campaign.imageModel)
+			const images = await generateImageForModel(prompt, campaign.imageModel)
 
-		for (const file of images) {
-			if (file.mediaType.startsWith("image/")) {
-				const blob = new Blob([file.uint8Array as BlobPart], {
-					type: file.mediaType,
-				})
-				const storageId = await ctx.storage.store(blob)
-				await ctx.runMutation(
-					internal.characters.storeOutfitForCharacterInternal,
-					{
-						characterId: args.characterId,
-						outfitName: args.outfitName,
-						outfitDescription: outfit.description,
-						storageId,
-					},
-				)
+			for (const file of images) {
+				if (file.mediaType.startsWith("image/")) {
+					const blob = new Blob([file.uint8Array as BlobPart], {
+						type: file.mediaType,
+					})
+					const storageId = await ctx.storage.store(blob)
+					await ctx.runMutation(
+						internal.characters.storeOutfitForCharacterInternal,
+						{
+							characterId: args.characterId,
+							outfitName: args.outfitName,
+							outfitDescription: outfit.description,
+							storageId,
+						},
+					)
+					return
+				}
 			}
+
+			// If no images were generated, store outfit without image
+			await ctx.runMutation(
+				internal.characters.storeOutfitForCharacterInternal,
+				{
+					characterId: args.characterId,
+					outfitName: args.outfitName,
+					outfitDescription: outfit.description,
+					storageId: undefined,
+				},
+			)
+		} catch (error) {
+			// If image generation fails, store outfit without image
+			console.error("Failed to regenerate outfit image:", error)
+			await ctx.runMutation(
+				internal.characters.storeOutfitForCharacterInternal,
+				{
+					characterId: args.characterId,
+					outfitName: args.outfitName,
+					outfitDescription: outfit.description,
+					storageId: undefined,
+				},
+			)
+			throw error
 		}
+	},
+})
+
+export const updateOutfit = mutation({
+	args: {
+		characterId: v.id("characters"),
+		oldOutfitName: v.string(),
+		newOutfitName: v.string(),
+		outfitDescription: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const character = await ctx.db.get(args.characterId)
+		if (!character) throw new Error("Character not found")
+		if (!character.outfits || !character.outfits[args.oldOutfitName]) {
+			throw new Error("Outfit not found")
+		}
+
+		const outfit = character.outfits[args.oldOutfitName]
+		const updatedOutfits = { ...character.outfits }
+
+		// If name changed, remove old entry and add new one
+		if (args.oldOutfitName !== args.newOutfitName) {
+			delete updatedOutfits[args.oldOutfitName]
+			updatedOutfits[args.newOutfitName] = {
+				description: args.outfitDescription,
+				image: outfit.image,
+			}
+
+			// Update currentOutfit if it matches the old name
+			if (character.currentOutfit === args.oldOutfitName) {
+				await ctx.db.patch(args.characterId, {
+					outfits: updatedOutfits,
+					currentOutfit: args.newOutfitName,
+				})
+			} else {
+				await ctx.db.patch(args.characterId, {
+					outfits: updatedOutfits,
+				})
+			}
+		} else {
+			// Just update the description
+			updatedOutfits[args.oldOutfitName] = {
+				description: args.outfitDescription,
+				image: outfit.image,
+			}
+
+			await ctx.db.patch(args.characterId, {
+				outfits: updatedOutfits,
+			})
+		}
+	},
+})
+
+export const deleteOutfit = mutation({
+	args: {
+		characterId: v.id("characters"),
+		outfitName: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const character = await ctx.db.get(args.characterId)
+		if (!character) throw new Error("Character not found")
+		if (!character.outfits || !character.outfits[args.outfitName]) {
+			throw new Error("Outfit not found")
+		}
+
+		const outfit = character.outfits[args.outfitName]
+
+		// Delete image from storage if it exists
+		if (outfit.image) {
+			await ctx.storage.delete(outfit.image)
+		}
+
+		const updatedOutfits = { ...character.outfits }
+		delete updatedOutfits[args.outfitName]
+
+		// Clear currentOutfit if it matches the deleted outfit
+		if (character.currentOutfit === args.outfitName) {
+			await ctx.db.patch(args.characterId, {
+				outfits: updatedOutfits,
+				currentOutfit: undefined,
+			})
+		} else {
+			await ctx.db.patch(args.characterId, {
+				outfits: updatedOutfits,
+			})
+		}
+	},
+})
+
+export const setCurrentOutfit = mutation({
+	args: {
+		characterId: v.id("characters"),
+		outfitName: v.optional(v.string()),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		await ctx.db.patch(args.characterId, {
+			currentOutfit: args.outfitName,
+		})
 	},
 })

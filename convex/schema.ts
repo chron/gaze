@@ -191,7 +191,7 @@ export default defineSchema(
 					v.string(),
 					v.object({
 						description: v.string(),
-						image: v.id("_storage"),
+						image: v.optional(v.id("_storage")),
 					}),
 				),
 			),

@@ -18,11 +18,10 @@ export const CharacterOutfitUpdate: React.FC<Props> = ({
 	return (
 		<ToolCallContainer
 			icon={Shirt}
-			title={`${parameters.characterName} changed outfits`}
+			title={`${parameters.characterName} changed into the "${parameters.outfitName}" outfit`}
 			className={className}
 		>
 			<div className="text-sm space-y-1">
-				<p className="font-semibold">Outfit: {parameters.outfitName}</p>
 				<p className="text-muted-foreground">{parameters.outfitDescription}</p>
 			</div>
 		</ToolCallContainer>

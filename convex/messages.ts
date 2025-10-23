@@ -715,7 +715,7 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 						: openrouter(campaign.model),
 		providerOptions: {
 			google: {
-				//thinkingConfig: { thinkingBudget: -1, includeThoughts: true },
+				thinkingConfig: { thinkingBudget: -1, includeThoughts: true },
 				...googleSafetySettings,
 				responseModalities: ["TEXT"],
 			} satisfies GoogleGenerativeAIProviderOptions,
