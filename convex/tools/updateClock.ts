@@ -18,11 +18,13 @@ export const updateClock = (
 				.int()
 				.min(0)
 				.describe("The current number of filled segments"),
-			max_ticks: z
-				.number()
-				.int()
-				.min(1)
-				.describe("The total number of segments (typically 4, 6, or 8)"),
+			max_ticks: z.optional(
+				z
+					.number()
+					.int()
+					.min(1)
+					.describe("The total number of segments (typically 4, 6, or 8)"),
+			),
 			hint: z
 				.string()
 				.optional()
@@ -31,28 +33,42 @@ export const updateClock = (
 				),
 		}),
 		execute: async ({ name, current_ticks, max_ticks, hint }) => {
+			const campaign = await ctx.runQuery(internal.campaigns.getInternal, {
+				id: campaignId,
+			})
+
+			if (!campaign) {
+				throw new Error("Campaign not found")
+			}
+
+			const existingClock = campaign.clocks?.find(
+				(clock) => clock.name === name,
+			)
+
+			const maxTicks = max_ticks ?? existingClock?.maxTicks ?? 6
+
 			const result = await ctx.runMutation(
 				internal.campaigns.updateClockInternal,
 				{
 					campaignId,
 					name,
 					currentTicks: current_ticks,
-					maxTicks: max_ticks,
+					maxTicks,
 					hint,
 				},
 			)
 
 			const message =
-				current_ticks >= max_ticks
+				current_ticks >= maxTicks
 					? `Clock "${name}" is now full! The event should occur.`
-					: `Clock "${name}" updated: ${current_ticks}/${max_ticks} segments filled`
+					: `Clock "${name}" updated: ${current_ticks}/${maxTicks} segments filled`
 
 			// Return structured data including previous ticks for UI animation
 			return {
 				message,
 				name,
 				current_ticks,
-				max_ticks,
+				max_ticks: maxTicks,
 				previous_ticks: result?.previousTicks ?? 0,
 				hint,
 			}

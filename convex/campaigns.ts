@@ -606,7 +606,7 @@ export const updateClockInternal = internalMutation({
 						return {
 							name: args.name,
 							currentTicks: args.currentTicks ?? existingClock.currentTicks,
-							maxTicks: args.maxTicks ?? existingClock.maxTicks,
+							maxTicks: args.maxTicks,
 							hint: args.hint ?? existingClock.hint,
 						}
 					}

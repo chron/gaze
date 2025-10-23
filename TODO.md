@@ -3,6 +3,7 @@ NEXT
 - [AUTH] make campaigns owned by a user id, enforce it in backend - users table?
 - [IMAGES] Use an image edit LLM for outfits so the characters stay more consistent. Fal.ai?
 - A way to replay a story easily — paginated, from the start, different UI affordances?
+- [DOCS] Add Outfit stuff to LLM docs
 
 LATER
 - [SPEECH] Different prompt for user messages that gets char info from the character sheet

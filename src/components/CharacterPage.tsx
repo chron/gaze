@@ -20,7 +20,7 @@ export const CharacterPage: React.FC<Props> = ({ campaignId }) => {
 	})
 
 	return (
-		<div className="flex flex-col gap-4 px-4 w-full h-full max-h-[calc(100dvh-52px)] overflow-y-auto">
+		<div className="flex flex-col gap-4 px-4 w-full h-full max-h-[calc(100dvh-92px)] overflow-y-auto">
 			<h1 className="text-2xl font-title text-white">Characters</h1>
 			<div className="flex flex-col gap-2">
 				{characters?.map((character) => (
