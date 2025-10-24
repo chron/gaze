@@ -24,6 +24,8 @@ export const updateCharacterSheet = (
 				},
 			)
 
+			const oldData = characterSheet?.data ?? {}
+
 			if (characterSheet) {
 				await ctx.runMutation(internal.characterSheets.updateInternal, {
 					characterSheetId: characterSheet._id,
@@ -40,6 +42,10 @@ export const updateCharacterSheet = (
 				})
 			}
 
-			return "Character sheet updated"
+			return {
+				message: "Character sheet updated",
+				oldData,
+				newData: data ?? {},
+			}
 		},
 	})

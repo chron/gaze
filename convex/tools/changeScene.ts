@@ -53,11 +53,6 @@ export const changeScene = (
 				campaignId,
 			})
 
-			// Build a set of character names that have outfit specifications
-			const charactersWithOutfits = new Set(
-				characterOutfits?.map((co) => co.character) ?? [],
-			)
-
 			// Update character outfits
 			for (const character of characters) {
 				const outfitSpec = characterOutfits?.find(

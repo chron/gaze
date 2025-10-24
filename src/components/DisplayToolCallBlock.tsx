@@ -111,6 +111,15 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 						data: Record<string, unknown>
 					}
 				}
+				result={
+					toolResult?.result as
+						| {
+								message: string
+								oldData: Record<string, unknown>
+								newData: Record<string, unknown>
+						  }
+						| undefined
+				}
 				className={positionClass}
 			/>
 		)
