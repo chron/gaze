@@ -1,5 +1,4 @@
 import { SignIn } from "@clerk/clerk-react"
-import { Sparkles } from "lucide-react"
 import { motion } from "motion/react"
 
 export function AuthPage() {
@@ -74,17 +73,9 @@ export function AuthPage() {
 					transition={{ duration: 0.6 }}
 					className="text-center mb-8"
 				>
-					<motion.div
-						className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-sm rounded-2xl mb-4 border border-white/20"
-						whileHover={{ scale: 1.05, rotate: 5 }}
-						transition={{ type: "spring", stiffness: 300 }}
-					>
-						<Sparkles className="w-10 h-10 text-white" />
-					</motion.div>
 					<h1 className="text-5xl font-title text-white mb-3 tracking-wide">
 						Gaze Into The Abyss
 					</h1>
-					<p className="text-blue-100 text-lg">AI-Powered Solo Tabletop RPGs</p>
 				</motion.div>
 
 				{/* Auth component */}
@@ -100,18 +91,6 @@ export function AuthPage() {
 						afterSignInUrl="/"
 						signUpFallbackRedirectUrl="/"
 					/>
-				</motion.div>
-
-				{/* Footer */}
-				<motion.div
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					transition={{ duration: 0.6, delay: 0.4 }}
-					className="text-center mt-8"
-				>
-					<p className="text-blue-100 text-sm">
-						Your gateway to infinite adventures
-					</p>
 				</motion.div>
 			</div>
 		</div>

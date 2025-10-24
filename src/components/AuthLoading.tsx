@@ -1,4 +1,3 @@
-import { Sparkles } from "lucide-react"
 import { motion } from "motion/react"
 
 export function AuthLoading() {
@@ -36,28 +35,6 @@ export function AuthLoading() {
 
 			{/* Loading content */}
 			<div className="relative z-10 text-center">
-				<motion.div
-					className="inline-flex items-center justify-center w-24 h-24 bg-white/10 backdrop-blur-sm rounded-2xl mb-6 border border-white/20"
-					animate={{
-						rotate: [0, 360],
-						scale: [1, 1.05, 1],
-					}}
-					transition={{
-						rotate: {
-							duration: 3,
-							repeat: Number.POSITIVE_INFINITY,
-							ease: "linear",
-						},
-						scale: {
-							duration: 2,
-							repeat: Number.POSITIVE_INFINITY,
-							ease: "easeInOut",
-						},
-					}}
-				>
-					<Sparkles className="w-12 h-12 text-white" />
-				</motion.div>
-
 				<motion.h1
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
@@ -117,7 +94,7 @@ export function AuthLoading() {
 					transition={{ duration: 0.6, delay: 0.4 }}
 					className="text-blue-100 text-lg mt-4"
 				>
-					Loading your adventure...
+					You look nice today btw
 				</motion.p>
 			</div>
 		</div>
