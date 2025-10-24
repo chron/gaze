@@ -60,7 +60,7 @@ export const ClockWheel: React.FC<ClockWheelProps> = ({
 		`
 	}
 
-	const filledColor = isFull ? "#dc2626" : "#3b82f6" // red or blue
+	const filledColor = isFull ? "#dc2626" : "#1e40af" // red or darker blue
 	const emptyColor = "#e5e7eb" // gray
 
 	// Generate segments with stable identifiers

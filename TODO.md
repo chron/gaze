@@ -7,7 +7,6 @@ NEXT
 LATER
 - [SPEECH] Different prompt for user messages that gets char info from the character sheet
 - [SPEECH] Progress indicator on the FE?
-- [CHARACTERS] Update character tool and/or outfit system? Use an image edit model maybe?
 - [LLM] New LLM call to brainstorm ideas, pass systems available, have clickable links to start new campaign
 - [LLM] Automate an initial welcome message once you create a campaign
 - [LLM] Add options, including whether reasoning shows collapsed by default (or hidden completely)

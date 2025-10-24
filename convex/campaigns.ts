@@ -831,7 +831,9 @@ ${campaign.lastCampaignSummary ? `\n\nCampaign Summary:\n${campaign.lastCampaign
 				prompt: userMessage,
 				mode: "json",
 				providerOptions: {
-					google: googleSafetySettings,
+					google: {
+						...googleSafetySettings,
+					},
 				},
 			})
 

@@ -6,6 +6,7 @@ import { api, internal } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
 import { action, internalMutation, internalQuery } from "./_generated/server"
 import { MESSAGES_TO_KEEP_AFTER_COLLAPSE } from "./prompts/core"
+import { googleSafetySettings } from "./utils"
 
 export const list = internalQuery({
 	args: {
@@ -139,6 +140,11 @@ export const collapseHistory = action({
 			const { object } = await generateObject({
 				system: prompt,
 				model: google("gemini-2.5-flash"),
+				providerOptions: {
+					google: {
+						...googleSafetySettings,
+					},
+				},
 				messages: formattedMessages,
 				schema: chaptersSchema,
 			})
@@ -152,7 +158,7 @@ export const collapseHistory = action({
 			const chapters = object.chapters
 
 			// Create steps for each chapter summary (ignore the last one as it might be in progress)
-			const chaptersToProcess = chapters.slice(0, -1)
+			const chaptersToProcess = chapters //.slice(0, -1)
 			for (let i = 0; i < chaptersToProcess.length; i++) {
 				const chapter = chaptersToProcess[i]
 

@@ -8,7 +8,7 @@ import { RECENT_CAMPAIGNS_CONTEXT_COUNT, isToolEnabled } from "../utils"
 import systemPrompt from "./system"
 
 // Constants for context window management
-export const CONTEXT_WARNING_TOKEN_THRESHOLD = 40000
+export const CONTEXT_WARNING_TOKEN_THRESHOLD = 60000
 export const MESSAGES_TO_KEEP_AFTER_COLLAPSE = 40
 
 // Helper to count tokens using Google's API
