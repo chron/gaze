@@ -1,8 +1,8 @@
-import { SignInButton } from "@clerk/clerk-react"
 import { Outlet, createRootRoute } from "@tanstack/react-router"
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools"
 import { AuthLoading, Authenticated, Unauthenticated } from "convex/react"
-import { Loader2 } from "lucide-react"
+import { AuthLoading as AuthLoadingComponent } from "../components/AuthLoading"
+import { AuthPage } from "../components/AuthPage"
 import { MainSidebar } from "../components/MainSidebar"
 import { SidebarProvider, SidebarTrigger } from "../components/ui/sidebar"
 
@@ -10,7 +10,7 @@ export const Route = createRootRoute({
 	component: () => (
 		<>
 			<Unauthenticated>
-				<SignInButton />
+				<AuthPage />
 			</Unauthenticated>
 
 			<Authenticated>
@@ -27,7 +27,7 @@ export const Route = createRootRoute({
 			</Authenticated>
 
 			<AuthLoading>
-				<Loader2 className="animate-spin" />
+				<AuthLoadingComponent />
 			</AuthLoading>
 		</>
 	),
