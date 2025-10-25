@@ -3,6 +3,7 @@ import { usePaginatedQuery, useQuery } from "convex/react"
 import { useEffect, useRef, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
+import modelsData from "../models.json"
 import { Message } from "./Message"
 import { Button } from "./ui/button"
 
@@ -43,6 +44,46 @@ export const MessageList: React.FC<Props> = ({
 	const usage = messages.find((m) => m.role === "assistant")?.usage
 	const reversedMessages = [...(messages ?? [])]
 	reversedMessages.reverse()
+
+	// Calculate cost in USD for the last message
+	const calculateMessageCost = (
+		usage:
+			| {
+					inputTokens: number
+					cachedInputTokens?: number
+					outputTokens: number
+					reasoningTokens?: number
+			  }
+			| undefined,
+		modelCode: string | undefined,
+	): number => {
+		if (!usage || !modelCode) return 0
+
+		// Find the model pricing data
+		const model = modelsData.find((m) => m.code === modelCode)
+		if (!model || !("pricing" in model)) return 0
+
+		const pricing = model.pricing as {
+			inputTokens: number
+			cachedInputTokens: number
+			outputTokens: number
+			reasoningTokens: number
+		}
+
+		// Calculate cost per token type (pricing is per million tokens)
+		const inputCost =
+			((usage.inputTokens - (usage.cachedInputTokens ?? 0)) / 1_000_000) *
+			pricing.inputTokens
+		const cachedCost =
+			((usage.cachedInputTokens ?? 0) / 1_000_000) * pricing.cachedInputTokens
+		const outputCost = (usage.outputTokens / 1_000_000) * pricing.outputTokens
+		const reasoningCost =
+			((usage.reasoningTokens ?? 0) / 1_000_000) * pricing.reasoningTokens
+
+		return inputCost + cachedCost + outputCost + reasoningCost
+	}
+
+	const lastMessageCost = calculateMessageCost(usage, campaign?.model)
 
 	// Find the most recent assistant message
 	const lastAssistantMessage = messages?.find((m) => m.role === "assistant")
@@ -217,9 +258,11 @@ export const MessageList: React.FC<Props> = ({
 						? ""
 						: `, ${usage.outputTokens} output`}
 					{usage.reasoningTokens ? `, ${usage.reasoningTokens} reasoning` : ""}
+					{lastMessageCost > 0 && <> • ${lastMessageCost.toFixed(6)}</>}
 					{campaign && (
 						<>
-							, {campaign.messageCount} messages
+							{" • "}
+							{campaign.messageCount} messages
 							{campaign.messageCountAtLastSummary !== 0
 								? ` (${campaign.messageCount - campaign.messageCountAtLastSummary} since last summary)`
 								: ""}

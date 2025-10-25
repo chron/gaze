@@ -43,6 +43,7 @@ export const ClockUpdate: React.FC<Props> = ({ parameters, className }) => {
 					Progress: {parameters.current_ticks}/{parameters.max_ticks}
 				</div>
 
+				{/* TODO: ideally it should show the old hint even if it hasn't changed */}
 				{parameters.hint && (
 					<p className="text-sm italic text-gray-500">{parameters.hint}</p>
 				)}

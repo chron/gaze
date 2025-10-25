@@ -6,7 +6,6 @@ import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
 import { useStructuredStream } from "../hooks/useStructuredStream"
 import { cn } from "../lib/utils"
-import { DiceRollResult } from "./DiceRollResult"
 import { DisplayToolCallBlock } from "./DisplayToolCallBlock"
 import { MessageMarkdown } from "./MessageMarkdown"
 import { ReasoningLozenges } from "./ReasoningLozenges"
@@ -110,26 +109,6 @@ export const Message: React.FC<Props> = ({
 				</pre>
 			</div>
 		)
-	}
-
-	if (message.role === "tool") {
-		if (
-			message.content.length === 1 &&
-			message.content[0].type === "tool-result"
-		) {
-			if (message.content[0].toolName === "request_dice_roll") {
-				return (
-					<DiceRollResult
-						results={message.content[0].result.results}
-						bonus={message.content[0].result.bonus}
-						total={message.content[0].result.total}
-					/>
-				)
-			}
-		}
-
-		// We track tool results for all calls but there's usually nothing to show
-		return null
 	}
 
 	if (noContent) {
@@ -263,7 +242,7 @@ export const Message: React.FC<Props> = ({
 								<React.Fragment key={`step-${step.stepId}-${stepIndex}`}>
 									{step.text && <MessageMarkdown>{step.text}</MessageMarkdown>}
 
-									{step.toolCalls.map((toolCall) => {
+									{step.toolCalls.map((toolCall, toolCallIndex) => {
 										return (
 											<DisplayToolCallBlock
 												key={`${message._id}-tool-call-${toolCall.toolCallId}`}
@@ -275,6 +254,10 @@ export const Message: React.FC<Props> = ({
 												message={message}
 												setStreamId={setStreamId}
 												toolCallIndex={stepIndex}
+												isFirstInGroup={toolCallIndex === 0}
+												isLastInGroup={
+													toolCallIndex === step.toolCalls.length - 1
+												}
 											/>
 										)
 									})}

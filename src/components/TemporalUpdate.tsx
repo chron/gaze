@@ -41,6 +41,8 @@ const getTimeIcon = (timeOfDay: TimeOfDay) => {
 }
 
 const formatTimeOfDay = (timeOfDay: TimeOfDay): string => {
+	if (!timeOfDay) return "???"
+
 	return timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1)
 }
 
