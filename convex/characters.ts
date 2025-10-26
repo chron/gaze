@@ -29,7 +29,7 @@ export const generateImageForModel = async (
 			providerOptions: {
 				openai: { quality: "medium" },
 			},
-			size: "1024x1024",
+			size: "1024x1536",
 			prompt,
 		})
 

@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils"
 import { AlertCircle } from "lucide-react"
 import type React from "react"
 import { ToolCallContainer } from "./ToolCallContainer"
@@ -19,7 +20,7 @@ export const UnknownToolCall: React.FC<Props> = ({
 			title={`Unknown tool call: ${toolName}`}
 			className={className}
 		>
-			<pre className="text-xs whitespace-pre-wrap bg-white p-2 rounded border border-red-100">
+			<pre className="text-xs whitespace-pre-wrap bg-red-50 p-2 rounded border border-red-100">
 				{JSON.stringify(parameters, null, 2)}
 			</pre>
 		</ToolCallContainer>
