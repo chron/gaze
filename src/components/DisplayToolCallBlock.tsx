@@ -293,6 +293,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 		<UnknownToolCall
 			parameters={params}
 			toolName={block.toolName}
+			toolResult={toolResult ?? null}
 			key={`unknown-tool-call-${block.toolName}`}
 			className={positionClass}
 		/>

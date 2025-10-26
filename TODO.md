@@ -29,3 +29,4 @@ LATER
 - [BUG] Date badges pulse on page load, should only happen when it changes
 - [UI] Handle `error` message finishReason better, when messages get cut off part way
 - [UI] Colors for clocks. Either get AI to choose, or just hash the name or something?
+- [LLM] Don't let it reintroduce clocks at max ticks (which would normally be deleted)

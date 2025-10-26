@@ -878,6 +878,44 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 					toolResults,
 				})
 			}
+
+			// Check for hallucinated tool calls (tool calls without results)
+			// We need to add error results for these so the AI knows it made a mistake
+			// Some tools are intentionally interactive and don't have immediate results
+			const interactiveTools = new Set(["request_dice_roll", "choose_name"])
+
+			const updatedMessage = await ctx.runQuery(
+				internal.messages.getByStreamId,
+				{
+					streamId: args.streamId,
+				},
+			)
+
+			if (updatedMessage) {
+				const toolCallIds = new Set(toolResults.map((tr) => tr.toolCallId))
+				const hallucinatedToolCalls = updatedMessage.content.filter(
+					(block): block is Extract<typeof block, { type: "tool-call" }> =>
+						block.type === "tool-call" &&
+						!toolCallIds.has(block.toolCallId) &&
+						!interactiveTools.has(block.toolName),
+				)
+
+				if (hallucinatedToolCalls.length > 0) {
+					const errorResults = hallucinatedToolCalls.map((toolCall) => ({
+						type: "tool-result" as const,
+						toolCallId: toolCall.toolCallId,
+						toolName: toolCall.toolName,
+						result: {
+							error: `Tool '${toolCall.toolName}' does not exist. Please use only the available tools.`,
+						},
+					}))
+
+					await ctx.runMutation(internal.messages.addToolResultsMessage, {
+						messageId: message._id,
+						toolResults: errorResults,
+					})
+				}
+			}
 		},
 	)
 
