@@ -22,7 +22,7 @@ export default defineSchema(
 			gameSystemId: v.optional(v.id("gameSystems")),
 			model: v.string(),
 			imageModel: v.string(),
-			plan: v.optional(v.union(v.string(), v.record(v.string(), v.string()))),
+			plan: v.record(v.string(), v.string()),
 			questLog: v.optional(
 				v.array(
 					v.object({
@@ -110,6 +110,7 @@ export default defineSchema(
 						args: v.optional(v.any()),
 						input: v.optional(v.any()),
 					}),
+					// tool-result is deprecated, but we keep it for backwards compat - stored in a separate field now
 					v.object({
 						type: v.literal("tool-result"),
 						toolCallId: v.string(),
@@ -132,7 +133,8 @@ export default defineSchema(
 				),
 			),
 			error: v.optional(v.string()),
-			reasoningText: v.optional(v.string()),
+			reasoningText: v.optional(v.string()), // TODO: remove
+			// TODO: figure out what to do with this
 			scene: v.optional(
 				v.object({
 					description: v.string(),
@@ -230,6 +232,6 @@ export default defineSchema(
 	},
 	// For doing migrations and whatnot
 	{
-		schemaValidation: false,
+		schemaValidation: true,
 	},
 )

@@ -549,15 +549,11 @@ export const currentGameContext = async (
 
 	// Build individual parts with character counts
 	let planText = ""
-	if (campaign.plan) {
+	if (campaign.plan && Object.keys(campaign.plan).length > 0) {
 		planText =
 			"\n\nYour current internal plan for the session. The plan is divided into sections. Update it with the `update_plan tool when needed:"
-		if (typeof campaign.plan === "string") {
-			planText += `\n\n<overall_story>${campaign.plan}</overall_story>`
-		} else {
-			for (const part of Object.keys(campaign.plan)) {
-				planText += `\n\n<${part}>${campaign.plan[part]}</${part}>`
-			}
+		for (const part of Object.keys(campaign.plan)) {
+			planText += `\n\n<${part}>${campaign.plan[part]}</${part}>`
 		}
 	} else {
 		planText =

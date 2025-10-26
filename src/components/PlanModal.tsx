@@ -23,10 +23,7 @@ export const PlanModal: React.FC<Props> = ({ campaignId, onClose }) => {
 		id: campaignId as Id<"campaigns">,
 	})
 
-	const plans =
-		typeof campaign?.plan === "string"
-			? [["overall_story", campaign?.plan]]
-			: Object.entries(campaign?.plan ?? {})
+	const plans = Object.entries(campaign?.plan ?? {})
 	return (
 		<Dialog open={true} onOpenChange={(v) => !v && onClose()}>
 			<DialogContent className="sm:max-w-2xl max-h-[80dvh] overflow-y-auto">

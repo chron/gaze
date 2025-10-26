@@ -228,6 +228,7 @@ export const addCampaign = mutation({
 			enabledTools: args.enabledTools,
 			messageCount: 0,
 			messageCountAtLastSummary: 0,
+			plan: {},
 		}
 
 		const campaignId = await ctx.db.insert("campaigns", campaign)
@@ -256,6 +257,7 @@ export const quickAddCampaign = mutation({
 			archived: false,
 			messageCount: 0,
 			messageCountAtLastSummary: 0,
+			plan: {},
 		})
 
 		return campaignId
@@ -325,16 +327,13 @@ export const updatePlan = mutation({
 		if (!campaign) {
 			throw new Error("Campaign not found")
 		}
-		let newPlan: string | Record<string, string>
+
+		let newPlan: Record<string, string>
 
 		if (args.part) {
-			const oldPlan =
-				typeof campaign.plan === "string"
-					? { overall_story: campaign.plan }
-					: campaign.plan
-			newPlan = { ...oldPlan, [args.part]: args.plan }
+			newPlan = { ...campaign.plan, [args.part]: args.plan }
 		} else {
-			newPlan = args.plan
+			newPlan = { overall_story: args.plan }
 		}
 
 		await ctx.db.patch(args.campaignId, {
@@ -462,16 +461,13 @@ export const updatePlanInternal = internalMutation({
 		if (!campaign) {
 			throw new Error("Campaign not found")
 		}
-		let newPlan: string | Record<string, string>
+
+		let newPlan: Record<string, string>
 
 		if (args.part) {
-			const oldPlan =
-				typeof campaign.plan === "string"
-					? { overall_story: campaign.plan }
-					: campaign.plan
-			newPlan = { ...oldPlan, [args.part]: args.plan }
+			newPlan = { ...campaign.plan, [args.part]: args.plan }
 		} else {
-			newPlan = args.plan
+			newPlan = { overall_story: args.plan }
 		}
 
 		await ctx.db.patch(args.campaignId, {
