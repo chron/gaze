@@ -1,4 +1,5 @@
 import { useQuery } from "convex/react"
+import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
@@ -8,6 +9,10 @@ type Props = {
 }
 
 export const CharacterList: React.FC<Props> = ({ campaignId }) => {
+	const [zoomedCharacters, setZoomedCharacters] = useState<Set<string>>(
+		new Set(),
+	)
+
 	const campaign = useQuery(api.campaigns.get, {
 		id: campaignId,
 	})
@@ -24,6 +29,18 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 	const activeCharacters =
 		campaign.activeCharacters ?? characters.map((c) => c.name)
 
+	const toggleZoom = (characterId: string) => {
+		setZoomedCharacters((prev) => {
+			const next = new Set(prev)
+			if (next.has(characterId)) {
+				next.delete(characterId)
+			} else {
+				next.add(characterId)
+			}
+			return next
+		})
+	}
+
 	return (
 		<div className="flex flex-wrap absolute top-[-40px] sm:top-[-64px] right-0 pointer-events-none sm:pointer-events-auto">
 			{activeCharacters.map((charName) => {
@@ -38,6 +55,8 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 						</div>
 					)
 
+				const isZoomed = zoomedCharacters.has(character._id)
+
 				return (
 					<Tooltip key={character._id}>
 						<TooltipContent className="max-w-[300px] p-4">
@@ -50,10 +69,24 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 							)}
 						</TooltipContent>
 						<TooltipTrigger>
-							<div className="w-[56px] sm:w-[80px] aspect-square -mx-2 sm:-mx-3">
+							<div
+								className="w-[56px] sm:w-[80px] aspect-square -mx-2 sm:-mx-3 cursor-pointer overflow-hidden"
+								onClick={(e) => {
+									e.preventDefault()
+									toggleZoom(character._id)
+								}}
+								onKeyDown={(e) => {
+									if (e.key === "Enter" || e.key === " ") {
+										e.preventDefault()
+										toggleZoom(character._id)
+									}
+								}}
+							>
 								{character.imageUrl && (
 									<img
-										className="w-full h-full object-contain"
+										className={`w-full h-full object-top ${
+											isZoomed ? "object-cover" : "object-contain"
+										}`}
 										src={character.imageUrl}
 										alt={character.name}
 									/>
