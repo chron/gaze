@@ -108,6 +108,7 @@ export const list = query({
 								imageUrl: outfit.image
 									? await ctx.storage.getUrl(outfit.image)
 									: null,
+								imageError: outfit.imageError,
 							})),
 						)
 					: []
@@ -164,6 +165,7 @@ export const listInternal = internalQuery({
 								imageUrl: outfit.image
 									? await ctx.storage.getUrl(outfit.image)
 									: null,
+								imageError: outfit.imageError,
 							})),
 						)
 					: []
@@ -221,6 +223,7 @@ export const get = query({
 						imageUrl: outfit.image
 							? await ctx.storage.getUrl(outfit.image)
 							: null,
+						imageError: outfit.imageError,
 					})),
 				)
 			: []
@@ -309,14 +312,22 @@ export const generateImageForCharacter = action({
 
 		if (!character) throw new Error("Character not found")
 
+		// Clear error state immediately when regeneration starts
+		await ctx.runMutation(internal.characters.storeImageForCharacterInternal, {
+			characterId: args.characterId,
+			storageId: character.image,
+			imageError: false,
+		})
+
 		if (character.image) {
-			// Delete old image from storage first!
+			// Delete old image from storage
 			await ctx.storage.delete(character.image)
 			await ctx.runMutation(
 				internal.characters.storeImageForCharacterInternal,
 				{
 					characterId: args.characterId,
 					storageId: undefined,
+					imageError: false,
 				},
 			)
 		}
@@ -335,22 +346,39 @@ export const generateImageForCharacter = action({
       The style of the image should be ${campaign.imagePrompt}. The background must be transparent.
     `
 
-		const images = await generateImageForModel(prompt, campaign.imageModel)
+		try {
+			const images = await generateImageForModel(prompt, campaign.imageModel)
 
-		for (const file of images) {
-			if (file.mediaType.startsWith("image/")) {
-				const blob = new Blob([file.uint8Array as BlobPart], {
-					type: file.mediaType,
-				})
-				const storageId = await ctx.storage.store(blob)
-				await ctx.runMutation(
-					internal.characters.storeImageForCharacterInternal,
-					{
-						characterId: args.characterId,
-						storageId,
-					},
-				)
+			for (const file of images) {
+				if (file.mediaType.startsWith("image/")) {
+					const blob = new Blob([file.uint8Array as BlobPart], {
+						type: file.mediaType,
+					})
+					const storageId = await ctx.storage.store(blob)
+					await ctx.runMutation(
+						internal.characters.storeImageForCharacterInternal,
+						{
+							characterId: args.characterId,
+							storageId,
+							imageError: false,
+						},
+					)
+				}
 			}
+		} catch (error) {
+			// Image generation failed (likely content policy violation)
+			console.error(
+				`Image generation failed for character ${character.name}:`,
+				error,
+			)
+			await ctx.runMutation(
+				internal.characters.storeImageForCharacterInternal,
+				{
+					characterId: args.characterId,
+					storageId: undefined,
+					imageError: true,
+				},
+			)
 		}
 
 		await ctx.runMutation(internal.campaigns.addActiveCharacterInternal, {
@@ -454,10 +482,12 @@ export const storeImageForCharacterInternal = internalMutation({
 	args: {
 		characterId: v.id("characters"),
 		storageId: v.optional(v.id("_storage")),
+		imageError: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args) => {
 		return await ctx.db.patch(args.characterId, {
 			image: args.storageId,
+			imageError: args.imageError,
 		})
 	},
 })
@@ -473,14 +503,22 @@ export const generateImageForCharacterInternal = internalAction({
 
 		if (!character) throw new Error("Character not found")
 
+		// Clear error state immediately when regeneration starts
+		await ctx.runMutation(internal.characters.storeImageForCharacterInternal, {
+			characterId: args.characterId,
+			storageId: character.image,
+			imageError: false,
+		})
+
 		if (character.image) {
-			// Delete old image from storage first!
+			// Delete old image from storage
 			await ctx.storage.delete(character.image)
 			await ctx.runMutation(
 				internal.characters.storeImageForCharacterInternal,
 				{
 					characterId: args.characterId,
 					storageId: undefined,
+					imageError: false,
 				},
 			)
 		}
@@ -499,22 +537,39 @@ export const generateImageForCharacterInternal = internalAction({
       The style of the image should be ${campaign.imagePrompt}. The background must be transparent.
     `
 
-		const images = await generateImageForModel(prompt, campaign.imageModel)
+		try {
+			const images = await generateImageForModel(prompt, campaign.imageModel)
 
-		for (const file of images) {
-			if (file.mediaType.startsWith("image/")) {
-				const blob = new Blob([file.uint8Array as BlobPart], {
-					type: file.mediaType,
-				})
-				const storageId = await ctx.storage.store(blob)
-				await ctx.runMutation(
-					internal.characters.storeImageForCharacterInternal,
-					{
-						characterId: args.characterId,
-						storageId,
-					},
-				)
+			for (const file of images) {
+				if (file.mediaType.startsWith("image/")) {
+					const blob = new Blob([file.uint8Array as BlobPart], {
+						type: file.mediaType,
+					})
+					const storageId = await ctx.storage.store(blob)
+					await ctx.runMutation(
+						internal.characters.storeImageForCharacterInternal,
+						{
+							characterId: args.characterId,
+							storageId,
+							imageError: false,
+						},
+					)
+				}
 			}
+		} catch (error) {
+			// Image generation failed (likely content policy violation)
+			console.error(
+				`Image generation failed for character ${character.name}:`,
+				error,
+			)
+			await ctx.runMutation(
+				internal.characters.storeImageForCharacterInternal,
+				{
+					characterId: args.characterId,
+					storageId: undefined,
+					imageError: true,
+				},
+			)
 		}
 
 		await ctx.runMutation(internal.campaigns.addActiveCharacterInternal, {
@@ -531,6 +586,7 @@ export const storeOutfitForCharacterInternal = internalMutation({
 		outfitName: v.string(),
 		outfitDescription: v.string(),
 		storageId: v.optional(v.id("_storage")),
+		imageError: v.optional(v.boolean()),
 	},
 	handler: async (ctx, args) => {
 		const character = await ctx.db.get(args.characterId)
@@ -541,6 +597,7 @@ export const storeOutfitForCharacterInternal = internalMutation({
 			[args.outfitName]: {
 				description: args.outfitDescription,
 				image: args.storageId,
+				imageError: args.imageError,
 			},
 		}
 
@@ -610,6 +667,7 @@ export const generateOutfitForCharacterInternal = internalAction({
 							outfitName: args.outfitName,
 							outfitDescription: args.outfitDescription,
 							storageId,
+							imageError: false,
 						},
 					)
 
@@ -630,6 +688,7 @@ export const generateOutfitForCharacterInternal = internalAction({
 					outfitName: args.outfitName,
 					outfitDescription: args.outfitDescription,
 					storageId: undefined,
+					imageError: false,
 				},
 			)
 
@@ -639,8 +698,7 @@ export const generateOutfitForCharacterInternal = internalAction({
 				outfitName: args.outfitName,
 			})
 		} catch (error) {
-			// If image generation fails, still store the outfit but without an image
-			// This allows the user to retry via the UI
+			// If image generation fails, still store the outfit but mark imageError
 			console.error("Failed to generate outfit image:", error)
 			await ctx.runMutation(
 				internal.characters.storeOutfitForCharacterInternal,
@@ -649,6 +707,7 @@ export const generateOutfitForCharacterInternal = internalAction({
 					outfitName: args.outfitName,
 					outfitDescription: args.outfitDescription,
 					storageId: undefined,
+					imageError: true,
 				},
 			)
 
@@ -682,6 +741,15 @@ export const regenerateOutfitForCharacter = action({
 		}
 
 		const outfit = character.outfits[args.outfitName]
+
+		// Clear error state immediately when regeneration starts
+		await ctx.runMutation(internal.characters.storeOutfitForCharacterInternal, {
+			characterId: args.characterId,
+			outfitName: args.outfitName,
+			outfitDescription: outfit.description,
+			storageId: outfit.image,
+			imageError: false,
+		})
 
 		// Delete old image from storage if it exists
 		if (outfit.image) {
@@ -720,6 +788,7 @@ export const regenerateOutfitForCharacter = action({
 							outfitName: args.outfitName,
 							outfitDescription: outfit.description,
 							storageId,
+							imageError: false,
 						},
 					)
 					return
@@ -734,10 +803,11 @@ export const regenerateOutfitForCharacter = action({
 					outfitName: args.outfitName,
 					outfitDescription: outfit.description,
 					storageId: undefined,
+					imageError: false,
 				},
 			)
 		} catch (error) {
-			// If image generation fails, store outfit without image
+			// If image generation fails, mark imageError
 			console.error("Failed to regenerate outfit image:", error)
 			await ctx.runMutation(
 				internal.characters.storeOutfitForCharacterInternal,
@@ -746,9 +816,9 @@ export const regenerateOutfitForCharacter = action({
 					outfitName: args.outfitName,
 					outfitDescription: outfit.description,
 					storageId: undefined,
+					imageError: true,
 				},
 			)
-			throw error
 		}
 	},
 })

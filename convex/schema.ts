@@ -185,6 +185,7 @@ export default defineSchema(
 			description: v.string(),
 			imagePrompt: v.string(),
 			image: v.optional(v.id("_storage")),
+			imageError: v.optional(v.boolean()),
 			humeVoiceId: v.optional(v.string()),
 			active: v.boolean(),
 			notes: v.optional(v.string()),
@@ -194,6 +195,7 @@ export default defineSchema(
 					v.object({
 						description: v.string(),
 						image: v.optional(v.id("_storage")),
+						imageError: v.optional(v.boolean()),
 					}),
 				),
 			),

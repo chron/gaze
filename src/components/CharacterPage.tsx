@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router"
 import { useAction, useMutation, useQuery } from "convex/react"
-import { Loader2, RefreshCcwIcon } from "lucide-react"
+import { Loader2, RefreshCcwIcon, User } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc, Id } from "../../convex/_generated/dataModel"
@@ -48,16 +48,25 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character }) => {
 
 	return (
 		<div className="flex items-center gap-4 p-4 bg-white rounded-lg shadow border border-gray-200 relative group">
-			{character.imageUrl && (
-				<img
-					src={character.imageUrl}
-					alt={character.name}
-					className="w-16 h-16 object-cover object-top rounded-full border border-gray-300 bg-blue-100 "
-				/>
-			)}
+			<div className="w-16 h-16 rounded-full border border-gray-300 bg-blue-100 overflow-hidden flex items-center justify-center">
+				{character.imageUrl && !character.imageError ? (
+					<img
+						src={character.imageUrl}
+						alt={character.name}
+						className="w-full h-full object-cover object-top"
+					/>
+				) : (
+					<User
+						className={`w-8 h-8 ${character.imageError ? "text-red-500" : "text-gray-400"}`}
+					/>
+				)}
+			</div>
 			<div className="flex flex-col gap-1 flex-1 min-w-0">
 				<h2 className="text-lg font-bold">{character.name}</h2>
 				<p className="text-sm text-gray-500">{character.description}</p>
+				{character.imageError && (
+					<p className="text-xs text-red-500">Image generation failed</p>
+				)}
 			</div>
 
 			<div className="flex items-center gap-2">

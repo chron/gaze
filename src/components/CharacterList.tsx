@@ -1,4 +1,5 @@
 import { useQuery } from "convex/react"
+import { User } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
@@ -57,6 +58,18 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 
 				const isZoomed = zoomedCharacters.has(character._id)
 
+				// Determine if we should show an image or fallback icon
+				const currentOutfitData = character.currentOutfit
+					? character.allOutfits?.find(
+							(o) => o.name === character.currentOutfit,
+						)
+					: undefined
+				const imageUrl = currentOutfitData
+					? currentOutfitData.imageUrl
+					: character.imageUrl
+				const hasImageError =
+					currentOutfitData?.imageError ?? character.imageError
+
 				return (
 					<Tooltip key={character._id}>
 						<TooltipContent className="max-w-[300px] p-4">
@@ -67,10 +80,15 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 									Wearing: {character.currentOutfit}
 								</p>
 							)}
+							{hasImageError && (
+								<p className="text-xs text-red-400 mt-2">
+									Image generation failed - showing fallback icon
+								</p>
+							)}
 						</TooltipContent>
 						<TooltipTrigger>
 							<div
-								className="w-[56px] sm:w-[80px] aspect-square -mx-2 sm:-mx-3 cursor-pointer overflow-hidden"
+								className="w-[56px] sm:w-[80px] aspect-square -mx-2 sm:-mx-3 cursor-pointer overflow-hidden flex items-center justify-center"
 								onClick={(e) => {
 									e.preventDefault()
 									toggleZoom(character._id)
@@ -82,13 +100,17 @@ export const CharacterList: React.FC<Props> = ({ campaignId }) => {
 									}
 								}}
 							>
-								{character.imageUrl && (
+								{imageUrl && !hasImageError ? (
 									<img
 										className={`w-full h-full object-top ${
 											isZoomed ? "object-cover" : "object-contain"
 										}`}
-										src={character.imageUrl}
+										src={imageUrl}
 										alt={character.name}
+									/>
+								) : (
+									<User
+										className={`w-8 h-8 sm:w-12 sm:h-12 ${hasImageError ? "text-red-500" : "text-gray-400"}`}
 									/>
 								)}
 							</div>

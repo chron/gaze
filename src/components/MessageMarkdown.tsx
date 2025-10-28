@@ -3,6 +3,7 @@ import remarkBreaks from "remark-breaks"
 import remarkGfm from "remark-gfm"
 import { cn } from "../lib/utils"
 import { Wiggly } from "./Wiggly"
+import { CopyButton } from "./ui/copy-button"
 import {
 	Table,
 	TableBody,
@@ -30,13 +31,7 @@ export const MessageMarkdown: React.FC<Props> = ({
 				components={{
 					a: ({ children }) =>
 						linkClickHandler ? (
-							<button
-								type="button"
-								className="bg-blue-500 text-white hover:text-gray-100 hover:bg-blue-600 rounded-md px-2 py-1 my-1 cursor-pointer text-left"
-								onClick={(e) => linkClickHandler?.(e.currentTarget.innerText)}
-							>
-								{children}
-							</button>
+							<CopyButton onCopy={linkClickHandler}>{children}</CopyButton>
 						) : (
 							children
 							// <a href={href} className="text-blue-500 hover:text-blue-600">

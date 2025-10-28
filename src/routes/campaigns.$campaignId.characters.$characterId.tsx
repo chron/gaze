@@ -1,11 +1,11 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useAction, useMutation, useQuery } from "convex/react"
 import {
-	AlertCircleIcon,
 	EditIcon,
 	Loader2,
 	RefreshCcwIcon,
 	TrashIcon,
+	User,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { api } from "../../convex/_generated/api"
@@ -254,7 +254,7 @@ function CharacterDetailsPage() {
 											className="w-full p-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
 										>
 											<div className="flex items-center gap-3">
-												{character.baseImageUrl ? (
+												{character.baseImageUrl && !character.imageError ? (
 													<img
 														src={character.baseImageUrl}
 														alt={character.name}
@@ -262,7 +262,9 @@ function CharacterDetailsPage() {
 													/>
 												) : (
 													<div className="w-12 h-12 rounded bg-gray-200 flex items-center justify-center">
-														<AlertCircleIcon className="w-6 h-6 text-gray-400" />
+														<User
+															className={`w-6 h-6 ${character.imageError ? "text-red-500" : "text-gray-400"}`}
+														/>
 													</div>
 												)}
 												<div className="text-left">
@@ -273,9 +275,15 @@ function CharacterDetailsPage() {
 																Current
 															</span>
 														)}
-														{!character.baseImageUrl && (
+														{!character.baseImageUrl &&
+															!character.imageError && (
+																<span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
+																	No Image
+																</span>
+															)}
+														{character.imageError && (
 															<span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
-																No Image
+																Error
 															</span>
 														)}
 													</div>
@@ -350,7 +358,7 @@ function CharacterDetailsPage() {
 												className="w-full p-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
 											>
 												<div className="flex items-center gap-3">
-													{outfit.imageUrl ? (
+													{outfit.imageUrl && !outfit.imageError ? (
 														<img
 															src={outfit.imageUrl}
 															alt={outfit.name}
@@ -358,7 +366,9 @@ function CharacterDetailsPage() {
 														/>
 													) : (
 														<div className="w-12 h-12 rounded bg-gray-200 flex items-center justify-center">
-															<AlertCircleIcon className="w-6 h-6 text-gray-400" />
+															<User
+																className={`w-6 h-6 ${outfit.imageError ? "text-red-500" : "text-gray-400"}`}
+															/>
 														</div>
 													)}
 													<div className="text-left">
@@ -369,9 +379,14 @@ function CharacterDetailsPage() {
 																	Current
 																</span>
 															)}
-															{!outfit.imageUrl && (
+															{!outfit.imageUrl && !outfit.imageError && (
 																<span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
 																	No Image
+																</span>
+															)}
+															{outfit.imageError && (
+																<span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">
+																	Error
 																</span>
 															)}
 														</div>

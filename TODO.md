@@ -13,7 +13,6 @@ LATER
 - [UI] Disable text input when there's an active roll to do (maybe?)
 - [UI] If we're going to take JSON directly in the modal, need some friendly errors
 - [UI] Also the modal is too long with long JSON and files
-- Drop chat messages out of the pagination so you don't have to hard refresh to go back to 10.
 - [UI] Some indicator of progress when files are being uploaded
 - [UI] validation messages or errors when saving forms (form lib?)
 - [CONTENT] Scrape the content at https://charsmith.com/wildsea-compendium to make a Wildsea doc?

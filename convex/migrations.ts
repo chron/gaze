@@ -61,3 +61,16 @@ export const setDefaultNotes = migrations.define({
 export const runNotesMigration = migrations.runner(
 	internal.migrations.setDefaultNotes,
 )
+
+export const setDefaultImageError = migrations.define({
+	table: "characters",
+	migrateOne: async (ctx, doc) => {
+		await ctx.db.patch(doc._id, {
+			imageError: false,
+		})
+	},
+})
+
+export const runImageErrorMigration = migrations.runner(
+	internal.migrations.setDefaultImageError,
+)
