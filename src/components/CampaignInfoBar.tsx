@@ -210,7 +210,7 @@ export const CampaignInfoBar: React.FC<Props> = ({ campaign }) => {
 						<Button
 							variant="secondary"
 							size="sm"
-							className="h-7 text-xs bg-white/20 hover:bg-white/30 text-white border-white/30"
+							className="h-auto py-0.5 text-xs bg-white/20 hover:bg-white/30 text-white border border-white/30"
 						>
 							<ClipboardList className="h-3.5 w-3.5 mr-1.5" />
 							Quests ({activeQuests.length})

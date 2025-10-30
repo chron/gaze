@@ -367,7 +367,9 @@ export const lookForThemesInCampaignSummaries = action({
 			throw new Error("Not authenticated")
 		}
 
-		const allCampaigns = await ctx.runQuery(api.campaigns.list, {})
+		const allCampaigns = await ctx.runQuery(api.campaigns.list, {
+			limit: 30,
+		})
 
 		const prompt = `
 		You are a game master, responsible for several different campaigns with the user. You will be given the name, description, and a full summary of each campaign.
