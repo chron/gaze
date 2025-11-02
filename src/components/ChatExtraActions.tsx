@@ -7,12 +7,14 @@ import {
 	Brain,
 	Command,
 	Landmark,
+	ReplaceAll,
 	Tag,
 	Trash,
 } from "lucide-react"
 import { useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Id } from "../../convex/_generated/dataModel"
+import { FindAndReplaceModal } from "./FindAndReplaceModal"
 import { MessageMarkdown } from "./MessageMarkdown"
 import { PlanModal } from "./PlanModal"
 import { ProgressModal } from "./ProgressModal"
@@ -38,6 +40,7 @@ export const ChatExtraActions: React.FC = () => {
 	const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
 	const [isPromptAnalysisOpen, setIsPromptAnalysisOpen] = useState(false)
 	const [isProgressModalOpen, setIsProgressModalOpen] = useState(false)
+	const [isFindReplaceOpen, setIsFindReplaceOpen] = useState(false)
 	const [progressJobId, setProgressJobId] = useState<Id<"jobProgress"> | null>(
 		null,
 	)
@@ -48,6 +51,7 @@ export const ChatExtraActions: React.FC = () => {
 	const deleteJob = useMutation(api.jobProgress.deleteJob)
 
 	const updatePlan = useMutation(api.campaigns.updatePlan)
+	const findAndReplace = useAction(api.findAndReplace.findAndReplaceInLastMessage)
 	const lookForThemesInCampaignSummaries = useAction(
 		api.campaigns.lookForThemesInCampaignSummaries,
 	)
@@ -74,6 +78,11 @@ export const ChatExtraActions: React.FC = () => {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
+					<DropdownMenuItem onClick={() => setIsFindReplaceOpen(true)}>
+						<ReplaceAll />
+						Find and replace
+					</DropdownMenuItem>
+
 					<DropdownMenuItem
 						onClick={async () => {
 							setIsLoading(true)
@@ -219,6 +228,24 @@ export const ChatExtraActions: React.FC = () => {
 				}}
 				title="Collapsing History"
 				description="Breaking your chat history into chapters and creating summaries"
+			/>
+
+			<FindAndReplaceModal
+				isOpen={isFindReplaceOpen}
+				onClose={() => setIsFindReplaceOpen(false)}
+				onSubmit={async (oldText, newText) => {
+					const result = await findAndReplace({
+						campaignId: campaignId as Id<"campaigns">,
+						oldText,
+						newText,
+					})
+					setResult(
+						`Replaced "${oldText}" with "${newText}"\n\n` +
+						`Updated message: ${result.updatedMessage}\n` +
+						`Updated ${result.updatedCharacters} character(s)\n` +
+						`Updated active characters: ${result.updatedActiveCharacters}`,
+					)
+				}}
 			/>
 		</>
 	)

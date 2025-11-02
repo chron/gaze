@@ -11,6 +11,7 @@
 import type * as campaigns from "../campaigns.js";
 import type * as characterSheets from "../characterSheets.js";
 import type * as characters from "../characters.js";
+import type * as findAndReplace from "../findAndReplace.js";
 import type * as gameSystems from "../gameSystems.js";
 import type * as http from "../http.js";
 import type * as jobProgress from "../jobProgress.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   campaigns: typeof campaigns;
   characterSheets: typeof characterSheets;
   characters: typeof characters;
+  findAndReplace: typeof findAndReplace;
   gameSystems: typeof gameSystems;
   http: typeof http;
   jobProgress: typeof jobProgress;
