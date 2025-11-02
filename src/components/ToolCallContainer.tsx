@@ -12,7 +12,7 @@ import {
 type ToolCallContainerProps = {
 	icon?: LucideIcon
 	iconSlot?: ReactNode
-	title: string
+	title: string | ReactNode
 	children?: ReactNode
 	defaultOpen?: boolean
 	className?: string

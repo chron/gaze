@@ -152,6 +152,11 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 	}
 
 	if (block.toolName === "update_character_outfit") {
+		// Check if the tool result indicates a new outfit
+		const isNew = toolResult?.result
+			? String(toolResult.result).toLowerCase().includes("new")
+			: false
+
 		return (
 			<CharacterOutfitUpdate
 				key={`character-outfit-${block.toolCallId}`}
@@ -162,6 +167,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 						outfitDescription: string
 					}
 				}
+				isNew={isNew}
 				className={positionClass}
 			/>
 		)
