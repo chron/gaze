@@ -1383,3 +1383,34 @@ export const analyzePrompt = action({
 		}
 	},
 })
+
+/**
+ * Get timestamps for all user messages (for analytics)
+ * Uses cursor-based pagination to handle large datasets
+ */
+export const getUserMessageTimestamps = query({
+	args: {
+		cursor: v.optional(v.string()),
+		pageSize: v.optional(v.number()),
+	},
+	handler: async (ctx, args) => {
+		const pageSize = args.pageSize ?? 1000
+
+		// Query messages with role = "user", ordered by creation time
+		const result = await ctx.db
+			.query("messages")
+			.filter((q) => q.eq(q.field("role"), "user"))
+			.paginate({
+				cursor: args.cursor ?? null,
+				numItems: pageSize,
+			})
+
+		// Extract just the creation timestamps
+		const timestamps = result.page.map((message) => message._creationTime)
+
+		return {
+			timestamps,
+			cursor: result.continueCursor,
+		}
+	},
+})

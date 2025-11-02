@@ -29,3 +29,6 @@ dist-ssr
 
 # NPM lockfile (project uses PNPM)
 package-lock.json
+
+# Analytics data output
+data/
