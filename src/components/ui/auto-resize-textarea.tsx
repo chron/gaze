@@ -21,19 +21,24 @@ export const AutoResizeTextarea = React.forwardRef<
 	useLayoutEffect(() => {
 		const textarea = textareaRef.current
 		if (textarea) {
+			// Save scroll position before height adjustment
+			const currentScrollY = window.scrollY
+
 			// Reset height to auto to get the correct scrollHeight
 			textarea.style.height = "auto"
 			// Set the height to match the content
 			textarea.style.height = `${textarea.scrollHeight}px`
+
+			// Restore scroll position to prevent jarring jumps
+			window.scrollTo(0, currentScrollY)
 
 			// Handle autofocus without scrolling - only on first mount
 			if (autoFocus && !hasFocusedRef.current) {
 				hasFocusedRef.current = true
 				// Use setTimeout to ensure it happens after all layout calculations
 				setTimeout(() => {
-					const currentScrollY = window.scrollY
 					textarea.focus()
-					window.scrollTo(0, currentScrollY)
+					// Already restored scroll position above
 				}, 0)
 			}
 		}
