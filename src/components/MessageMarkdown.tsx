@@ -17,12 +17,14 @@ import {
 
 type Props = {
 	children: string
-	linkClickHandler?: (text: string) => void
+	linkClickHandler?: (text: string) => Promise<void>
+	linkSendHandler?: (text: string) => Promise<void>
 }
 
 export const MessageMarkdown: React.FC<Props> = ({
 	children,
 	linkClickHandler,
+	linkSendHandler,
 }) => {
 	return (
 		<div className="flex flex-col gap-2">
@@ -31,7 +33,9 @@ export const MessageMarkdown: React.FC<Props> = ({
 				components={{
 					a: ({ children }) =>
 						linkClickHandler ? (
-							<CopyButton onCopy={linkClickHandler}>{children}</CopyButton>
+							<CopyButton onCopy={linkClickHandler} onSend={linkSendHandler}>
+								{children}
+							</CopyButton>
 						) : (
 							children
 							// <a href={href} className="text-blue-500 hover:text-blue-600">

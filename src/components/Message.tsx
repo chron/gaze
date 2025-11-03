@@ -37,6 +37,10 @@ export const Message: React.FC<Props> = ({
 	)
 
 	const updateTextBlockMutation = useMutation(api.messages.updateTextBlock)
+	const addUserMessage = useMutation(api.messages.addUserMessage)
+	const convertToFirstPerson = useAction(
+		api.convertPersonPerspective.convertToFirstPerson,
+	)
 
 	const [editingIndex, setEditingIndex] = useState<number | null>(null)
 	const [editingText, setEditingText] = useState("")
@@ -215,8 +219,25 @@ export const Message: React.FC<Props> = ({
 									<MessageMarkdown
 										linkClickHandler={
 											isLastMessage
-												? (text) => {
-														navigator.clipboard.writeText(text)
+												? async (text) => {
+														const convertedText = await convertToFirstPerson({
+															text,
+														})
+														await navigator.clipboard.writeText(convertedText)
+													}
+												: undefined
+										}
+										linkSendHandler={
+											isLastMessage
+												? async (text) => {
+														const convertedText = await convertToFirstPerson({
+															text,
+														})
+														const { streamId } = await addUserMessage({
+															campaignId: message.campaignId,
+															content: convertedText,
+														})
+														setStreamId(streamId)
 													}
 												: undefined
 										}
