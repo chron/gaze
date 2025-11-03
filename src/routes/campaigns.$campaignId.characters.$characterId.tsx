@@ -288,7 +288,7 @@ function CharacterDetailsPage() {
 														)}
 													</div>
 													<p className="text-sm text-gray-500 line-clamp-1">
-														{character.description}
+														{character.imagePrompt}
 													</p>
 												</div>
 											</div>
@@ -300,7 +300,7 @@ function CharacterDetailsPage() {
 									<CollapsibleContent>
 										<div className="p-3 border-t bg-gray-50 space-y-3">
 											<div className="text-sm">
-												<p className="text-gray-700">{character.description}</p>
+												<p className="text-gray-700">{character.imagePrompt}</p>
 											</div>
 											<div className="flex gap-2 flex-wrap">
 												{character.currentOutfit && (

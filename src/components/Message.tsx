@@ -77,6 +77,20 @@ export const Message: React.FC<Props> = ({
 				return count > 0 ? Array(count).fill(combinedReasoning) : []
 			})()
 
+	// Extract the current (most recent) title from reasoning text
+	const currentTitle = (() => {
+		const reasoningToUse = noDatabaseContent ? reasoningText : combinedReasoning
+		if (!reasoningToUse) return undefined
+
+		// Match all bold headings like "**Title**"
+		const headingMatches = reasoningToUse.match(/^\*\*(.+?)\*\*$/gm)
+		if (!headingMatches || headingMatches.length === 0) return undefined
+
+		// Get the last heading and remove the asterisks
+		const lastHeading = headingMatches[headingMatches.length - 1]
+		return lastHeading.replace(/^\*\*|\*\*$/g, "")
+	})()
+
 	// Once the content of the message begins streaming, collapse the reasoning section
 	const startedStreamingContent = steps.filter((s) => s.text).length > 0
 
@@ -149,6 +163,7 @@ export const Message: React.FC<Props> = ({
 							isStreaming={!startedStreamingContent} // Collapse as soon as the reasoning has finished flowing in
 							isExpanded={showReasoning}
 							onClick={() => setShowReasoning(!showReasoning)}
+							currentTitle={currentTitle}
 						/>
 
 						{showReasoning && (

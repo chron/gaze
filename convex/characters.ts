@@ -341,7 +341,7 @@ export const generateImageForCharacter = action({
 		const prompt = `
       Generate a portrait of ${character.name}: ${character.imagePrompt}.
 
-      The portrait should be from the waist up. It should be a square. Don't include any text.
+      The portrait should be from the waist up. Don't include any text.
 
       The style of the image should be ${campaign.imagePrompt}. The background must be transparent.
     `
