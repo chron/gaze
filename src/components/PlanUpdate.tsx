@@ -2,6 +2,7 @@ import { ListChecks } from "lucide-react"
 import type React from "react"
 import ReactMarkdown from "react-markdown"
 import { ToolCallContainer } from "./ToolCallContainer"
+import { StringDiff } from "./ui/string-diff"
 
 type Props = {
 	parameters: {
@@ -13,6 +14,12 @@ type Props = {
 			| "overall_story"
 			| "key_details"
 			| "feelings_and_reflections"
+	}
+	result?: {
+		message: string
+		oldPlan: string
+		newPlan: string
+		part?: string
 	}
 	className?: string
 }
@@ -26,14 +33,29 @@ const partLabels = {
 	feelings_and_reflections: "Feelings and Reflections",
 }
 
-export const PlanUpdate: React.FC<Props> = ({ parameters, className }) => {
+export const PlanUpdate: React.FC<Props> = ({
+	parameters,
+	result,
+	className,
+}) => {
 	const title = parameters.part
 		? `Plan updated: ${partLabels[parameters.part]}`
 		: "Plan updated"
 
+	const showDiff =
+		result?.oldPlan && result?.newPlan && result.oldPlan !== result.newPlan
+
 	return (
 		<ToolCallContainer icon={ListChecks} title={title} className={className}>
-			<ReactMarkdown>{parameters.plan}</ReactMarkdown>
+			{showDiff ? (
+				<StringDiff
+					oldText={result.oldPlan}
+					newText={result.newPlan}
+					mode="side-by-side"
+				/>
+			) : (
+				<ReactMarkdown>{parameters.plan}</ReactMarkdown>
+			)}
 		</ToolCallContainer>
 	)
 }

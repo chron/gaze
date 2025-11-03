@@ -446,7 +446,7 @@ export const updateInternal = internalMutation({
 		description: v.optional(v.string()),
 		notes: v.optional(v.string()),
 	},
-	handler: async (ctx, args) => {
+	handler: async (ctx, args): Promise<{ oldDescription?: string; oldNotes?: string }> => {
 		// Find the character by name and campaign
 		const character = await ctx.db
 			.query("characters")
@@ -458,6 +458,10 @@ export const updateInternal = internalMutation({
 		if (!character) {
 			throw new Error(`Character "${args.name}" not found in this campaign`)
 		}
+
+		// Store old values
+		const oldDescription = character.description
+		const oldNotes = character.notes
 
 		// Build update object with only provided fields
 		const updates: Partial<{
@@ -474,7 +478,7 @@ export const updateInternal = internalMutation({
 
 		await ctx.db.patch(character._id, updates)
 
-		return character._id
+		return { oldDescription, oldNotes }
 	},
 })
 

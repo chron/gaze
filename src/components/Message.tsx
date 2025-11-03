@@ -91,14 +91,15 @@ export const Message: React.FC<Props> = ({
 		return lastHeading.replace(/^\*\*|\*\*$/g, "")
 	})()
 
-	// Once the content of the message begins streaming, collapse the reasoning section
 	const startedStreamingContent = steps.filter((s) => s.text).length > 0
 
-	useEffect(() => {
-		if (startedStreamingContent) {
-			setShowReasoning(false)
-		}
-	}, [startedStreamingContent])
+	// Once the content of the message begins streaming, collapse the reasoning section
+	// Only useful if reasoning starts open (right now it does not)
+	// useEffect(() => {
+	// 	if (startedStreamingContent) {
+	// 		setShowReasoning(false)
+	// 	}
+	// }, [startedStreamingContent])
 
 	useEffect(() => {
 		if ((!noDatabaseContent && !noStreamingContent) || !!message.error) {

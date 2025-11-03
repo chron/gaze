@@ -27,12 +27,17 @@ export const updatePlan = (
 				.describe("The part of the plan you'd like to update"),
 		}),
 		execute: async ({ plan, part }) => {
-			await ctx.runMutation(internal.campaigns.updatePlanInternal, {
+			const result = await ctx.runMutation(internal.campaigns.updatePlanInternal, {
 				campaignId,
 				plan,
 				part,
 			})
 
-			return "Plan updated successfully"
+			return {
+				message: "Plan updated successfully",
+				oldPlan: result.oldPlan,
+				newPlan: plan,
+				part,
+			}
 		},
 	})

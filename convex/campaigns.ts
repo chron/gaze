@@ -457,12 +457,17 @@ export const updatePlanInternal = internalMutation({
 		plan: v.string(),
 		part: v.optional(v.string()),
 	},
-	handler: async (ctx, args): Promise<void> => {
+	handler: async (ctx, args): Promise<{ oldPlan: string }> => {
 		const campaign = await ctx.db.get(args.campaignId)
 
 		if (!campaign) {
 			throw new Error("Campaign not found")
 		}
+
+		// Get old plan value for the specific part
+		const oldPlan = args.part
+			? (campaign.plan?.[args.part] ?? "")
+			: (campaign.plan?.overall_story ?? "")
 
 		let newPlan: Record<string, string>
 
@@ -475,6 +480,8 @@ export const updatePlanInternal = internalMutation({
 		await ctx.db.patch(args.campaignId, {
 			plan: newPlan,
 		})
+
+		return { oldPlan }
 	},
 })
 

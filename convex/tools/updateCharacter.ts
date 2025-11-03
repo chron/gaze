@@ -31,14 +31,20 @@ export const updateCharacter = (
 				return "Error: Must provide either description or notes to update"
 			}
 
-			await ctx.runMutation(internal.characters.updateInternal, {
+			const result = await ctx.runMutation(internal.characters.updateInternal, {
 				campaignId,
 				name,
 				description,
 				notes,
 			})
 
-			return `Character ${name} updated successfully`
+			return {
+				message: `Character ${name} updated successfully`,
+				oldDescription: result.oldDescription,
+				newDescription: description,
+				oldNotes: result.oldNotes,
+				newNotes: notes,
+			}
 		},
 	})
 }

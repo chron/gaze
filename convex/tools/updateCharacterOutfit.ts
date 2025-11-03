@@ -11,7 +11,7 @@ export const updateCharacterOutfit = (
 ) => {
 	return tool({
 		description:
-			"Use this tool to change a character's outfit or create a new outfit variation. When a character needs to wear different clothes (e.g., formal attire, swimwear, combat gear, disguise), use this tool. If the outfit already exists, the character will simply switch to it. If it's a new outfit, an image will be generated. The outfit will be saved and can be reused in future scenes without regenerating the image.",
+			"Use this tool to change a character's outfit or create a new outfit variation. When a character needs to wear different clothes (e.g., formal attire, swimwear, combat gear, disguise), use this tool. If the outfit already exists, the character will simply switch to it. If it's a new outfit, an image will be generated. The outfit will be saved and can be reused in future scenes without regenerating the image. If the outfit is tied to a specific mood or emotion, consider incorporating that into the name so it's clear when to re-use it.",
 		inputSchema: z.object({
 			characterName: z
 				.string()
@@ -24,7 +24,7 @@ export const updateCharacterOutfit = (
 			outfitDescription: z
 				.string()
 				.describe(
-					"A detailed physical description of the outfit for image generation. Focus on clothing, accessories, and style. Be specific about colors, materials, and details. You can also include a description of pose, expression, and other similar details.",
+					"A detailed physical description of the outfit for image generation. Focus on clothing, accessories, and style. Be specific about colors, materials, and details. You can also include a description of pose, expression, mood, vibe, and other similar details.",
 				),
 		}),
 		execute: async ({ characterName, outfitName, outfitDescription }) => {

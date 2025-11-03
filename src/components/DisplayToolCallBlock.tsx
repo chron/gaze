@@ -146,6 +146,17 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 						notes?: string
 					}
 				}
+				result={
+					toolResult?.result as
+						| {
+								message: string
+								oldDescription?: string
+								newDescription?: string
+								oldNotes?: string
+								newNotes?: string
+						  }
+						| undefined
+				}
 				className={positionClass}
 			/>
 		)
@@ -188,6 +199,16 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 							| "key_details"
 							| "feelings_and_reflections"
 					}
+				}
+				result={
+					toolResult?.result as
+						| {
+								message: string
+								oldPlan: string
+								newPlan: string
+								part?: string
+						  }
+						| undefined
 				}
 				className={positionClass}
 			/>
