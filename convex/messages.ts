@@ -746,8 +746,6 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 			})
 		},
 		onFinish: async ({ finishReason, response }) => {
-			console.log("onFinish", finishReason, response)
-
 			if (finishReason === "unknown") {
 				await ctx.runMutation(internal.messages.addError, {
 					messageId: message._id,
@@ -761,6 +759,12 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 				ArrayElement<Exclude<AssistantContent, string>>,
 				{ type: "text" | "reasoning" | "tool-call" }
 			>[] = []
+			const allToolResults: {
+				type: "tool-result"
+				toolCallId: string
+				toolName: string
+				result: unknown
+			}[] = []
 
 			for (const responseMessage of response.messages) {
 				if (responseMessage.role === "assistant") {
@@ -786,6 +790,23 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 							}
 						}
 					}
+				} else if (responseMessage.role === "tool") {
+					// Extract tool results from tool messages
+					const content = responseMessage.content
+					if (!Array.isArray(content)) continue
+
+					for (const block of content) {
+						if (block.type === "tool-result") {
+							// AI SDK uses 'output' in the response, but we store it as 'result'
+							const output = (block as unknown as { output: unknown }).output
+							allToolResults.push({
+								type: "tool-result",
+								toolCallId: block.toolCallId,
+								toolName: block.toolName,
+								result: output,
+							})
+						}
+					}
 				}
 			}
 
@@ -793,6 +814,39 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 				messageId: message._id,
 				content: allContent,
 			})
+
+			// Add tool results from onFinish (these might not have come through streaming)
+			if (allToolResults.length > 0) {
+				// Get existing tool results to avoid duplicates
+				const currentMessage = await ctx.runQuery(
+					internal.messages.getByStreamId,
+					{
+						streamId: args.streamId,
+					},
+				)
+
+				const existingToolCallIds = new Set(
+					currentMessage?.toolResults?.map(
+						(tr: { toolCallId: string }) => tr.toolCallId,
+					) ?? [],
+				)
+
+				// Only add tool results that don't already exist
+				const newToolResults = allToolResults.filter(
+					(tr) => !existingToolCallIds.has(tr.toolCallId),
+				)
+
+				if (newToolResults.length > 0) {
+					console.log(
+						"Added missing tool results from onFinish:",
+						newToolResults.map((tr) => tr.toolName),
+					)
+					await ctx.runMutation(internal.messages.addToolResultsMessage, {
+						messageId: message._id,
+						toolResults: newToolResults,
+					})
+				}
+			}
 		},
 	})
 
@@ -892,15 +946,24 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 			)
 
 			if (updatedMessage) {
-				const toolCallIds = new Set(toolResults.map((tr) => tr.toolCallId))
+				// Get tool result IDs from the actual message (which includes results from onFinish)
+				const toolResultIds = new Set(
+					updatedMessage.toolResults?.map((tr) => tr.toolCallId) ?? [],
+				)
+
 				const hallucinatedToolCalls = updatedMessage.content.filter(
 					(block): block is Extract<typeof block, { type: "tool-call" }> =>
 						block.type === "tool-call" &&
-						!toolCallIds.has(block.toolCallId) &&
+						!toolResultIds.has(block.toolCallId) &&
 						!interactiveTools.has(block.toolName),
 				)
 
 				if (hallucinatedToolCalls.length > 0) {
+					console.warn(
+						"Hallucinated tool calls detected:",
+						hallucinatedToolCalls.map((tc) => tc.toolName),
+					)
+
 					const errorResults = hallucinatedToolCalls.map((toolCall) => ({
 						type: "tool-result" as const,
 						toolCallId: toolCall.toolCallId,

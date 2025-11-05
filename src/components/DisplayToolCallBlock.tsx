@@ -163,7 +163,7 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 	}
 
 	if (block.toolName === "update_character_outfit") {
-		// Check if the tool result indicates a new outfit
+		// Check if the tool result indicates a new outfit (legacy check)
 		const isNew = toolResult?.result
 			? String(toolResult.result).toLowerCase().includes("new")
 			: false
@@ -177,6 +177,24 @@ export const DisplayToolCallBlock: React.FC<Props> = ({
 						outfitName: string
 						outfitDescription: string
 					}
+				}
+				result={
+					toolResult?.result as
+						| {
+								success: true
+								message: string
+								isNew: boolean
+								characterName: string
+								outfitName: string
+								outfitDescription: string
+						  }
+						| {
+								error: string
+								characterName?: string
+								outfitName?: string
+								outfitDescription?: string
+						  }
+						| undefined
 				}
 				isNew={isNew}
 				className={positionClass}

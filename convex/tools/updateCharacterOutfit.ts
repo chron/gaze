@@ -28,41 +28,73 @@ export const updateCharacterOutfit = (
 				),
 		}),
 		execute: async ({ characterName, outfitName, outfitDescription }) => {
-			// Find the character by name
-			const characters = await ctx.runQuery(internal.characters.listInternal, {
-				campaignId,
-			})
+			try {
+				// Find the character by name
+				const characters = await ctx.runQuery(
+					internal.characters.listInternal,
+					{
+						campaignId,
+					},
+				)
 
-			const character = characters.find((c) => c.name === characterName)
-			if (!character) {
-				return `Error: Character ${characterName} not found. Use the introduce_character tool first.`
-			}
+				const character = characters.find((c) => c.name === characterName)
+				if (!character) {
+					return {
+						error: `Character '${characterName}' not found in this campaign. Available characters: ${characters.map((c) => c.name).join(", ") || "none"}. Use the introduce_character tool first to create new characters.`,
+						characterName,
+						outfitName,
+						outfitDescription,
+					}
+				}
 
-			// Check if outfit already exists
-			const existingOutfit = character.outfits?.[outfitName]
+				// Check if outfit already exists
+				const existingOutfit = character.outfits?.[outfitName]
 
-			if (existingOutfit) {
-				// Just switch to existing outfit
-				await ctx.runMutation(internal.characters.setCurrentOutfitInternal, {
-					characterId: character._id,
-					outfitName,
-				})
+				if (existingOutfit) {
+					// Just switch to existing outfit
+					await ctx.runMutation(internal.characters.setCurrentOutfitInternal, {
+						characterId: character._id,
+						outfitName,
+					})
 
-				return `${characterName} changed into their ${outfitName} outfit.`
-			}
+					return {
+						success: true,
+						message: `${characterName} changed into their ${outfitName} outfit.`,
+						isNew: false,
+						characterName,
+						outfitName,
+						outfitDescription,
+					}
+				}
 
-			// Generate new outfit
-			await ctx.scheduler.runAfter(
-				0,
-				internal.characters.generateOutfitForCharacterInternal,
-				{
-					characterId: character._id,
+				// Generate new outfit
+				await ctx.scheduler.runAfter(
+					0,
+					internal.characters.generateOutfitForCharacterInternal,
+					{
+						characterId: character._id,
+						outfitName,
+						outfitDescription,
+					},
+				)
+
+				return {
+					success: true,
+					message: `${characterName} changed into their new ${outfitName} outfit. Image generating...`,
+					isNew: true,
+					characterName,
 					outfitName,
 					outfitDescription,
-				},
-			)
-
-			return `${characterName} changed into their new ${outfitName} outfit. Image generating...`
+				}
+			} catch (error) {
+				console.error("update_character_outfit exception:", error)
+				return {
+					error: `Failed to change outfit: ${error instanceof Error ? error.message : String(error)}`,
+					characterName,
+					outfitName,
+					outfitDescription,
+				}
+			}
 		},
 	})
 }
