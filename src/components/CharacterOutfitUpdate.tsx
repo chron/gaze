@@ -10,6 +10,7 @@ type Props = {
 		outfitDescription: string
 	}
 	result?:
+		| string
 		| {
 				success: true
 				message: string
@@ -34,7 +35,7 @@ export const CharacterOutfitUpdate: React.FC<Props> = ({
 	isNew,
 	className,
 }) => {
-	const hasError = result && "error" in result
+	const hasError = typeof result === "object" && result && "error" in result
 	const errorMessage = hasError ? result.error : null
 
 	// Check if parameters are missing or invalid
@@ -56,11 +57,13 @@ export const CharacterOutfitUpdate: React.FC<Props> = ({
 
 	// Determine if this is a new outfit from either the result or the legacy isNew prop
 	const isNewOutfit =
-		result && "isNew" in result ? result.isNew : (isNew ?? false)
+		typeof result === "object" && result && "isNew" in result
+			? result.isNew
+			: (isNew ?? false)
 
 	// Use the result message if available, otherwise construct one
 	const successMessage =
-		result && "message" in result
+		typeof result === "object" && result && "message" in result
 			? result.message
 			: `${parameters.characterName || "Unknown"} changed into the "${parameters.outfitName || "unknown"}" outfit`
 

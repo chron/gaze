@@ -16,22 +16,25 @@ export const updatePlan = (
 			plan: z.string().describe("Your internal plan for the session"),
 			part: z
 				.enum([
-					"current_scene",
+					// "current_scene",
 					"future_events",
 					"player_requests",
 					"overall_story",
 					"key_details",
-					"feelings_and_reflections",
+					// "feelings_and_reflections",
 				])
 				.optional()
 				.describe("The part of the plan you'd like to update"),
 		}),
 		execute: async ({ plan, part }) => {
-			const result = await ctx.runMutation(internal.campaigns.updatePlanInternal, {
-				campaignId,
-				plan,
-				part,
-			})
+			const result = await ctx.runMutation(
+				internal.campaigns.updatePlanInternal,
+				{
+					campaignId,
+					plan,
+					part,
+				},
+			)
 
 			return {
 				message: "Plan updated successfully",
