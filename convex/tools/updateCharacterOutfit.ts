@@ -23,8 +23,9 @@ export const updateCharacterOutfit = (
 				),
 			outfitDescription: z
 				.string()
+				.optional()
 				.describe(
-					"A detailed physical description of the outfit for image generation. Focus on clothing, accessories, and style. Be specific about colors, materials, and details. You can also include a description of pose, expression, mood, vibe, and other similar details.",
+					"A detailed physical description of the outfit for image generation. Required when creating a new outfit. Focus on clothing, accessories, and style. Be specific about colors, materials, and details. You can also include a description of pose, expression, mood, vibe, and other similar details.",
 				),
 		}),
 		execute: async ({ characterName, outfitName, outfitDescription }) => {
@@ -61,6 +62,16 @@ export const updateCharacterOutfit = (
 						success: true,
 						message: `${characterName} changed into their ${outfitName} outfit.`,
 						isNew: false,
+						characterName,
+						outfitName,
+						outfitDescription,
+					}
+				}
+
+				// Validate that description is provided for new outfits
+				if (!outfitDescription) {
+					return {
+						error: `Outfit description is required when creating a new outfit. The '${outfitName}' outfit does not exist yet for ${characterName}.`,
 						characterName,
 						outfitName,
 						outfitDescription,
