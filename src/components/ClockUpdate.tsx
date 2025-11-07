@@ -6,7 +6,7 @@ type Props = {
 	parameters: {
 		name: string
 		current_ticks: number
-		max_ticks: number
+		max_ticks?: number
 		previous_ticks?: number
 		hint?: string
 	}
@@ -14,7 +14,9 @@ type Props = {
 }
 
 export const ClockUpdate: React.FC<Props> = ({ parameters, className }) => {
-	const isFull = parameters.current_ticks >= parameters.max_ticks
+	// Fallback to 6 if max_ticks is missing (matching backend behavior)
+	const maxTicks = parameters.max_ticks ?? 6
+	const isFull = parameters.current_ticks >= maxTicks
 	const isNew =
 		parameters.previous_ticks === undefined || parameters.previous_ticks === 0
 
@@ -29,7 +31,7 @@ export const ClockUpdate: React.FC<Props> = ({ parameters, className }) => {
 			iconSlot={
 				<ClockWheel
 					currentTicks={parameters.current_ticks}
-					maxTicks={parameters.max_ticks}
+					maxTicks={maxTicks}
 					size="sm"
 					isFull={isFull}
 					previousTicks={parameters.previous_ticks}
@@ -40,7 +42,7 @@ export const ClockUpdate: React.FC<Props> = ({ parameters, className }) => {
 		>
 			<div className="flex flex-col gap-2">
 				<div className="text-sm">
-					Progress: {parameters.current_ticks}/{parameters.max_ticks}
+					Progress: {parameters.current_ticks}/{maxTicks}
 				</div>
 
 				{/* TODO: ideally it should show the old hint even if it hasn't changed */}
