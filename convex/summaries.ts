@@ -24,11 +24,13 @@ export const collapseHistory = action({
 	args: {
 		campaignId: v.id("campaigns"),
 	},
-	handler: async (ctx, args): Promise<Id<"jobProgress">> => {
+	handler: async (ctx, args): Promise<Id<"timelineEvents">> => {
 		const identity = await ctx.auth.getUserIdentity()
 		if (!identity) {
 			throw new Error("Not authenticated")
 		}
+
+		const startTime = Date.now()
 
 		// Create a job to track progress
 		const jobId: Id<"jobProgress"> = await ctx.runMutation(
@@ -43,6 +45,16 @@ export const collapseHistory = action({
 						description: "Breaking history into chapters",
 					},
 				],
+			},
+		)
+
+		// Create a timeline event for this operation
+		const timelineEventId: Id<"timelineEvents"> = await ctx.runMutation(
+			api.timelineEvents.create,
+			{
+				campaignId: args.campaignId,
+				type: "collapseHistory",
+				jobProgressId: jobId,
 			},
 		)
 
@@ -213,7 +225,36 @@ export const collapseHistory = action({
 				success: true,
 			})
 
-			return jobId
+			// Get campaign info for stats
+			const campaign = await ctx.runQuery(api.campaigns.get, {
+				id: args.campaignId,
+			})
+
+			const duration = Date.now() - startTime
+			const messagesCollapsed = formattedMessages.length
+			const unsummarizedMessages = campaign
+				? campaign.messageCount - campaign.messageCountAtLastSummary
+				: 0
+
+			// Reset unsummarized message count since we just collapsed history
+			await ctx.runMutation(api.campaigns.resetUnsummarizedMessageCount, {
+				campaignId: args.campaignId,
+				count: MESSAGES_TO_KEEP_AFTER_COLLAPSE,
+			})
+
+			// Update timeline event with stats
+			await ctx.runMutation(api.timelineEvents.update, {
+				eventId: timelineEventId,
+				status: "completed",
+				metadata: {
+					summaryCount: chaptersToProcess.length,
+					messagesCollapsed,
+					unsummarizedMessages,
+					duration,
+				},
+			})
+
+			return timelineEventId
 		} catch (error) {
 			// Mark job as failed
 			await ctx.runMutation(api.jobProgress.complete, {
@@ -221,6 +262,14 @@ export const collapseHistory = action({
 				success: false,
 				error: error instanceof Error ? error.message : "Unknown error",
 			})
+
+			// Update timeline event with error
+			await ctx.runMutation(api.timelineEvents.update, {
+				eventId: timelineEventId,
+				status: "failed",
+				error: error instanceof Error ? error.message : "Unknown error",
+			})
+
 			throw error
 		}
 	},

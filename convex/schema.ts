@@ -69,6 +69,7 @@ export default defineSchema(
 			enabledTools: v.optional(v.record(v.string(), v.boolean())),
 			messageCount: v.number(),
 			messageCountAtLastSummary: v.number(),
+			unsummarizedMessageCount: v.optional(v.number()),
 			primaryCharacterId: v.optional(v.id("characters")),
 			tags: v.optional(v.array(v.string())),
 		})
@@ -231,6 +232,18 @@ export default defineSchema(
 		})
 			.index("by_campaign", ["campaignId"])
 			.index("by_campaign_and_type", ["campaignId", "type"]),
+		timelineEvents: defineTable({
+			campaignId: v.id("campaigns"),
+			type: v.string(), // e.g., "collapseHistory"
+			jobProgressId: v.optional(v.id("jobProgress")),
+			status: v.union(
+				v.literal("running"),
+				v.literal("completed"),
+				v.literal("failed"),
+			),
+			metadata: v.optional(v.any()), // Stats like summaryCount, messagesAffected, duration, etc.
+			error: v.optional(v.string()),
+		}).index("by_campaign", ["campaignId"]),
 	},
 	// For doing migrations and whatnot
 	{

@@ -228,6 +228,7 @@ export const addCampaign = mutation({
 			enabledTools: args.enabledTools,
 			messageCount: 0,
 			messageCountAtLastSummary: 0,
+			unsummarizedMessageCount: 0,
 			plan: {},
 		}
 
@@ -257,6 +258,7 @@ export const quickAddCampaign = mutation({
 			archived: false,
 			messageCount: 0,
 			messageCountAtLastSummary: 0,
+			unsummarizedMessageCount: 0,
 			plan: {},
 		})
 
@@ -706,6 +708,7 @@ export const incrementMessageCount = internalMutation({
 
 		await ctx.db.patch(args.campaignId, {
 			messageCount: campaign.messageCount + 1,
+			unsummarizedMessageCount: (campaign.unsummarizedMessageCount ?? 0) + 1,
 		})
 	},
 })
@@ -722,6 +725,10 @@ export const decrementMessageCount = internalMutation({
 
 		await ctx.db.patch(args.campaignId, {
 			messageCount: Math.max(0, campaign.messageCount - 1),
+			unsummarizedMessageCount: Math.max(
+				0,
+				(campaign.unsummarizedMessageCount ?? 0) - 1,
+			),
 		})
 	},
 })
@@ -743,6 +750,23 @@ export const setMessageCountAtLastSummary = mutation({
 
 		await ctx.db.patch(args.campaignId, {
 			messageCountAtLastSummary: campaign.messageCount,
+		})
+	},
+})
+
+export const resetUnsummarizedMessageCount = mutation({
+	args: {
+		campaignId: v.id("campaigns"),
+		count: v.number(),
+	},
+	handler: async (ctx, args) => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		await ctx.db.patch(args.campaignId, {
+			unsummarizedMessageCount: args.count,
 		})
 	},
 })

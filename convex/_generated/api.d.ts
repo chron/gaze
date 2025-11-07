@@ -24,6 +24,7 @@ import type * as prompts_extractMemories from "../prompts/extractMemories.js";
 import type * as prompts_system from "../prompts/system.js";
 import type * as speech from "../speech.js";
 import type * as summaries from "../summaries.js";
+import type * as timelineEvents from "../timelineEvents.js";
 import type * as tools_changeScene from "../tools/changeScene.js";
 import type * as tools_chooseName from "../tools/chooseName.js";
 import type * as tools_introduceCharacter from "../tools/introduceCharacter.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   "prompts/system": typeof prompts_system;
   speech: typeof speech;
   summaries: typeof summaries;
+  timelineEvents: typeof timelineEvents;
   "tools/changeScene": typeof tools_changeScene;
   "tools/chooseName": typeof tools_chooseName;
   "tools/introduceCharacter": typeof tools_introduceCharacter;

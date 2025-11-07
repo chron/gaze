@@ -2,9 +2,10 @@ import type { StreamId } from "@convex-dev/persistent-text-streaming"
 import { usePaginatedQuery, useQuery } from "convex/react"
 import { useEffect, useRef, useState } from "react"
 import { api } from "../../convex/_generated/api"
-import type { Id } from "../../convex/_generated/dataModel"
+import type { Doc, Id } from "../../convex/_generated/dataModel"
 import modelsData from "../models.json"
 import { Message } from "./Message"
+import { TimelineEventCard } from "./TimelineEventCard"
 import { Button } from "./ui/button"
 
 type Props = {
@@ -13,6 +14,23 @@ type Props = {
 	streamId: StreamId | null
 	setStreamId: (streamId: StreamId | null) => void
 }
+
+type TimelineItem =
+	| {
+			type: "message"
+			data: Omit<Doc<"messages">, "audio"> & {
+				audio?: (string | null)[]
+				scene?: Omit<NonNullable<Doc<"messages">["scene"]>, "image"> & {
+					imageUrl?: string | null
+				}
+			}
+			_creationTime: number
+	  }
+	| {
+			type: "event"
+			data: Doc<"timelineEvents">
+			_creationTime: number
+	  }
 
 export const MessageList: React.FC<Props> = ({
 	campaignId,
@@ -40,10 +58,28 @@ export const MessageList: React.FC<Props> = ({
 		{ initialNumItems: 10 },
 	)
 
+	// Query timeline events for this campaign
+	const timelineEvents = useQuery(api.timelineEvents.list, { campaignId })
+
+	// Merge messages and timeline events into a single chronological list
+	const timelineItems: TimelineItem[] = [
+		...(messages?.map((m) => ({
+			type: "message" as const,
+			data: m,
+			_creationTime: m._creationTime,
+		})) ?? []),
+		...(timelineEvents?.map((e) => ({
+			type: "event" as const,
+			data: e,
+			_creationTime: e._creationTime,
+		})) ?? []),
+	].sort((a, b) => b._creationTime - a._creationTime) // Sort by creation time, newest first
+
+	const lastItem = timelineItems[0]
 	const lastMessage = messages?.[0]
 	const usage = messages.find((m) => m.role === "assistant")?.usage
-	const reversedMessages = [...(messages ?? [])]
-	reversedMessages.reverse()
+	const reversedTimelineItems = [...timelineItems]
+	reversedTimelineItems.reverse()
 
 	// Calculate cost in USD for the last message
 	const calculateMessageCost = (
@@ -90,12 +126,12 @@ export const MessageList: React.FC<Props> = ({
 
 	// Track initial load state
 	useEffect(() => {
-		if (lastMessage?._id) {
+		if (lastItem) {
 			if (isInitialLoadRef.current) {
 				isInitialLoadRef.current = false
 			}
 		}
-	}, [lastMessage?._id])
+	}, [lastItem])
 
 	// Scroll new assistant messages to top of viewport
 	useEffect(() => {
@@ -231,16 +267,21 @@ export const MessageList: React.FC<Props> = ({
 				ref={messagesContainerRef}
 				className="messages-container flex flex-col gap-4"
 			>
-				{reversedMessages?.map((message) => {
-					return (
-						<Message
-							key={message._id}
-							message={message}
-							isLastMessage={message._id === lastMessage?._id}
-							isStreaming={message.streamId === streamId}
-							setStreamId={setStreamId}
-						/>
-					)
+				{reversedTimelineItems.map((item) => {
+					if (item.type === "message") {
+						return (
+							<Message
+								key={item.data._id}
+								message={item.data}
+								isLastMessage={item.data._id === lastMessage?._id}
+								isStreaming={item.data.streamId === streamId}
+								setStreamId={setStreamId}
+							/>
+						)
+					}
+
+					// Timeline event
+					return <TimelineEventCard key={item.data._id} event={item.data} />
 				})}
 
 				{/* Dynamic spacer to keep last assistant message at top */}
@@ -250,22 +291,22 @@ export const MessageList: React.FC<Props> = ({
 			</div>
 			{usage && (
 				<div className="text-sm text-gray-200">
-					{usage.inputTokens} input
+					{usage.inputTokens - (usage.cachedInputTokens ?? 0)}
 					{usage.cachedInputTokens
-						? ` (${usage.cachedInputTokens} cached)`
+						? ` + ${usage.cachedInputTokens} cached`
 						: ""}
 					{Number.isNaN(usage.outputTokens)
 						? ""
-						: `, ${usage.outputTokens} output`}
-					{usage.reasoningTokens ? `, ${usage.reasoningTokens} reasoning` : ""}
+						: ` • ${usage.outputTokens} out`}
+					{usage.reasoningTokens ? ` + ${usage.reasoningTokens} reasoning` : ""}
 					{lastMessageCost > 0 && <> • ${lastMessageCost.toFixed(6)}</>}
 					{campaign && (
 						<>
 							{" • "}
 							{campaign.messageCount} messages
-							{campaign.messageCountAtLastSummary !== 0
-								? ` (${campaign.messageCount - campaign.messageCountAtLastSummary} since last summary)`
-								: ""}
+							{campaign.unsummarizedMessageCount !== undefined && (
+								<> ({campaign.unsummarizedMessageCount} full)</>
+							)}
 						</>
 					)}
 				</div>

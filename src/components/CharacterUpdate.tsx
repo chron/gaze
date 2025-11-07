@@ -40,17 +40,17 @@ export const CharacterUpdate: React.FC<Props> = ({ parameters, result, className
 				{parameters.description && (
 					<div>
 						<span className="font-medium">Description:</span>
-						{showDescriptionDiff ? (
-							<div className="mt-1">
-								<StringDiff
-									oldText={result.oldDescription}
-									newText={result.newDescription}
-									mode="side-by-side"
-								/>
-							</div>
-						) : (
-							<div className="mt-1">{parameters.description}</div>
-						)}
+			{showDescriptionDiff ? (
+				<div className="mt-1">
+					<StringDiff
+						oldText={result.oldDescription ?? ""}
+						newText={result.newDescription ?? ""}
+						mode="side-by-side"
+					/>
+				</div>
+			) : (
+				<div className="mt-1">{parameters.description}</div>
+			)}
 					</div>
 				)}
 				{parameters.notes && (

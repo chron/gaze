@@ -581,9 +581,9 @@ export const currentGameContext = async (
 	let temporalText = ""
 	if (isToolEnabled("update_temporal", campaign)) {
 		if (campaign.temporal) {
-			temporalText = `\n\nCurrent in-game time: ${campaign.temporal.date} (${campaign.temporal.timeOfDay})`
+			temporalText = `\n\nCurrent in-game time: ${campaign.temporal.date}, ${campaign.temporal.timeOfDay}`
 			if (campaign.temporal.notes) {
-				temporalText += `\n${campaign.temporal.notes}`
+				temporalText += ` (notes: ${campaign.temporal.notes})`
 			}
 		} else {
 			temporalText =

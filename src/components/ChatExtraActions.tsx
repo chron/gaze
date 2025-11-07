@@ -17,7 +17,6 @@ import type { Id } from "../../convex/_generated/dataModel"
 import { FindAndReplaceModal } from "./FindAndReplaceModal"
 import { MessageMarkdown } from "./MessageMarkdown"
 import { PlanModal } from "./PlanModal"
-import { ProgressModal } from "./ProgressModal"
 import { PromptAnalysisModal } from "./PromptAnalysisModal"
 import { Button } from "./ui/button"
 import {
@@ -39,16 +38,11 @@ export const ChatExtraActions: React.FC = () => {
 	const [isLoading, setIsLoading] = useState(false)
 	const [isPlanModalOpen, setIsPlanModalOpen] = useState(false)
 	const [isPromptAnalysisOpen, setIsPromptAnalysisOpen] = useState(false)
-	const [isProgressModalOpen, setIsProgressModalOpen] = useState(false)
 	const [isFindReplaceOpen, setIsFindReplaceOpen] = useState(false)
-	const [progressJobId, setProgressJobId] = useState<Id<"jobProgress"> | null>(
-		null,
-	)
 	const collapseHistory = useAction(api.summaries.collapseHistory)
 	const summarizeChatHistory = useAction(api.messages.summarizeChatHistory)
 	const chatWithHistory = useAction(api.messages.chatWithHistory)
 	const generateTags = useAction(api.campaigns.generateTags)
-	const deleteJob = useMutation(api.jobProgress.deleteJob)
 
 	const updatePlan = useMutation(api.campaigns.updatePlan)
 	const findAndReplace = useAction(api.findAndReplace.findAndReplaceInLastMessage)
@@ -144,24 +138,27 @@ export const ChatExtraActions: React.FC = () => {
 						Analyze prompt
 					</DropdownMenuItem>
 
-					<DropdownMenuItem
-						onClick={async () => {
-							// Show modal immediately
-							setIsProgressModalOpen(true)
-							try {
-								const jobId = await collapseHistory({
-									campaignId: campaignId as Id<"campaigns">,
-								})
-								setProgressJobId(jobId)
-							} catch (error) {
-								console.error("Failed to collapse history:", error)
-								setIsProgressModalOpen(false)
-							}
-						}}
-					>
-						<BetweenHorizontalStart />
-						Collapse history
-					</DropdownMenuItem>
+				<DropdownMenuItem
+					onClick={async () => {
+						setIsLoading(true)
+						try {
+							await collapseHistory({
+								campaignId: campaignId as Id<"campaigns">,
+							})
+							// Timeline event will appear inline in the message list
+						} catch (error) {
+							console.error("Failed to collapse history:", error)
+							setResult(
+								`Failed to collapse history: ${error instanceof Error ? error.message : "Unknown error"}`,
+							)
+						} finally {
+							setIsLoading(false)
+						}
+					}}
+				>
+					<BetweenHorizontalStart />
+					Collapse history
+				</DropdownMenuItem>
 
 					<DropdownMenuItem
 						onClick={async () => {
@@ -209,28 +206,14 @@ export const ChatExtraActions: React.FC = () => {
 				/>
 			)}
 
-			{isPromptAnalysisOpen && (
-				<PromptAnalysisModal
-					campaignId={campaignId as Id<"campaigns">}
-					onClose={() => setIsPromptAnalysisOpen(false)}
-				/>
-			)}
-
-			<ProgressModal
-				isOpen={isProgressModalOpen}
-				jobId={progressJobId}
-				onClose={async () => {
-					if (progressJobId) {
-						await deleteJob({ jobId: progressJobId })
-					}
-					setProgressJobId(null)
-					setIsProgressModalOpen(false)
-				}}
-				title="Collapsing History"
-				description="Breaking your chat history into chapters and creating summaries"
+		{isPromptAnalysisOpen && (
+			<PromptAnalysisModal
+				campaignId={campaignId as Id<"campaigns">}
+				onClose={() => setIsPromptAnalysisOpen(false)}
 			/>
+		)}
 
-			<FindAndReplaceModal
+		<FindAndReplaceModal
 				isOpen={isFindReplaceOpen}
 				onClose={() => setIsFindReplaceOpen(false)}
 				onSubmit={async (oldText, newText) => {
