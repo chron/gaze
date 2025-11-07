@@ -26,3 +26,4 @@ LATER
 - [UI] Colors for clocks. Either get AI to choose, or just hash the name or something?
 - [LLM] Don't let it reintroduce clocks at max ticks (which would normally be deleted)
 - [IMAGES] Use an image edit LLM for outfits so the characters stay more consistent. Fal.ai? (After AI SDK v6)
+- [OUTFITS] Split base imagePrompt into invariant parts + a "base" outfit for better combining

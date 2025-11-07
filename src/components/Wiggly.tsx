@@ -1,11 +1,11 @@
 import { motion } from "motion/react"
-import { useMemo, useRef } from "react"
+import { memo, useMemo, useRef } from "react"
 
 type Props = {
 	children: string
 }
 
-export const Wiggly: React.FC<Props> = ({ children }) => {
+export const Wiggly: React.FC<Props> = memo(({ children }) => {
 	const offsetRef = useRef(Math.random())
 	const chars = useMemo(() => children.split(""), [children])
 
@@ -29,4 +29,4 @@ export const Wiggly: React.FC<Props> = ({ children }) => {
 			))}
 		</span>
 	)
-}
+})

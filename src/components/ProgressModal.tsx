@@ -57,16 +57,6 @@ export const ProgressModal: React.FC<Props> = ({
 		}
 	}, [isOpen])
 
-	// Auto-close after completion with a delay
-	useEffect(() => {
-		if (job?.status === "completed") {
-			const timer = setTimeout(() => {
-				onClose()
-			}, 8000)
-			return () => clearTimeout(timer)
-		}
-	}, [job?.status, onClose])
-
 	return (
 		<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
 			<DialogContent className="sm:max-w-3xl max-h-[85dvh] flex flex-col">

@@ -22,7 +22,8 @@ export const convertToFirstPerson = action({
 Convert the following text from second person (you/your) to first person (I/me/my).
 
 Rules:
-- DO NOT change any third-person pronouns (he/she/her/they/etc.)
+- Do NOT change any third-person pronouns (he/she/her/they/etc.)
+- Do NOT change any proper names (names of characters, places, etc.)
 - Keep the same tense and mood
 - Keep the same meaning and tone
 - Only change pronouns and verb forms in the NARRATIVE portions
@@ -50,6 +51,12 @@ Output: Call after her.
 
 Input: "Okay, Ms. Fuller. You've convinced me."
 Output: "Okay, Ms. Fuller. You've convinced me."
+
+Input: Introduce Penny to Ethan.
+Output: Introduce Penny to Ethan.
+
+Input: Focus on Hannah's question.
+Output: Focus on Hannah's question.
 
 Now convert this text:
 ${args.text}`
