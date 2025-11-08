@@ -169,7 +169,7 @@ export const collapseHistory = action({
 
 			const chapters = object.chapters
 
-			// Create steps for each chapter summary (ignore the last one as it might be in progress)
+			// Create steps for each chapter summary
 			const chaptersToProcess = chapters //.slice(0, -1)
 			for (let i = 0; i < chaptersToProcess.length; i++) {
 				const chapter = chaptersToProcess[i]
@@ -232,9 +232,6 @@ export const collapseHistory = action({
 
 			const duration = Date.now() - startTime
 			const messagesCollapsed = formattedMessages.length
-			const unsummarizedMessages = campaign
-				? campaign.messageCount - campaign.messageCountAtLastSummary
-				: 0
 
 			// Reset unsummarized message count since we just collapsed history
 			await ctx.runMutation(api.campaigns.resetUnsummarizedMessageCount, {
@@ -249,7 +246,7 @@ export const collapseHistory = action({
 				metadata: {
 					summaryCount: chaptersToProcess.length,
 					messagesCollapsed,
-					unsummarizedMessages,
+					unsummarizedMessages: MESSAGES_TO_KEEP_AFTER_COLLAPSE,
 					duration,
 				},
 			})

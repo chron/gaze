@@ -42,10 +42,8 @@ export const CharacterOutfitUpdate: React.FC<Props> = ({
 	const hasMissingParams =
 		!parameters.characterName ||
 		!parameters.outfitName ||
-		!parameters.outfitDescription ||
 		parameters.characterName === "undefined" ||
-		parameters.outfitName === "undefined" ||
-		parameters.outfitDescription === "undefined"
+		parameters.outfitName === "undefined"
 
 	// Treat missing parameters as an error
 	const effectiveError = hasError || hasMissingParams

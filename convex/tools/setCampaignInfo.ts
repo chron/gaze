@@ -46,6 +46,7 @@ export const setCampaignInfo = (
 				gameSystemId: campaign.gameSystemId,
 				model: campaign.model,
 				imageModel: campaign.imageModel,
+				enabledTools: campaign.enabledTools,
 			})
 
 			return "Plan updated successfully"

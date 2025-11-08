@@ -91,7 +91,7 @@ export const updateCharacterOutfit = (
 
 				return {
 					success: true,
-					message: `${characterName} changed into their new ${outfitName} outfit. Image generating...`,
+					message: `${characterName} changed into their new ${outfitName} outfit.`,
 					isNew: true,
 					characterName,
 					outfitName,

@@ -29,6 +29,7 @@ Rules:
 - Only change pronouns and verb forms in the NARRATIVE portions
 - Do NOT change any text inside quotation marks (dialogue should remain exactly as written)
 - Do NOT remove or change any punctuation or quotation marks
+- Important: If there are no second-person pronouns in the text, return the original text unchanged.
 - Do not add explanations or extra text
 - Return ONLY the converted text
 

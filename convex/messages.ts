@@ -836,16 +836,16 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 					(tr) => !existingToolCallIds.has(tr.toolCallId),
 				)
 
-				if (newToolResults.length > 0) {
-					console.log(
-						"Added missing tool results from onFinish:",
-						newToolResults.map((tr) => tr.toolName),
-					)
-					await ctx.runMutation(internal.messages.addToolResultsMessage, {
-						messageId: message._id,
-						toolResults: newToolResults,
-					})
-				}
+				// if (newToolResults.length > 0) {
+				// 	console.log(
+				// 		"Added missing tool results from onFinish:",
+				// 		newToolResults.map((tr) => tr.toolName),
+				// 	)
+				// 	await ctx.runMutation(internal.messages.addToolResultsMessage, {
+				// 		messageId: message._id,
+				// 		toolResults: newToolResults,
+				// 	})
+				// }
 			}
 		},
 	})
