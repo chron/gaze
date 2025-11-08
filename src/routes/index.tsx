@@ -6,6 +6,7 @@ import { useMemo, useState } from "react"
 import { api } from "../../convex/_generated/api"
 import type { Doc } from "../../convex/_generated/dataModel"
 import { RECENT_CAMPAIGNS_CONTEXT_COUNT } from "../../convex/utils"
+import { ExportMenu } from "../components/ExportMenu"
 import { Badge } from "../components/ui/badge"
 import { Button } from "../components/ui/button"
 import { DataTable } from "../components/ui/data-table"
@@ -316,13 +317,16 @@ function HomePage() {
 							{selectedTag && " · filtered by tag"}
 						</p>
 					</div>
-					<Button className="gap-2" asChild>
-						<Link to="/campaigns/new">
-							<Plus size={16} />
-							<span className="hidden sm:inline">New Campaign</span>
-							<span className="sm:hidden">New</span>
-						</Link>
-					</Button>
+					<div className="flex items-center gap-2">
+						<ExportMenu />
+						<Button className="gap-2" asChild>
+							<Link to="/campaigns/new">
+								<Plus size={16} />
+								<span className="hidden sm:inline">New Campaign</span>
+								<span className="sm:hidden">New</span>
+							</Link>
+						</Button>
+					</div>
 				</div>
 
 				{/* Tag Filter */}

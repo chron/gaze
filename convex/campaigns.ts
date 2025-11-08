@@ -15,7 +15,7 @@ import {
 	mutation,
 	query,
 } from "./_generated/server"
-import { googleSafetySettings } from "./utils"
+import { RECENT_CAMPAIGNS_CONTEXT_COUNT, googleSafetySettings } from "./utils"
 
 export const list = query({
 	args: {
@@ -357,6 +357,35 @@ export const updateLastInteraction = mutation({
 		await ctx.db.patch(args.campaignId, {
 			lastInteractionAt: Date.now(),
 		})
+	},
+})
+
+export const exportRecentCampaigns = action({
+	handler: async (ctx): Promise<string> => {
+		const identity = await ctx.auth.getUserIdentity()
+		if (!identity) {
+			throw new Error("Not authenticated")
+		}
+
+		const allCampaigns = await ctx.runQuery(api.campaigns.list, {
+			limit: RECENT_CAMPAIGNS_CONTEXT_COUNT,
+		})
+
+		const campaignsWithSummaries = allCampaigns.filter(
+			(c) => c.lastCampaignSummary,
+		)
+
+		if (campaignsWithSummaries.length === 0) {
+			return "# Recent Campaigns\n\nNo campaigns with summaries found."
+		}
+
+		const markdown = campaignsWithSummaries
+			.map((c) => {
+				return `## ${c.name}\n\n### Description\n\n${c.description}\n\nTotal messages: ${c.messageCount}\n\n### Summary\n\n${c.lastCampaignSummary}\n\n---\n`
+			})
+			.join("\n")
+
+		return `# Recent Campaigns\n\n${markdown}`
 	},
 })
 
