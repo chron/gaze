@@ -225,11 +225,6 @@ export const collapseHistory = action({
 				success: true,
 			})
 
-			// Get campaign info for stats
-			const campaign = await ctx.runQuery(api.campaigns.get, {
-				id: args.campaignId,
-			})
-
 			const duration = Date.now() - startTime
 			const messagesCollapsed = formattedMessages.length
 

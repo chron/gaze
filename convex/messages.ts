@@ -816,37 +816,37 @@ export const sendToLLM = httpAction(async (ctx, request) => {
 			})
 
 			// Add tool results from onFinish (these might not have come through streaming)
-			if (allToolResults.length > 0) {
-				// Get existing tool results to avoid duplicates
-				const currentMessage = await ctx.runQuery(
-					internal.messages.getByStreamId,
-					{
-						streamId: args.streamId,
-					},
-				)
+			// if (allToolResults.length > 0) {
+			// Get existing tool results to avoid duplicates
+			// const currentMessage = await ctx.runQuery(
+			// 	internal.messages.getByStreamId,
+			// 	{
+			// 		streamId: args.streamId,
+			// 	},
+			// )
 
-				const existingToolCallIds = new Set(
-					currentMessage?.toolResults?.map(
-						(tr: { toolCallId: string }) => tr.toolCallId,
-					) ?? [],
-				)
+			// const existingToolCallIds = new Set(
+			// 	currentMessage?.toolResults?.map(
+			// 		(tr: { toolCallId: string }) => tr.toolCallId,
+			// 	) ?? [],
+			// )
 
-				// Only add tool results that don't already exist
-				const newToolResults = allToolResults.filter(
-					(tr) => !existingToolCallIds.has(tr.toolCallId),
-				)
+			// Only add tool results that don't already exist
+			// const newToolResults = allToolResults.filter(
+			// 	(tr) => !existingToolCallIds.has(tr.toolCallId),
+			// )
 
-				// if (newToolResults.length > 0) {
-				// 	console.log(
-				// 		"Added missing tool results from onFinish:",
-				// 		newToolResults.map((tr) => tr.toolName),
-				// 	)
-				// 	await ctx.runMutation(internal.messages.addToolResultsMessage, {
-				// 		messageId: message._id,
-				// 		toolResults: newToolResults,
-				// 	})
-				// }
-			}
+			// if (newToolResults.length > 0) {
+			// 	console.log(
+			// 		"Added missing tool results from onFinish:",
+			// 		newToolResults.map((tr) => tr.toolName),
+			// 	)
+			// 	await ctx.runMutation(internal.messages.addToolResultsMessage, {
+			// 		messageId: message._id,
+			// 		toolResults: newToolResults,
+			// 	})
+			// }
+			// }
 		},
 	})
 
